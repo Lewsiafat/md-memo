@@ -1,0 +1,66 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            PROJECT=md-memo
+            PORT=10026
+
+            cd /srv/projects/$PROJECT
+            git pull origin main
+            npm install --production
+
+            if [ ! -f /etc/systemd/system/$PROJECT.service ]; then
+              sudo tee /etc/systemd/system/$PROJECT.service > /dev/null << 'SVCEOF'
+[Unit]
+Description=md-memo AI markdown memo tool
+After=network.target
+
+[Service]
+Type=simple
+User=lewsi
+WorkingDirectory=/srv/projects/md-memo
+ExecStart=/home/lewsi/.nvm/versions/node/v22.17.1/bin/node src/index.js
+EnvironmentFile=/srv/projects/md-memo/.env
+Environment="PATH=/home/lewsi/.nvm/versions/node/v22.17.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+              sudo systemctl daemon-reload
+              sudo systemctl enable $PROJECT
+            fi
+
+            if [ ! -f /etc/nginx/conf.d/projects/$PROJECT.conf ]; then
+              sudo tee /etc/nginx/conf.d/projects/$PROJECT.conf > /dev/null << 'NGINXEOF'
+location /md-memo/ {
+    proxy_pass http://127.0.0.1:10026/md-memo/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+NGINXEOF
+              sudo nginx -t && sudo systemctl reload nginx
+            fi
+
+            sudo systemctl restart $PROJECT
