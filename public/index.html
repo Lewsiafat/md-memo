@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>md-memo</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --text: #e2e4f0;
+      --text2: #7b80a0;
+      --accent: #7c6af7;
+      --accent-h: #9d94ff;
+      --green: #4ade80;
+      --red: #f87171;
+      --radius: 10px;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #topbar h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--accent);
+      margin-right: auto;
+    }
+    #topbar h1 span { color: var(--text2); font-weight: 400; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 7px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, opacity .15s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) { background: #2e3455; }
+
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid #f8717140; }
+    .btn-danger:hover { background: #f8717115; }
+
+    #export-btns { display: flex; gap: 6px; }
+
+    /* ── MAIN LAYOUT ── */
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── EDITOR PANEL ── */
+    #editor-panel {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+    }
+
+    #editor-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #raw-input {
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      background: var(--bg);
+      color: var(--text);
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 14.5px;
+      line-height: 1.7;
+      font-family: var(--mono);
+      tab-size: 2;
+    }
+    #raw-input::placeholder { color: var(--text2); }
+
+    /* ── PREVIEW ── */
+    #preview-wrap {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 24px 28px;
+      display: none;
+    }
+    #preview-wrap.visible { display: block; }
+
+    #preview {
+      max-width: 720px;
+      margin: 0 auto;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    #preview h1,#preview h2,#preview h3,#preview h4 {
+      color: var(--text);
+      margin: 1.4em 0 .5em;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    #preview h1 { font-size: 1.6em; border-bottom: 1px solid var(--border); padding-bottom: .3em; }
+    #preview h2 { font-size: 1.3em; }
+    #preview h3 { font-size: 1.1em; }
+    #preview p { margin: .7em 0; color: var(--text); }
+    #preview ul,#preview ol { margin: .7em 0 .7em 1.4em; }
+    #preview li { margin: .3em 0; }
+    #preview code {
+      background: var(--surface2);
+      color: #c0c8ff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: .88em;
+    }
+    #preview pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin: 1em 0;
+    }
+    #preview pre code {
+      background: none;
+      padding: 0;
+      font-size: .87em;
+      color: #b8c2ff;
+    }
+    #preview blockquote {
+      border-left: 3px solid var(--accent);
+      margin: 1em 0;
+      padding: .4em 1em;
+      color: var(--text2);
+      font-style: italic;
+      background: var(--surface);
+      border-radius: 0 6px 6px 0;
+    }
+    #preview hr { border: none; border-top: 1px solid var(--border); margin: 1.5em 0; }
+    #preview table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: .9em; }
+    #preview th,#preview td {
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      text-align: left;
+    }
+    #preview th { background: var(--surface2); font-weight: 600; }
+    #preview tr:nth-child(even) { background: var(--surface); }
+    #preview strong { color: #fff; font-weight: 700; }
+    #preview a { color: var(--accent); text-decoration: none; }
+    #preview a:hover { text-decoration: underline; }
+
+    /* ── EDITOR FOOTER ── */
+    #editor-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      font-size: 12px;
+      color: var(--text2);
+    }
+
+    #char-count { font-family: var(--mono); }
+
+    /* ── LOADING OVERLAY ── */
+    #loading-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(15,17,23,.85);
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      backdrop-filter: blur(3px);
+    }
+    #loading-overlay.visible { display: flex; }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-text {
+      color: var(--text2);
+      font-size: 13px;
+    }
+
+    /* ── HISTORY PANEL ── */
+    #history-panel {
+      width: 280px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    #history-header {
+      padding: 12px 14px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    #history-header h2 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+
+    #history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+    #history-list::-webkit-scrollbar { width: 4px; }
+    #history-list::-webkit-scrollbar-track { background: transparent; }
+    #history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .history-item {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+      position: relative;
+    }
+    .history-item:hover { background: var(--surface2); }
+    .history-item:hover .hi-delete { display: flex; }
+
+    .hi-time {
+      font-size: 10px;
+      color: var(--text2);
+      font-family: var(--mono);
+      margin-bottom: 4px;
+    }
+    .hi-preview {
+      font-size: 12px;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    .hi-delete {
+      display: none;
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--red);
+      border-radius: 5px;
+      padding: 3px 7px;
+      font-size: 11px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+    .hi-delete:hover { background: #f8717115; }
+
+    #history-empty {
+      padding: 40px 14px;
+      text-align: center;
+      color: var(--text2);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #toast.success { border-color: #4ade8060; color: var(--green); }
+    #toast.error { border-color: #f8717160; color: var(--red); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 680px) {
+      body { overflow: auto; }
+      #main { flex-direction: column; overflow: visible; }
+      #editor-panel { border-right: none; border-bottom: 1px solid var(--border); min-height: 55vh; }
+      #history-panel { width: 100%; height: auto; max-height: 45vh; }
+      #export-btns .btn-ghost span { display: none; }
+      #topbar h1 span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <h1>md<span>-</span>memo</h1>
+    <div id="export-btns" style="display:none">
+      <button class="btn btn-ghost" id="btn-edit">✏️ <span>Edit</span></button>
+      <button class="btn btn-ghost" id="btn-copy">📋 <span>Copy</span></button>
+      <button class="btn btn-ghost" id="btn-download">⬇️ <span>Download</span></button>
+    </div>
+    <button class="btn btn-primary" id="btn-format">✨ Format</button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+    <!-- Editor / Preview Panel -->
+    <div id="editor-panel">
+      <div id="editor-area">
+        <textarea id="raw-input" placeholder="Paste or type your raw notes here…
+
+Examples:
+- bullet points
+- meeting notes
+- code snippets
+- anything messy
+
+Hit ✨ Format and AI will clean it up into nice Markdown."></textarea>
+
+        <div id="preview-wrap">
+          <div id="preview"></div>
+        </div>
+
+        <div id="loading-overlay">
+          <div class="spinner"></div>
+          <div class="loading-text">Formatting with AI…</div>
+        </div>
+      </div>
+
+      <div id="editor-footer">
+        <span id="char-count">0 chars</span>
+        <span id="status-text"></span>
+      </div>
+    </div>
+
+    <!-- History Panel -->
+    <div id="history-panel">
+      <div id="history-header">
+        <h2>History</h2>
+        <button class="btn btn-ghost" style="padding:3px 9px;font-size:11px" id="btn-clear-all">Clear all</button>
+      </div>
+      <div id="history-list">
+        <div id="history-empty">No formatted memos yet.<br>Write something and hit Format!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script>
+    const API = '/md-memo/api';
+
+    // State
+    let currentMarkdown = '';
+    let isPreviewMode = false;
+    let history = [];
+
+    // DOM refs
+    const rawInput = document.getElementById('raw-input');
+    const previewWrap = document.getElementById('preview-wrap');
+    const preview = document.getElementById('preview');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const btnFormat = document.getElementById('btn-format');
+    const btnEdit = document.getElementById('btn-edit');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnDownload = document.getElementById('btn-download');
+    const btnClearAll = document.getElementById('btn-clear-all');
+    const exportBtns = document.getElementById('export-btns');
+    const charCount = document.getElementById('char-count');
+    const statusText = document.getElementById('status-text');
+    const historyList = document.getElementById('history-list');
+    const historyEmpty = document.getElementById('history-empty');
+    const toast = document.getElementById('toast');
+
+    // ── TOAST ──
+    let toastTimer;
+    function showToast(msg, type = '') {
+      toast.textContent = msg;
+      toast.className = 'show ' + type;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.className = ''; }, 2800);
+    }
+
+    // ── CHAR COUNT ──
+    rawInput.addEventListener('input', () => {
+      const n = rawInput.value.length;
+      charCount.textContent = n.toLocaleString() + ' chars';
+    });
+
+    // ── FORMAT ──
+    btnFormat.addEventListener('click', async () => {
+      const text = rawInput.value.trim();
+      if (!text) { showToast('Write something first!', 'error'); return; }
+
+      setLoading(true);
+      try {
+        const res = await fetch(`${API}/format`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Format failed');
+
+        currentMarkdown = data.markdown;
+        showPreview(currentMarkdown);
+        statusText.textContent = '✓ Formatted';
+        loadHistoryData();
+        showToast('Formatted successfully!', 'success');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+        statusText.textContent = '✗ Error';
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // ── EDIT / PREVIEW TOGGLE ──
+    function showPreview(md) {
+      isPreviewMode = true;
+      preview.innerHTML = marked.parse(md);
+      previewWrap.classList.add('visible');
+      rawInput.style.display = 'none';
+      exportBtns.style.display = 'flex';
+      btnFormat.textContent = '✨ Re-format';
+    }
+
+    btnEdit.addEventListener('click', () => {
+      isPreviewMode = false;
+      previewWrap.classList.remove('visible');
+      rawInput.style.display = '';
+      exportBtns.style.display = 'none';
+      rawInput.value = currentMarkdown;
+      charCount.textContent = currentMarkdown.length.toLocaleString() + ' chars';
+      btnFormat.textContent = '✨ Format';
+      statusText.textContent = '';
+      rawInput.focus();
+    });
+
+    // ── COPY ──
+    btnCopy.addEventListener('click', async () => {
+      if (!currentMarkdown) return;
+      try {
+        await navigator.clipboard.writeText(currentMarkdown);
+        showToast('Copied to clipboard!', 'success');
+      } catch {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = currentMarkdown;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Copied!', 'success');
+      }
+    });
+
+    // ── DOWNLOAD ──
+    btnDownload.addEventListener('click', () => {
+      if (!currentMarkdown) return;
+      const blob = new Blob([currentMarkdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url;
+      a.download = `memo-${ts}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Downloaded!', 'success');
+    });
+
+    // ── LOADING STATE ──
+    function setLoading(on) {
+      loadingOverlay.classList.toggle('visible', on);
+      btnFormat.disabled = on;
+    }
+
+    // ── HISTORY ──
+    async function loadHistoryData() {
+      try {
+        const res = await fetch(`${API}/history`);
+        history = await res.json();
+        renderHistory();
+      } catch {}
+    }
+
+    function renderHistory() {
+      if (!history.length) {
+        historyEmpty.style.display = '';
+        historyList.querySelectorAll('.history-item').forEach(el => el.remove());
+        return;
+      }
+      historyEmpty.style.display = 'none';
+      historyList.querySelectorAll('.history-item').forEach(el => el.remove());
+
+      history.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.dataset.id = entry.id;
+
+        const d = new Date(entry.createdAt);
+        const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+          + ' ' + d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        // Strip markdown syntax for preview
+        const rawPreview = entry.preview
+          .replace(/^#+\s*/, '')
+          .replace(/\*\*/g, '')
+          .replace(/`/g, '');
+
+        item.innerHTML = `
+          <div class="hi-time">${timeStr}</div>
+          <div class="hi-preview">${escHtml(rawPreview)}</div>
+          <button class="hi-delete" data-id="${entry.id}" title="Delete">✕</button>
+        `;
+
+        item.addEventListener('click', (e) => {
+          if (e.target.classList.contains('hi-delete') || e.target.closest('.hi-delete')) return;
+          restoreEntry(entry);
+        });
+
+        item.querySelector('.hi-delete').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await deleteEntry(entry.id);
+        });
+
+        historyList.appendChild(item);
+      });
+    }
+
+    function restoreEntry(entry) {
+      currentMarkdown = entry.markdown;
+      rawInput.value = entry.raw;
+      charCount.textContent = entry.raw.length.toLocaleString() + ' chars';
+      showPreview(entry.markdown);
+      statusText.textContent = '↩ Restored';
+      showToast('Memo restored', 'success');
+    }
+
+    async function deleteEntry(id) {
+      await fetch(`${API}/history/${id}`, { method: 'DELETE' });
+      history = history.filter(e => e.id !== id);
+      renderHistory();
+    }
+
+    btnClearAll.addEventListener('click', async () => {
+      if (!history.length) return;
+      if (!confirm('Clear all history? This cannot be undone.')) return;
+      for (const e of history) {
+        await fetch(`${API}/history/${e.id}`, { method: 'DELETE' });
+      }
+      history = [];
+      renderHistory();
+      showToast('History cleared');
+    });
+
+    // ── KEYBOARD SHORTCUTS ──
+    rawInput.addEventListener('keydown', (e) => {
+      // Ctrl+Enter or Cmd+Enter → Format
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        btnFormat.click();
+      }
+    });
+
+    // ── UTILS ──
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── INIT ──
+    loadHistoryData();
+    rawInput.focus();
+  </script>
+</body>
+</html>
