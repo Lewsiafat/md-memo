@@ -467,6 +467,7 @@
 
   <div id="topbar">
     <h1>md<span>-</span>memo</h1>
+    <button class="btn btn-ghost" id="btn-new" style="display:none">＋ New</button>
     <div id="export-btns" style="display:none">
       <button class="btn btn-ghost" id="btn-edit">✏️ Edit</button>
       <button class="btn btn-ghost" id="btn-copy">📋 Copy</button>
@@ -568,6 +569,7 @@ Ctrl+Enter to format."></textarea>
     const preview        = document.getElementById('preview');
     const loadingOverlay = document.getElementById('loading-overlay');
     const btnFormat      = document.getElementById('btn-format');
+    const btnNew         = document.getElementById('btn-new');
     const btnEdit        = document.getElementById('btn-edit');
     const btnCopy        = document.getElementById('btn-copy');
     const btnDownload    = document.getElementById('btn-download');
@@ -648,8 +650,29 @@ Ctrl+Enter to format."></textarea>
       previewWrap.classList.add('visible');
       rawInput.style.display = 'none';
       exportBtns.style.display = 'flex';
+      btnNew.style.display = '';
       btnFormat.textContent = '✨ Re-format';
     }
+
+    // ── NEW — reset to blank editor ──
+    function resetToNew() {
+      isPreviewMode = false;
+      currentMarkdown = '';
+      currentTags = [];
+      previewWrap.classList.remove('visible');
+      rawInput.style.display = '';
+      rawInput.value = '';
+      exportBtns.style.display = 'none';
+      btnNew.style.display = 'none';
+      btnFormat.textContent = '✨ Format';
+      charCount.textContent = '0 chars';
+      statusText.textContent = '';
+      currentTagsEl.innerHTML = '';
+      closeQuickView();
+      rawInput.focus();
+    }
+
+    btnNew.addEventListener('click', resetToNew);
 
     btnEdit.addEventListener('click', () => {
       isPreviewMode = false;
