@@ -31,6 +31,15 @@ function saveHistory(history) {
   fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
 }
 
+// Parse tags from markdown — AI appends <!-- tags: a, b, c --> at the end
+function parseTags(raw) {
+  const match = raw.match(/<!--\s*tags:\s*([^>]+?)-->/i);
+  if (!match) return { markdown: raw.trim(), tags: [] };
+  const tags = match[1].split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+  const markdown = raw.replace(/<!--\s*tags:[^>]+-->/gi, '').trim();
+  return { markdown, tags };
+}
+
 // POST /md-memo/api/format
 app.post(`${BASE_PATH}/api/format`, async (req, res) => {
   const { text } = req.body;
@@ -49,11 +58,16 @@ app.post(`${BASE_PATH}/api/format`, async (req, res) => {
         'X-Title': 'md-memo'
       },
       body: JSON.stringify({
-        model: 'google/gemma-3-4b-it:free',
+        model: process.env.AI_MODEL || 'deepseek/deepseek-v4-flash',
         messages: [
           {
             role: 'system',
-            content: 'You are a markdown formatter. Convert the user\'s raw notes into clean, well-structured Markdown. Fix grammar, organize with headers/bullets/code blocks where appropriate. Return ONLY the markdown, no explanation, no code fences wrapping the entire output.'
+            content: `You are a markdown formatter. Convert the user's raw notes into clean, well-structured Markdown. Fix grammar, organize with headers/bullets/code blocks where appropriate.
+
+At the very end of your output, append exactly one line in this format:
+<!-- tags: tag1, tag2, tag3 -->
+
+Generate 1–5 short, relevant lowercase tags that best describe the content topic. Return ONLY the markdown + that tags line. No other explanation, no wrapping code fences.`
           },
           { role: 'user', content: text }
         ],
@@ -69,7 +83,8 @@ app.post(`${BASE_PATH}/api/format`, async (req, res) => {
     }
 
     const data = await response.json();
-    const markdown = data.choices?.[0]?.message?.content?.trim() || '';
+    const raw = data.choices?.[0]?.message?.content?.trim() || '';
+    const { markdown, tags } = parseTags(raw);
 
     // Save to history
     const history = loadHistory();
@@ -78,12 +93,13 @@ app.post(`${BASE_PATH}/api/format`, async (req, res) => {
       createdAt: new Date().toISOString(),
       raw: text,
       markdown,
+      tags,
       preview: markdown.split('\n').find(l => l.trim()) || '(empty)'
     };
     history.unshift(entry);
     saveHistory(history.slice(0, HISTORY_LIMIT));
 
-    res.json({ markdown, id: entry.id });
+    res.json({ markdown, tags, id: entry.id });
   } catch (err) {
     console.error('Format error:', err);
     res.status(500).json({ error: err.message });
