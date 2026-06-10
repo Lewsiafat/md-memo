@@ -8,6 +8,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ── DARK THEME (default) ── */
     :root {
       --bg: #0f1117;
       --surface: #1a1d27;
@@ -25,6 +26,36 @@
       --amber: #fbbf24;
       --radius: 10px;
       --mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --md-code-bg: #22263a;
+      --md-code-color: #c0c8ff;
+      --md-pre-code-color: #b8c2ff;
+      --md-strong: #fff;
+      --md-bq-bg: #1a1d27;
+      --md-tr-even: #1a1d27;
+    }
+
+    /* ── LIGHT THEME ── */
+    body.light {
+      --bg: #f7f5f0;
+      --surface: #ffffff;
+      --surface2: #f0ede6;
+      --surface3: #e5e1d8;
+      --border: #ddd8cc;
+      --text: #1a1714;
+      --text2: #6b6558;
+      --text3: #a09880;
+      --accent: #6655e0;
+      --accent-h: #7c6af7;
+      --accent-dim: #6655e015;
+      --green: #16a34a;
+      --red: #dc2626;
+      --amber: #d97706;
+      --md-code-bg: #ede9e0;
+      --md-code-color: #5a4fcf;
+      --md-pre-code-color: #3730a3;
+      --md-strong: #111;
+      --md-bq-bg: #f0edf8;
+      --md-tr-even: #f7f4ee;
     }
 
     html, body { height: 100%; }
@@ -36,20 +67,21 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      font-size: 15px;
     }
 
     /* ── TOPBAR ── */
     #topbar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       padding: 9px 14px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
     #topbar h1 {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
       letter-spacing: .05em;
       color: var(--accent);
@@ -61,10 +93,10 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      padding: 5px 12px;
+      padding: 6px 13px;
       border-radius: 7px;
       border: none;
-      font-size: 12.5px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       transition: background .15s, opacity .15s, transform .1s;
@@ -76,7 +108,16 @@
     .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
     .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-ghost:hover:not(:disabled) { background: var(--surface3); }
-    .btn-icon { padding: 5px 8px; background: transparent; color: var(--text2); border: none; border-radius: 6px; }
+    .btn-icon {
+      padding: 6px 9px;
+      background: transparent;
+      color: var(--text2);
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
     .btn-icon:hover { background: var(--surface2); color: var(--text); }
 
     #export-btns { display: flex; gap: 5px; }
@@ -94,7 +135,7 @@
       position: relative;
     }
 
-    /* ── WORK AREA: editor + optional quickview ── */
+    /* ── WORK AREA ── */
     #work-area {
       flex: 1;
       display: flex;
@@ -107,38 +148,37 @@
       min-width: 0;
       position: relative;
       overflow: hidden;
-      transition: flex .25s ease;
     }
 
     #raw-input {
       width: 100%;
       height: 100%;
-      padding: 20px;
+      padding: 22px;
       background: var(--bg);
       color: var(--text);
       border: none;
       outline: none;
       resize: none;
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1.75;
       font-family: var(--mono);
       tab-size: 2;
     }
     #raw-input::placeholder { color: var(--text3); }
 
-    /* ── PREVIEW (full editor replace) ── */
+    /* ── PREVIEW ── */
     #preview-wrap {
       width: 100%;
       height: 100%;
       overflow-y: auto;
-      padding: 24px 28px;
+      padding: 28px 32px;
       display: none;
       background: var(--bg);
     }
     #preview-wrap.visible { display: block; }
-    #preview { max-width: 720px; margin: 0 auto; font-size: 14.5px; line-height: 1.8; }
+    #preview { max-width: 740px; margin: 0 auto; font-size: 16px; line-height: 1.82; }
 
-    /* ── QUICK VIEW PANEL ── */
+    /* ── QUICK VIEW ── */
     #quickview-panel {
       width: 0;
       overflow: hidden;
@@ -157,15 +197,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
+      padding: 9px 13px;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
       gap: 8px;
     }
     #quickview-title {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: .07em;
+      letter-spacing: .06em;
       text-transform: uppercase;
       color: var(--text2);
       white-space: nowrap;
@@ -173,14 +213,10 @@
       text-overflow: ellipsis;
       flex: 1;
     }
-    #quickview-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 18px 20px;
-    }
-    #quickview-content { font-size: 13.5px; line-height: 1.75; }
+    #quickview-body { flex: 1; overflow-y: auto; padding: 20px 22px; }
+    #quickview-content { font-size: 14.5px; line-height: 1.75; }
 
-    /* ── MARKDOWN RENDER SHARED STYLES ── */
+    /* ── MARKDOWN STYLES ── */
     .md-render h1,.md-render h2,.md-render h3,.md-render h4 {
       color: var(--text);
       margin: 1.3em 0 .45em;
@@ -188,52 +224,52 @@
       line-height: 1.3;
     }
     .md-render h1 { font-size: 1.55em; border-bottom: 1px solid var(--border); padding-bottom: .3em; }
-    .md-render h2 { font-size: 1.25em; }
-    .md-render h3 { font-size: 1.05em; }
+    .md-render h2 { font-size: 1.28em; }
+    .md-render h3 { font-size: 1.08em; }
     .md-render p { margin: .65em 0; }
     .md-render ul,.md-render ol { margin: .65em 0 .65em 1.4em; }
     .md-render li { margin: .28em 0; }
     .md-render code {
-      background: var(--surface2);
-      color: #c0c8ff;
+      background: var(--md-code-bg);
+      color: var(--md-code-color);
       padding: 2px 6px;
       border-radius: 4px;
       font-family: var(--mono);
       font-size: .86em;
     }
     .md-render pre {
-      background: var(--surface2);
+      background: var(--md-code-bg);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 12px 14px;
+      padding: 13px 15px;
       overflow-x: auto;
       margin: .9em 0;
     }
-    .md-render pre code { background: none; padding: 0; font-size: .85em; color: #b8c2ff; }
+    .md-render pre code { background: none; padding: 0; font-size: .85em; color: var(--md-pre-code-color); }
     .md-render blockquote {
       border-left: 3px solid var(--accent);
       margin: .9em 0;
       padding: .35em .9em;
       color: var(--text2);
       font-style: italic;
-      background: var(--surface);
+      background: var(--md-bq-bg);
       border-radius: 0 6px 6px 0;
     }
     .md-render hr { border: none; border-top: 1px solid var(--border); margin: 1.4em 0; }
-    .md-render table { border-collapse: collapse; width: 100%; margin: .9em 0; font-size: .88em; }
-    .md-render th,.md-render td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+    .md-render table { border-collapse: collapse; width: 100%; margin: .9em 0; font-size: .9em; }
+    .md-render th,.md-render td { border: 1px solid var(--border); padding: 7px 11px; text-align: left; }
     .md-render th { background: var(--surface2); font-weight: 600; }
-    .md-render tr:nth-child(even) { background: var(--surface); }
-    .md-render strong { color: #fff; font-weight: 700; }
+    .md-render tr:nth-child(even) { background: var(--md-tr-even); }
+    .md-render strong { color: var(--md-strong); font-weight: 700; }
     .md-render a { color: var(--accent); text-decoration: none; }
     .md-render a:hover { text-decoration: underline; }
 
-    /* ── LOADING OVERLAY ── */
+    /* ── LOADING ── */
     #loading-overlay {
       display: none;
       position: absolute;
       inset: 0;
-      background: rgba(15,17,23,.8);
+      background: rgba(0,0,0,.5);
       z-index: 20;
       align-items: center;
       justify-content: center;
@@ -250,18 +286,18 @@
       animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { color: var(--text2); font-size: 12.5px; }
+    .loading-text { color: var(--text2); font-size: 13px; }
 
     /* ── EDITOR FOOTER ── */
     #editor-footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 14px;
+      padding: 7px 15px;
       border-top: 1px solid var(--border);
       background: var(--surface);
       flex-shrink: 0;
-      font-size: 11.5px;
+      font-size: 12.5px;
       color: var(--text2);
       gap: 8px;
     }
@@ -270,9 +306,9 @@
     .tag-chip {
       display: inline-flex;
       align-items: center;
-      padding: 1px 7px;
+      padding: 2px 8px;
       border-radius: 20px;
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 600;
       background: var(--accent-dim);
       color: var(--accent-h);
@@ -282,7 +318,7 @@
 
     /* ── HISTORY PANEL ── */
     #history-panel {
-      width: 270px;
+      width: 280px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -290,53 +326,35 @@
       overflow: hidden;
     }
 
-    /* ── TAG CLOUD SECTION ── */
-    #tag-section {
-      border-bottom: 1px solid var(--border);
-      overflow: hidden;
-    }
+    /* ── TAG CLOUD ── */
+    #tag-section { border-bottom: 1px solid var(--border); overflow: hidden; }
     #tag-toggle {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
+      padding: 9px 13px;
       cursor: pointer;
       user-select: none;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
       letter-spacing: .07em;
       text-transform: uppercase;
       color: var(--text2);
     }
     #tag-toggle:hover { color: var(--text); }
-    #tag-toggle-arrow {
-      font-size: 9px;
-      transition: transform .2s;
-      color: var(--text3);
-    }
+    #tag-toggle-arrow { font-size: 9px; transition: transform .2s; color: var(--text3); }
     #tag-toggle-arrow.open { transform: rotate(180deg); }
-
-    #tag-cloud-wrap {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height .25s ease;
-    }
+    #tag-cloud-wrap { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
     #tag-cloud-wrap.open { max-height: 200px; }
-
-    #tag-cloud {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      padding: 6px 12px 10px;
-    }
+    #tag-cloud { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 13px 11px; }
 
     .tag-filter-chip {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 9px;
+      padding: 3px 10px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       border: 1px solid var(--border);
@@ -345,89 +363,80 @@
       transition: all .15s;
     }
     .tag-filter-chip:hover { border-color: var(--accent); color: var(--text); }
-    .tag-filter-chip.active {
-      background: var(--accent-dim);
-      border-color: var(--accent);
-      color: var(--accent-h);
-    }
-    .tag-filter-chip .tag-count {
-      font-size: 9px;
-      opacity: .7;
-    }
+    .tag-filter-chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent-h); }
+    .tag-filter-chip .tag-count { font-size: 10px; opacity: .7; }
 
     /* ── HISTORY HEADER ── */
     #history-header {
-      padding: 8px 12px 6px;
+      padding: 9px 13px 7px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    #history-header h2 {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .07em;
-      text-transform: uppercase;
-      color: var(--text2);
-    }
-    #history-count { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+    #history-header h2 { font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text2); }
+    #history-count { font-size: 11px; color: var(--text3); font-family: var(--mono); }
 
-    #history-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 4px 0;
-    }
+    #history-list { flex: 1; overflow-y: auto; padding: 4px 0; }
     #history-list::-webkit-scrollbar { width: 3px; }
     #history-list::-webkit-scrollbar-track { background: transparent; }
     #history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
     .history-item {
-      padding: 9px 12px;
+      padding: 10px 13px;
       cursor: pointer;
-      border-bottom: 1px solid #1e2238;
+      border-bottom: 1px solid var(--border);
       transition: background .12s;
       position: relative;
     }
     .history-item:hover { background: var(--surface2); }
     .history-item.active { background: var(--surface2); border-left: 2px solid var(--accent); }
-    .history-item:hover .hi-delete { opacity: 1; }
+    .history-item:hover .hi-actions { opacity: 1; }
 
-    .hi-time { font-size: 9.5px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
+    .hi-time { font-size: 10.5px; color: var(--text3); font-family: var(--mono); margin-bottom: 3px; }
     .hi-preview {
-      font-size: 12px; color: var(--text);
+      font-size: 13px; color: var(--text);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       line-height: 1.4; margin-bottom: 5px;
     }
     .hi-tags { display: flex; gap: 3px; flex-wrap: wrap; }
     .hi-tag {
-      font-size: 9.5px;
-      padding: 1px 6px;
+      font-size: 10.5px;
+      padding: 1px 7px;
       border-radius: 20px;
       background: var(--surface3);
       color: var(--text2);
       border: 1px solid var(--border);
     }
-    .hi-delete {
+    /* action buttons (share + delete) on hover */
+    .hi-actions {
       opacity: 0;
       position: absolute;
       right: 8px; top: 8px;
+      display: flex;
+      gap: 4px;
+      transition: opacity .15s;
+    }
+    .hi-action-btn {
       background: var(--surface);
       border: 1px solid var(--border);
-      color: var(--red);
       border-radius: 4px;
       padding: 2px 6px;
-      font-size: 10px;
+      font-size: 10.5px;
       cursor: pointer;
-      transition: opacity .15s, background .15s;
+      transition: background .15s;
+      color: var(--text2);
     }
-    .hi-delete:hover { background: #f8717115; }
+    .hi-action-btn:hover { background: var(--surface3); color: var(--text); }
+    .hi-action-btn.delete { color: var(--red); }
+    .hi-action-btn.delete:hover { background: #f8717115; }
 
     #history-empty {
       padding: 36px 14px;
       text-align: center;
       color: var(--text3);
-      font-size: 12px;
+      font-size: 13px;
       line-height: 1.7;
     }
 
@@ -439,9 +448,9 @@
       background: var(--surface2);
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 8px 16px;
+      padding: 9px 18px;
       border-radius: 8px;
-      font-size: 12.5px; font-weight: 500;
+      font-size: 13px; font-weight: 500;
       opacity: 0;
       transition: opacity .22s, transform .22s;
       pointer-events: none;
@@ -470,19 +479,19 @@
     <button class="btn btn-ghost" id="btn-new" style="display:none">＋ New</button>
     <div id="export-btns" style="display:none">
       <button class="btn btn-ghost" id="btn-edit">✏️ Edit</button>
+      <button class="btn btn-ghost" id="btn-share">🔗 Share</button>
       <button class="btn btn-ghost" id="btn-copy">📋 Copy</button>
       <button class="btn btn-ghost" id="btn-download">⬇️ .md</button>
     </div>
+    <button class="btn-icon" id="btn-theme" title="Toggle theme">🌙</button>
     <button class="btn btn-primary" id="btn-format">✨ Format</button>
   </div>
 
   <div id="main">
 
-    <!-- ── EDITOR PANEL ── -->
     <div id="editor-panel">
       <div id="work-area">
 
-        <!-- Editor / Preview -->
         <div id="editor-area">
           <textarea id="raw-input" placeholder="Paste or type your raw notes here…
 
@@ -498,12 +507,11 @@ Ctrl+Enter to format."></textarea>
           </div>
         </div>
 
-        <!-- Quick View -->
         <div id="quickview-panel">
           <div id="quickview-header">
             <span id="quickview-title">Quick View</span>
             <button class="btn btn-ghost" id="btn-qv-restore" style="padding:3px 9px;font-size:11px">↩ Restore</button>
-            <button class="btn-icon" id="btn-qv-close" title="Close quick view">✕</button>
+            <button class="btn-icon" id="btn-qv-close" title="Close">✕</button>
           </div>
           <div id="quickview-body">
             <div id="quickview-content" class="md-render"></div>
@@ -519,10 +527,7 @@ Ctrl+Enter to format."></textarea>
       </div>
     </div>
 
-    <!-- ── HISTORY PANEL ── -->
     <div id="history-panel">
-
-      <!-- Tag Cloud (collapsed by default) -->
       <div id="tag-section">
         <div id="tag-toggle">
           <span>🏷 Tags</span>
@@ -530,7 +535,7 @@ Ctrl+Enter to format."></textarea>
         </div>
         <div id="tag-cloud-wrap">
           <div id="tag-cloud">
-            <span style="font-size:11px;color:var(--text3);padding:4px 0">No tags yet</span>
+            <span style="font-size:12px;color:var(--text3);padding:4px 0">No tags yet</span>
           </div>
         </div>
       </div>
@@ -539,14 +544,13 @@ Ctrl+Enter to format."></textarea>
         <h2>History</h2>
         <div style="display:flex;gap:6px;align-items:center">
           <span id="history-count"></span>
-          <button class="btn btn-icon" style="font-size:10px;padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2)" id="btn-clear-all">Clear</button>
+          <button class="btn-icon" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2)" id="btn-clear-all">Clear</button>
         </div>
       </div>
 
       <div id="history-list">
         <div id="history-empty">No formatted memos yet.<br>Write something and hit Format!</div>
       </div>
-
     </div>
   </div>
 
@@ -554,14 +558,16 @@ Ctrl+Enter to format."></textarea>
 
   <script>
     const API = '/md-memo/api';
+    const BASE = location.origin + '/md-memo';
 
     // State
     let currentMarkdown = '';
     let currentTags = [];
+    let currentId = null;
     let isPreviewMode = false;
     let history = [];
-    let activeTagFilter = null;   // tag string or null
-    let quickViewEntry = null;    // history entry shown in quick view
+    let activeTagFilter = null;
+    let quickViewEntry = null;
 
     // DOM
     const rawInput       = document.getElementById('raw-input');
@@ -571,8 +577,10 @@ Ctrl+Enter to format."></textarea>
     const btnFormat      = document.getElementById('btn-format');
     const btnNew         = document.getElementById('btn-new');
     const btnEdit        = document.getElementById('btn-edit');
+    const btnShare       = document.getElementById('btn-share');
     const btnCopy        = document.getElementById('btn-copy');
     const btnDownload    = document.getElementById('btn-download');
+    const btnTheme       = document.getElementById('btn-theme');
     const btnClearAll    = document.getElementById('btn-clear-all');
     const exportBtns     = document.getElementById('export-btns');
     const charCount      = document.getElementById('char-count');
@@ -581,7 +589,6 @@ Ctrl+Enter to format."></textarea>
     const historyList    = document.getElementById('history-list');
     const historyEmpty   = document.getElementById('history-empty');
     const historyCount   = document.getElementById('history-count');
-    const tagSection     = document.getElementById('tag-section');
     const tagToggle      = document.getElementById('tag-toggle');
     const tagToggleArrow = document.getElementById('tag-toggle-arrow');
     const tagCloudWrap   = document.getElementById('tag-cloud-wrap');
@@ -592,6 +599,16 @@ Ctrl+Enter to format."></textarea>
     const btnQvRestore   = document.getElementById('btn-qv-restore');
     const btnQvClose     = document.getElementById('btn-qv-close');
     const toast          = document.getElementById('toast');
+
+    // ── THEME ──
+    function applyTheme(light) {
+      document.body.classList.toggle('light', light);
+      btnTheme.textContent = light ? '☀️' : '🌙';
+      localStorage.setItem('md-memo-theme', light ? 'light' : 'dark');
+    }
+    // Init theme
+    applyTheme(localStorage.getItem('md-memo-theme') === 'light');
+    btnTheme.addEventListener('click', () => applyTheme(!document.body.classList.contains('light')));
 
     // ── TOAST ──
     let toastTimer;
@@ -628,6 +645,7 @@ Ctrl+Enter to format."></textarea>
 
         currentMarkdown = data.markdown;
         currentTags = data.tags || [];
+        currentId = data.id;
         showPreview(currentMarkdown);
         renderCurrentTags(currentTags);
         statusText.textContent = '✓ Formatted';
@@ -642,7 +660,7 @@ Ctrl+Enter to format."></textarea>
       }
     }
 
-    // ── PREVIEW / EDIT TOGGLE ──
+    // ── PREVIEW / EDIT ──
     function showPreview(md) {
       isPreviewMode = true;
       preview.innerHTML = marked.parse(md);
@@ -654,11 +672,11 @@ Ctrl+Enter to format."></textarea>
       btnFormat.textContent = '✨ Re-format';
     }
 
-    // ── NEW — reset to blank editor ──
     function resetToNew() {
       isPreviewMode = false;
       currentMarkdown = '';
       currentTags = [];
+      currentId = null;
       previewWrap.classList.remove('visible');
       rawInput.style.display = '';
       rawInput.value = '';
@@ -686,24 +704,21 @@ Ctrl+Enter to format."></textarea>
       rawInput.focus();
     });
 
-    // ── CURRENT TAGS DISPLAY ──
-    function renderCurrentTags(tags) {
-      currentTagsEl.innerHTML = '';
-      tags.forEach(t => {
-        const chip = document.createElement('span');
-        chip.className = 'tag-chip';
-        chip.textContent = t;
-        currentTagsEl.appendChild(chip);
-      });
-    }
+    // ── SHARE / PERMALINK ──
+    btnShare.addEventListener('click', async () => {
+      if (!currentId) return;
+      const url = `${BASE}/m/${currentId}`;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = url; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      showToast('🔗 Link copied!', 'success');
+    });
 
-    // ── LOADING ──
-    function setLoading(on) {
-      loadingOverlay.classList.toggle('visible', on);
-      btnFormat.disabled = on;
-    }
-
-    // ── COPY ──
+    // ── COPY MARKDOWN ──
     btnCopy.addEventListener('click', async () => {
       if (!currentMarkdown) return;
       try {
@@ -732,8 +747,7 @@ Ctrl+Enter to format."></textarea>
     // ── QUICK VIEW ──
     function openQuickView(entry) {
       quickViewEntry = entry;
-      const rawPreview = (entry.preview || '')
-        .replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
+      const rawPreview = (entry.preview || '').replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
       qvTitle.textContent = rawPreview || 'Quick View';
       qvContent.innerHTML = marked.parse(entry.markdown);
       qvPanel.classList.add('open');
@@ -746,11 +760,11 @@ Ctrl+Enter to format."></textarea>
     }
 
     btnQvClose.addEventListener('click', closeQuickView);
-
     btnQvRestore.addEventListener('click', () => {
       if (!quickViewEntry) return;
       currentMarkdown = quickViewEntry.markdown;
       currentTags = quickViewEntry.tags || [];
+      currentId = quickViewEntry.id;
       rawInput.value = quickViewEntry.raw;
       charCount.textContent = quickViewEntry.raw.length.toLocaleString() + ' chars';
       showPreview(currentMarkdown);
@@ -760,6 +774,23 @@ Ctrl+Enter to format."></textarea>
       closeQuickView();
     });
 
+    // ── CURRENT TAGS ──
+    function renderCurrentTags(tags) {
+      currentTagsEl.innerHTML = '';
+      tags.forEach(t => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.textContent = t;
+        currentTagsEl.appendChild(chip);
+      });
+    }
+
+    // ── LOADING ──
+    function setLoading(on) {
+      loadingOverlay.classList.toggle('visible', on);
+      btnFormat.disabled = on;
+    }
+
     // ── TAG CLOUD TOGGLE ──
     tagToggle.addEventListener('click', () => {
       const isOpen = tagCloudWrap.classList.toggle('open');
@@ -768,11 +799,7 @@ Ctrl+Enter to format."></textarea>
 
     // ── TAG FILTER ──
     function setTagFilter(tag) {
-      if (activeTagFilter === tag) {
-        activeTagFilter = null;
-      } else {
-        activeTagFilter = tag;
-      }
+      activeTagFilter = activeTagFilter === tag ? null : tag;
       renderTagCloud();
       renderHistoryItems();
     }
@@ -793,21 +820,16 @@ Ctrl+Enter to format."></textarea>
     }
 
     function renderTagCloud() {
-      // Count tags across all history
       const tagMap = {};
-      history.forEach(e => (e.tags || []).forEach(t => {
-        tagMap[t] = (tagMap[t] || 0) + 1;
-      }));
-
+      history.forEach(e => (e.tags || []).forEach(t => { tagMap[t] = (tagMap[t] || 0) + 1; }));
       const tags = Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
 
       tagCloud.innerHTML = '';
       if (!tags.length) {
-        tagCloud.innerHTML = '<span style="font-size:11px;color:var(--text3);padding:4px 0">No tags yet</span>';
+        tagCloud.innerHTML = '<span style="font-size:12px;color:var(--text3);padding:4px 0">No tags yet</span>';
         return;
       }
 
-      // "All" chip
       const allChip = document.createElement('span');
       allChip.className = 'tag-filter-chip' + (!activeTagFilter ? ' active' : '');
       allChip.innerHTML = `All <span class="tag-count">${history.length}</span>`;
@@ -825,7 +847,6 @@ Ctrl+Enter to format."></textarea>
 
     function renderHistoryItems() {
       const filtered = getFilteredHistory();
-
       historyCount.textContent = filtered.length ? `${filtered.length}` : '';
       historyList.querySelectorAll('.history-item').forEach(el => el.remove());
 
@@ -849,26 +870,39 @@ Ctrl+Enter to format."></textarea>
 
         const rawPreview = (entry.preview || '')
           .replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
-
-        const tagsHtml = (entry.tags || [])
-          .map(t => `<span class="hi-tag">${escHtml(t)}</span>`).join('');
+        const tagsHtml = (entry.tags || []).map(t => `<span class="hi-tag">${escHtml(t)}</span>`).join('');
 
         item.innerHTML = `
           <div class="hi-time">${timeStr}</div>
           <div class="hi-preview">${escHtml(rawPreview)}</div>
           ${tagsHtml ? `<div class="hi-tags">${tagsHtml}</div>` : ''}
-          <button class="hi-delete" data-id="${entry.id}" title="Delete">✕</button>
+          <div class="hi-actions">
+            <button class="hi-action-btn share" title="Copy link">🔗</button>
+            <button class="hi-action-btn delete" title="Delete">✕</button>
+          </div>
         `;
 
-        item.addEventListener('click', e => {
-          if (e.target.closest('.hi-delete')) return;
-          handleHistoryClick(entry, item);
+        item.querySelector('.share').addEventListener('click', async e => {
+          e.stopPropagation();
+          const url = `${BASE}/m/${entry.id}`;
+          try { await navigator.clipboard.writeText(url); }
+          catch {
+            const ta = document.createElement('textarea');
+            ta.value = url; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+          }
+          showToast('🔗 Link copied!', 'success');
         });
 
-        item.querySelector('.hi-delete').addEventListener('click', async e => {
+        item.querySelector('.delete').addEventListener('click', async e => {
           e.stopPropagation();
           if (quickViewEntry?.id === entry.id) closeQuickView();
           await deleteEntry(entry.id);
+        });
+
+        item.addEventListener('click', e => {
+          if (e.target.closest('.hi-actions')) return;
+          handleHistoryClick(entry, item);
         });
 
         historyList.appendChild(item);
@@ -877,16 +911,14 @@ Ctrl+Enter to format."></textarea>
 
     function handleHistoryClick(entry, itemEl) {
       const hasContent = rawInput.value.trim().length > 0 && !isPreviewMode;
-
       if (hasContent) {
-        // Editor has unsaved content → open quick view instead of replacing
         document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
         itemEl.classList.add('active');
         openQuickView(entry);
       } else {
-        // Editor is empty or in preview mode → restore directly
         currentMarkdown = entry.markdown;
         currentTags = entry.tags || [];
+        currentId = entry.id;
         rawInput.value = entry.raw;
         charCount.textContent = entry.raw.length.toLocaleString() + ' chars';
         showPreview(entry.markdown);
@@ -916,12 +948,10 @@ Ctrl+Enter to format."></textarea>
       showToast('History cleared');
     });
 
-    // ── UTILS ──
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    // ── INIT ──
     loadHistoryData();
     rawInput.focus();
   </script>
