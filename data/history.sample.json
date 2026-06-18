@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1000000000001,
+    "createdAt": "2026-01-01T10:00:00.000Z",
+    "raw": "Meeting notes 2026-01-01\n\nDiscussed roadmap for Q1:\n- Launch v1.0\n- Onboard first 100 users\n- Setup monitoring",
+    "markdown": "# Meeting Notes – 2026-01-01\n\n## Q1 Roadmap Discussion\n\n- Launch **v1.0**\n- Onboard first **100 users**\n- Setup monitoring",
+    "tags": ["meeting", "roadmap", "q1", "planning"],
+    "preview": "# Meeting Notes – 2026-01-01"
+  },
+  {
+    "id": 1000000000002,
+    "createdAt": "2026-01-02T14:30:00.000Z",
+    "raw": "Reading notes: Clean Code by Robert Martin\n\nKey takeaways:\n- Meaningful names matter\n- Functions should do one thing\n- Comments are a last resort\n- Tests are documentation",
+    "markdown": "# Reading Notes: Clean Code\n*by Robert C. Martin*\n\n## Key Takeaways\n\n1. **Meaningful names** — code should read like prose\n2. **Single responsibility** — functions do one thing only\n3. **Comments as last resort** — write self-documenting code\n4. **Tests as documentation** — tests reveal intent",
+    "tags": ["reading", "clean code", "programming", "best practices"],
+    "preview": "# Reading Notes: Clean Code"
+  },
+  {
+    "id": 1000000000003,
+    "createdAt": "2026-01-03T09:15:00.000Z",
+    "raw": "Ideas for side project\n\n- A tool to track personal goals weekly\n- AI that summarizes your week\n- Simple, no login required\n- Store data locally",
+    "markdown": "# Side Project Ideas 💡\n\n## Weekly Goal Tracker\n\n- Track personal goals on a **weekly basis**\n- AI-powered **weekly summary**\n- **No login required** — privacy first\n- **Local storage** — your data stays with you",
+    "tags": ["ideas", "side project", "ai", "productivity"],
+    "preview": "# Side Project Ideas 💡"
+  }
+]
