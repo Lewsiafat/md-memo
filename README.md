@@ -2,8 +2,6 @@
 
 A lightweight markdown memo tool with AI-powered formatting. Write in plain text, get back clean structured markdown instantly.
 
-![md-memo screenshot](https://lewsi.ddns.net/md-memo/)
-
 ## Features
 
 - ✍️ **Write in plain text** — no markdown syntax needed
