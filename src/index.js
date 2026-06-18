@@ -60,7 +60,7 @@ app.post(`${BASE_PATH}/api/format`, async (req, res) => {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://lewsi.ddns.net/md-memo/',
+        'HTTP-Referer': 'https://github.com/Lewsiafat/md-memo',
         'X-Title': 'md-memo'
       },
       body: JSON.stringify({
