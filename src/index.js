@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 10026;
-const BASE_PATH = '/md-memo';
+const BASE_PATH = process.env.BASE_PATH || '/md-memo';
 const HISTORY_FILE = path.join(__dirname, '..', 'data', 'history.json');
 const HISTORY_LIMIT = 50;
 
@@ -14,6 +14,12 @@ const HISTORY_LIMIT = 50;
 fs.mkdirSync(path.dirname(HISTORY_FILE), { recursive: true });
 
 app.use(express.json({ limit: '1mb' }));
+
+// Serve the SPA with BASE_PATH injected (replaces the __BASE_PATH__ placeholder).
+// Must run before express.static so the placeholders never reach the browser raw.
+const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8')
+  .replace(/__BASE_PATH__/g, BASE_PATH);
+app.get([BASE_PATH, `${BASE_PATH}/`], (req, res) => res.type('html').send(indexHtml));
 app.use(BASE_PATH, express.static(path.join(__dirname, '..', 'public')));
 
 // Load history
@@ -172,7 +178,7 @@ app.get(`${BASE_PATH}/m/:id`, (req, res) => {
 </head>
 <body>
   <header>
-    <a href="/md-memo/">md<span>-</span>memo</a>
+    <a href="${BASE_PATH}/">md<span>-</span>memo</a>
     <div class="tags">${tagsHtml}</div>
     <span class="meta">${date}</span>
   </header>
@@ -180,7 +186,7 @@ app.get(`${BASE_PATH}/m/:id`, (req, res) => {
     <button class="copy-btn" onclick="copyMd()">📋 複製 Markdown</button>
     <div class="md" id="content"></div>
   </main>
-  <footer>由 <a href="/md-memo/">md-memo</a> 產生 · <a href="/md-memo/">建立你自己的筆記 →</a></footer>
+  <footer>由 <a href="${BASE_PATH}/">md-memo</a> 產生 · <a href="${BASE_PATH}/">建立你自己的筆記 →</a></footer>
   <script>
     const raw = ${JSON.stringify(entry.markdown)};
     document.getElementById('content').innerHTML = marked.parse(raw);
