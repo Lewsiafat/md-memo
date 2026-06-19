@@ -461,6 +461,31 @@
     #toast.success { border-color: #4ade8050; color: var(--green); }
     #toast.error { border-color: #f8717150; color: var(--red); }
 
+    /* ── AGENT PANEL ── */
+    #agentPanel { display: none; flex: 1; min-height: 0; overflow-y: auto; max-width: 760px; width: 100%; margin: 24px auto; padding: 0 20px; }
+    body.agent-open #main { display: none; }
+    body.agent-open #agentPanel { display: flex; flex-direction: column; }
+    #agentBar { display: flex; gap: 8px; margin-bottom: 16px; }
+    #agentInput { flex: 1; padding: 10px 14px; border: 1px solid var(--border, #ccc); border-radius: 8px; font-size: 15px; background: var(--surface, #fff); color: var(--text, #111); }
+    #agentSend { padding: 10px 18px; border: none; border-radius: 8px; background: var(--accent, #6c5ce7); color: #fff; font-weight: 600; cursor: pointer; }
+    #agentSend:disabled { opacity: .5; cursor: default; }
+    #agentTrace { display: flex; flex-direction: column; gap: 8px; }
+    .ag-msg { color: var(--text2, #666); font-size: 14px; }
+    .ag-tool { font-family: var(--mono, monospace); font-size: 12.5px; background: #6c5ce715; color: var(--accent, #6c5ce7); padding: 4px 10px; border-radius: 6px; align-self: flex-start; }
+    .ag-result { font-size: 12px; }
+    .ag-result pre { background: #00000008; padding: 8px 10px; border-radius: 6px; overflow-x: auto; }
+    .ag-proposal { border: 1px solid var(--accent, #6c5ce7); border-radius: 10px; padding: 12px 14px; background: #6c5ce70a; }
+    .ag-proposal-title { font-weight: 600; margin-bottom: 8px; }
+    .ag-proposal-actions { display: flex; gap: 8px; }
+    .ag-proposal-actions button { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+    .ag-apply { background: var(--accent, #6c5ce7); color: #fff; }
+    .ag-skip { background: #00000010; color: var(--text, #333); }
+    .ag-skipped { opacity: .5; }
+    .ag-permalink { display: inline-block; margin-top: 8px; color: var(--accent, #6c5ce7); }
+    .ag-answer { margin-top: 8px; }
+    .ag-done { font-size: 12px; color: var(--text2, #888); }
+    .ag-error { color: #d63031; font-weight: 600; }
+
     /* ── MOBILE ── */
     @media (max-width: 700px) {
       body { overflow: auto; }
@@ -483,6 +508,7 @@
       <button class="btn btn-ghost" id="btn-copy">📋 Copy</button>
       <button class="btn btn-ghost" id="btn-download">⬇️ .md</button>
     </div>
+    <button class="btn-icon" id="agentToggle" title="Agent">🤖</button>
     <button class="btn-icon" id="btn-theme" title="Toggle theme">🌙</button>
     <button class="btn btn-primary" id="btn-format">✨ Format</button>
   </div>
@@ -553,6 +579,14 @@ Ctrl+Enter to format."></textarea>
       </div>
     </div>
   </div>
+
+  <section id="agentPanel">
+    <div id="agentBar">
+      <input id="agentInput" type="text" placeholder="問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）" />
+      <button id="agentSend">送出</button>
+    </div>
+    <div id="agentTrace" class="md-render-host"></div>
+  </section>
 
   <div id="toast"></div>
 
@@ -954,6 +988,95 @@ Ctrl+Enter to format."></textarea>
 
     loadHistoryData();
     rawInput.focus();
+  </script>
+
+  <script>
+  (function () {
+    const BASE = '__BASE_PATH__';
+    const toggle = document.getElementById('agentToggle');
+    const input = document.getElementById('agentInput');
+    const sendBtn = document.getElementById('agentSend');
+    const trace = document.getElementById('agentTrace');
+
+    toggle && toggle.addEventListener('click', () => document.body.classList.toggle('agent-open'));
+
+    const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    function renderProposal(data) {
+      const card = el('div', 'ag-proposal');
+      card.appendChild(el('div', 'ag-proposal-title', `提案：${esc(data.summary)}`));
+      const actions = el('div', 'ag-proposal-actions');
+      const apply = el('button', 'ag-apply', '✓ 套用');
+      const skip = el('button', 'ag-skip', '✗ 略過');
+      actions.appendChild(apply); actions.appendChild(skip);
+      card.appendChild(actions); trace.appendChild(card);
+
+      skip.addEventListener('click', () => { card.classList.add('ag-skipped'); apply.disabled = skip.disabled = true; });
+      apply.addEventListener('click', async () => {
+        apply.disabled = skip.disabled = true; apply.textContent = '套用中…';
+        try {
+          const r = await fetch(`${BASE}/api/agent/apply`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: data.action, args: data.args }),
+          });
+          const j = await r.json();
+          if (!r.ok || !j.ok) throw new Error(j.error || '套用失敗');
+          apply.textContent = '✓ 已套用';
+          if (j.id) { const a = el('a', 'ag-permalink', '開啟筆記 →'); a.href = `${BASE}/m/${j.id}`; a.target = '_blank'; card.appendChild(a); }
+        } catch (e) { apply.textContent = '✗ ' + e.message; apply.disabled = skip.disabled = false; }
+      });
+    }
+
+    function renderEvent(ev, data) {
+      if (ev === 'start') { trace.innerHTML = ''; return; }
+      if (ev === 'message') trace.appendChild(el('div', 'ag-msg', `💭 ${esc(data.content)}`));
+      else if (ev === 'tool_call') trace.appendChild(el('div', 'ag-tool', `🔧 ${esc(data.name)}(${esc(JSON.stringify(data.args))})`));
+      else if (ev === 'tool_result') {
+        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, '結果'));
+        d.appendChild(el('pre', null, esc(JSON.stringify(data.result, null, 2)))); trace.appendChild(d);
+      } else if (ev === 'proposal') renderProposal(data);
+      else if (ev === 'answer') {
+        const a = el('div', 'ag-answer md-render');
+        a.innerHTML = window.marked ? marked.parse(data.content || '') : esc(data.content || '');
+        trace.appendChild(a);
+      } else if (ev === 'done') trace.appendChild(el('div', 'ag-done', `⏱ ${data.steps} 步 · ${data.tokens} tokens`));
+      else if (ev === 'error') trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`));
+      trace.scrollTop = trace.scrollHeight;
+    }
+
+    async function run() {
+      const message = input.value.trim();
+      if (!message) return;
+      sendBtn.disabled = true;
+      try {
+        const res = await fetch(`${BASE}/api/agent`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+        if (!res.ok) { renderEvent('error', { message: `HTTP ${res.status}` }); return; }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          let idx;
+          while ((idx = buf.indexOf('\n\n')) !== -1) {
+            const frame = buf.slice(0, idx); buf = buf.slice(idx + 2);
+            const evM = frame.match(/^event: (.+)$/m);
+            const dataM = frame.match(/^data: (.+)$/m);
+            if (evM && dataM) { try { renderEvent(evM[1].trim(), JSON.parse(dataM[1])); } catch {} }
+          }
+        }
+      } catch (e) { renderEvent('error', { message: e.message }); }
+      finally { sendBtn.disabled = false; }
+    }
+
+    sendBtn && sendBtn.addEventListener('click', run);
+    input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run(); });
+  })();
   </script>
 </body>
 </html>
