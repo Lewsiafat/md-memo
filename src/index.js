@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { loadHistory, saveHistory, createEntry, insertEntry } from './store.js';
+import { runAgent } from './agent.js';
+import { applyProposal } from './tools.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -81,6 +83,39 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
     console.error('Format error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// POST /md-memo/api/agent — run the agent loop, stream events as SSE
+app.post(`${BASE_PATH}/api/agent`, async (req, res) => {
+  const { message } = req.body || {};
+  if (!message?.trim()) return res.status(400).json({ error: 'No message provided' });
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  const emit = (event, data) => {
+    if (res.writableEnded) return;
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+  try {
+    await runAgent(message, emit);
+  } catch (err) {
+    console.error('Agent error:', err);
+    emit('error', { message: err.message });
+  } finally {
+    res.end();
+  }
+});
+
+// POST /md-memo/api/agent/apply — execute a user-confirmed write proposal
+app.post(`${BASE_PATH}/api/agent/apply`, (req, res) => {
+  const { action, args } = req.body || {};
+  if (!action || !args) return res.status(400).json({ error: 'action and args required' });
+  const result = applyProposal({ action, args });
+  if (!result.ok) return res.status(400).json(result);
+  res.json(result);
 });
 
 // GET /md-memo/api/history
