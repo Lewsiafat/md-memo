@@ -160,3 +160,68 @@ export function runReadTool(name, args) {
     default: return { error: `Unknown read tool ${name}` };
   }
 }
+
+// ---- Write proposals (loop emits these; nothing is mutated until apply) ----
+export function buildProposal(name, args) {
+  switch (name) {
+    case 'create_memo':
+      return { action: name, args, summary: `建立新筆記（${(args.tags || []).join(', ') || '無標籤'}）` };
+    case 'merge_memos':
+      return { action: name, args, summary: `合併 ${(args.source_ids || []).length} 篇為「${args.title || '未命名'}」` };
+    case 'link_memos':
+      return { action: name, args, summary: `連結 ${(args.ids || []).length} 篇筆記` };
+    case 'retag_memo':
+      return { action: name, args, summary: `重設 #${args.id} 標籤為 ${(args.tags || []).join(', ')}` };
+    default:
+      return { action: name, args, summary: name };
+  }
+}
+
+function existingIds() {
+  return new Set(loadHistory().map(e => e.id));
+}
+
+// ---- Apply a user-confirmed proposal. Mutates history. ----
+export function applyProposal({ action, args = {} }) {
+  switch (action) {
+    case 'create_memo': {
+      const entry = insertEntry(createEntry({ markdown: args.markdown, tags: args.tags || [] }));
+      return { ok: true, id: entry.id };
+    }
+    case 'merge_memos': {
+      const ids = (args.source_ids || []).map(Number);
+      const have = existingIds();
+      const missing = ids.filter(id => !have.has(id));
+      if (missing.length) return { ok: false, error: `Unknown source ids: ${missing.join(', ')}` };
+      const md = args.title ? `# ${args.title}\n\n${args.markdown}` : args.markdown;
+      const entry = insertEntry(createEntry({ markdown: md, tags: args.tags || [], sources: ids }));
+      return { ok: true, id: entry.id };
+    }
+    case 'link_memos': {
+      const ids = (args.ids || []).map(Number);
+      const history = loadHistory();
+      const have = new Set(history.map(e => e.id));
+      const missing = ids.filter(id => !have.has(id));
+      if (missing.length) return { ok: false, error: `Unknown ids: ${missing.join(', ')}` };
+      for (const m of history) {
+        if (ids.includes(m.id)) {
+          const others = ids.filter(x => x !== m.id);
+          m.links = Array.from(new Set([...(m.links || []), ...others]));
+        }
+      }
+      saveHistory(history);
+      return { ok: true, ids };
+    }
+    case 'retag_memo': {
+      const id = Number(args.id);
+      const history = loadHistory();
+      const m = history.find(e => e.id === id);
+      if (!m) return { ok: false, error: `No memo with id ${id}` };
+      m.tags = args.tags || [];
+      saveHistory(history);
+      return { ok: true, id };
+    }
+    default:
+      return { ok: false, error: `Unknown action ${action}` };
+  }
+}

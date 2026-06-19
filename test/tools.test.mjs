@@ -53,3 +53,50 @@ test('runReadTool dispatches by name', () => {
   assert.ok(Array.isArray(runReadTool('search_memos', { query: 'alpha' })));
   assert.ok(runReadTool('nope', {}).error);
 });
+
+const { buildProposal, applyProposal } = await import('../src/tools.js');
+
+test('buildProposal summarizes each write action', () => {
+  assert.match(buildProposal('merge_memos', { source_ids: [1, 2], title: 'X' }).summary, /合併 2 篇/);
+  assert.strictEqual(buildProposal('retag_memo', { id: 1, tags: ['a'] }).action, 'retag_memo');
+});
+
+test('applyProposal create_memo inserts a memo', () => {
+  saveHistory([]);
+  const r = applyProposal({ action: 'create_memo', args: { markdown: '# New', tags: ['t'] } });
+  assert.ok(r.ok && r.id);
+  assert.strictEqual(readMemo({ id: r.id }).markdown, '# New');
+});
+
+test('applyProposal merge_memos records sources and validates ids', () => {
+  saveHistory([
+    { id: 1, markdown: 'a', tags: [], preview: 'a', createdAt: 't', raw: '' },
+    { id: 2, markdown: 'b', tags: [], preview: 'b', createdAt: 't', raw: '' },
+  ]);
+  const ok = applyProposal({ action: 'merge_memos', args: { source_ids: [1, 2], title: 'M', markdown: 'merged', tags: ['m'] } });
+  assert.ok(ok.ok);
+  const bad = applyProposal({ action: 'merge_memos', args: { source_ids: [1, 999], markdown: 'x' } });
+  assert.strictEqual(bad.ok, false);
+});
+
+test('applyProposal link_memos cross-links and validates', async () => {
+  saveHistory([
+    { id: 1, markdown: 'a', tags: [], preview: 'a', createdAt: 't', raw: '' },
+    { id: 2, markdown: 'b', tags: [], preview: 'b', createdAt: 't', raw: '' },
+  ]);
+  const r = applyProposal({ action: 'link_memos', args: { ids: [1, 2] } });
+  assert.ok(r.ok);
+  const reread = (await import('../src/store.js')).loadHistory();
+  assert.deepStrictEqual(reread.find(m => m.id === 1).links, [2]);
+  assert.strictEqual(applyProposal({ action: 'link_memos', args: { ids: [1, 999] } }).ok, false);
+});
+
+test('applyProposal retag_memo replaces tags', () => {
+  saveHistory([{ id: 1, markdown: 'a', tags: ['old'], preview: 'a', createdAt: 't', raw: '' }]);
+  assert.ok(applyProposal({ action: 'retag_memo', args: { id: 1, tags: ['new'] } }).ok);
+  assert.strictEqual(applyProposal({ action: 'retag_memo', args: { id: 999, tags: [] } }).ok, false);
+});
+
+test('applyProposal rejects unknown actions', () => {
+  assert.strictEqual(applyProposal({ action: 'delete_everything', args: {} }).ok, false);
+});
