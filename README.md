@@ -48,7 +48,7 @@ npm start
 | `BASE_PATH` | `/md-memo` | URL base path |
 | `OPENROUTER_API_KEY` | — | Your OpenRouter API key (required for AI) |
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter model ID |
-| `AGENT_MODEL` | `openai/gpt-4o-mini` | Model for the agent loop (must support tool calling) |
+| `AGENT_MODEL` | `deepseek/deepseek-v4-pro` | Model for the agent loop (must support tool calling) |
 
 Get your free API key at [openrouter.ai](https://openrouter.ai).
 

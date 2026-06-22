@@ -13,7 +13,7 @@ Answer in the user's language and cite the memo ids you used.`;
 export async function callOpenRouter(messages, tools) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
-  const model = process.env.AGENT_MODEL || process.env.AI_MODEL || 'openai/gpt-4o-mini';
+  const model = process.env.AGENT_MODEL || process.env.AI_MODEL || 'deepseek/deepseek-v4-pro';
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
