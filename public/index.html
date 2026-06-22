@@ -462,14 +462,14 @@
     #toast.error { border-color: #f8717150; color: var(--red); }
 
     /* ── AGENT PANEL ── */
-    #agentPanel { display: none; flex: 1; min-height: 0; overflow-y: auto; max-width: 760px; width: 100%; margin: 24px auto; padding: 0 20px; }
+    #agentPanel { display: none; flex: 1; min-height: 0; max-width: 760px; width: 100%; margin: 0 auto; padding: 16px 20px; }
     body.agent-open #main { display: none; }
     body.agent-open #agentPanel { display: flex; flex-direction: column; }
-    #agentBar { display: flex; gap: 8px; margin-bottom: 16px; }
+    #agentTrace { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+    #agentBar { display: flex; gap: 8px; flex-shrink: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border, #e5e0d5); }
     #agentInput { flex: 1; padding: 10px 14px; border: 1px solid var(--border, #ccc); border-radius: 8px; font-size: 15px; background: var(--surface, #fff); color: var(--text, #111); }
     #agentSend { padding: 10px 18px; border: none; border-radius: 8px; background: var(--accent, #6c5ce7); color: #fff; font-weight: 600; cursor: pointer; }
     #agentSend:disabled { opacity: .5; cursor: default; }
-    #agentTrace { display: flex; flex-direction: column; gap: 8px; }
     .ag-msg { color: var(--text2, #666); font-size: 14px; }
     .ag-tool { font-family: var(--mono, monospace); font-size: 12.5px; background: #6c5ce715; color: var(--accent, #6c5ce7); padding: 4px 10px; border-radius: 6px; align-self: flex-start; }
     .ag-result { font-size: 12px; }
@@ -581,11 +581,11 @@ Ctrl+Enter to format."></textarea>
   </div>
 
   <section id="agentPanel">
+    <div id="agentTrace" class="md-render-host"></div>
     <div id="agentBar">
       <input id="agentInput" type="text" placeholder="問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）" />
       <button id="agentSend">送出</button>
     </div>
-    <div id="agentTrace" class="md-render-host"></div>
   </section>
 
   <div id="toast"></div>

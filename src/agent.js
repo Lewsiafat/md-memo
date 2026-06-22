@@ -2,12 +2,15 @@ import { TOOLS, TOOL_KIND, runReadTool, buildProposal } from './tools.js';
 
 const MAX_STEPS = 8;
 
+// Language for all agent output (BCP-47 tag). Default zh-TW (繁體中文).
+const RESPONSE_LANG = process.env.AGENT_LANG || 'zh-TW';
+
 const SYSTEM = `You are an agent that helps the user manage a markdown notebook.
 You can search and read memos, and propose changes (create/merge/link/retag).
 Plan your steps. Use search_memos and read_memo to gather context before answering or proposing changes.
 When the user wants something synthesized or merged, read the relevant memos first, then write the result yourself.
 Write tools only PROPOSE changes — the user confirms them; never assume a proposed change has been applied.
-Answer in the user's language and cite the memo ids you used.`;
+Always respond — including reasoning text and any markdown you write into memos — in this language (BCP-47 tag): ${RESPONSE_LANG} (for zh-TW, use 繁體中文/Traditional Chinese), regardless of the language the user writes in. Cite the memo ids you used.`;
 
 // Real OpenRouter call. Returns { message, usage }.
 export async function callOpenRouter(messages, tools) {

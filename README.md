@@ -49,6 +49,7 @@ npm start
 | `OPENROUTER_API_KEY` | — | Your OpenRouter API key (required for AI) |
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter model ID |
 | `AGENT_MODEL` | `deepseek/deepseek-v4-pro` | Model for the agent loop (must support tool calling) |
+| `AGENT_LANG` | `zh-TW` | Language for all agent output (BCP-47 tag) |
 
 Get your free API key at [openrouter.ai](https://openrouter.ai).
 
