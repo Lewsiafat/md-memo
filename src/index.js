@@ -2,16 +2,14 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { loadHistory, saveHistory, createEntry, insertEntry } from './store.js';
+import { runAgent } from './agent.js';
+import { applyProposal } from './tools.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 10026;
 const BASE_PATH = process.env.BASE_PATH || '/md-memo';
-const HISTORY_FILE = path.join(__dirname, '..', 'data', 'history.json');
-const HISTORY_LIMIT = 50;
-
-// Ensure data dir exists
-fs.mkdirSync(path.dirname(HISTORY_FILE), { recursive: true });
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -21,21 +19,6 @@ const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.ht
   .replace(/__BASE_PATH__/g, BASE_PATH);
 app.get([BASE_PATH, `${BASE_PATH}/`], (req, res) => res.type('html').send(indexHtml));
 app.use(BASE_PATH, express.static(path.join(__dirname, '..', 'public')));
-
-// Load history
-function loadHistory() {
-  try {
-    if (fs.existsSync(HISTORY_FILE)) {
-      return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
-    }
-  } catch {}
-  return [];
-}
-
-// Save history
-function saveHistory(history) {
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
-}
 
 // Parse tags from markdown — AI appends <!-- tags: a, b, c --> at the end
 function parseTags(raw) {
@@ -93,23 +76,46 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
     const { markdown, tags } = parseTags(raw);
 
     // Save to history
-    const history = loadHistory();
-    const entry = {
-      id: Date.now(),
-      createdAt: new Date().toISOString(),
-      raw: text,
-      markdown,
-      tags,
-      preview: markdown.split('\n').find(l => l.trim()) || '(empty)'
-    };
-    history.unshift(entry);
-    saveHistory(history.slice(0, HISTORY_LIMIT));
+    const entry = insertEntry(createEntry({ raw: text, markdown, tags }));
 
     res.json({ markdown, tags, id: entry.id });
   } catch (err) {
     console.error('Format error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// POST /md-memo/api/agent — run the agent loop, stream events as SSE
+app.post(`${BASE_PATH}/api/agent`, async (req, res) => {
+  const { message } = req.body || {};
+  if (!message?.trim()) return res.status(400).json({ error: 'No message provided' });
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  const emit = (event, data) => {
+    if (res.writableEnded) return;
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+  try {
+    await runAgent(message, emit);
+  } catch (err) {
+    console.error('Agent error:', err);
+    emit('error', { message: err.message });
+  } finally {
+    res.end();
+  }
+});
+
+// POST /md-memo/api/agent/apply — execute a user-confirmed write proposal
+app.post(`${BASE_PATH}/api/agent/apply`, (req, res) => {
+  const { action, args } = req.body || {};
+  if (!action || !args) return res.status(400).json({ error: 'action and args required' });
+  const result = applyProposal({ action, args });
+  if (!result.ok) return res.status(400).json(result);
+  res.json(result);
 });
 
 // GET /md-memo/api/history
