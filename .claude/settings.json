@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); [ \"${f##*/}\" = \".env\" ] && { echo \"阻擋：.env 含正式 API key，禁止讀寫\" >&2; exit 2; }; exit 0",
+            "statusMessage": "檢查 .env 保護"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in */src/*|*/test/*) node --test 2>&1 | tail -15 ;; esac; exit 0",
+            "statusMessage": "改動 src/test 後跑 node --test",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
