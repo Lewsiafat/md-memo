@@ -2,6 +2,10 @@
 
 A lightweight markdown memo tool with AI-powered formatting. Write in plain text, get back clean structured markdown instantly.
 
+## 🌐 Live Demo
+
+**[lewsiafat.github.io/md-memo](https://lewsiafat.github.io/md-memo/)** — a fully static showcase (no API key needed). The AI formatting and agent reasoning are **pre-recorded** so you can try the full flow; a "Demo mode" badge marks the canned responses. Built from `demo/` by `npm run build:demo` and deployed to the `gh-pages` branch via GitHub Actions.
+
 ## Features
 
 - ✍️ **Write in plain text** — no markdown syntax needed
