@@ -14,6 +14,7 @@ npm start                            # node src/index.js（生產）
 npm run dev                          # node --watch src/index.js（檔案變動自動重啟）
 npm test                             # node --test（test/ 下的單元測試）
 npm run smoke                        # 無 API key 的 agent 整合 smoke
+npm run build:demo                   # 產出靜態 demo bundle 到 dist-demo/（GitHub Pages 用）
 ```
 
 開啟 http://localhost:10026/md-memo/ 。沒有 lint、沒有 build；測試見下方 Agent 段落（`node --test`）。
@@ -52,7 +53,7 @@ AI 不回傳結構化 tags 欄位。系統 prompt（`src/index.js` 內 `/api/for
 - `POST /md-memo/api/agent/apply` — 使用者確認後落地 agent 的寫入 proposal
 - `GET  /md-memo/api/history` — 回傳全部 history
 - `DELETE /md-memo/api/history/:id` — 刪除單筆
-- `GET  /md-memo/m/:id` — **server-render** 的公開永久連結頁
+- `GET  /md-memo/m/:id` — **server-render** 的公開永久連結頁（用 `src/permalink.js` 的 `renderPermalink`）
 - `GET  /md-memo/` — 靜態 SPA（`express.static`）
 
 ### 兩套獨立的渲染環境（容易踩雷）
@@ -60,11 +61,21 @@ AI 不回傳結構化 tags 欄位。系統 prompt（`src/index.js` 內 `/api/for
 markdown 在兩個地方各自渲染、CSS 各自獨立、互不影響：
 
 1. **SPA**（`public/index.html`）——客戶端 `marked`，支援 dark/light 切換，狀態機在 editor / preview 模式間切換（`isPreviewMode`），另有 quick view 面板可預覽 history 而不離開編輯器。樣式用 `.md-render` class。
-2. **永久連結頁**（`src/index.js` 的 `GET /m/:id` handler）——後端用 template string 產出一份**完全獨立、自包含**的 HTML（只有 light theme），CSS 是另一份複製。
+2. **永久連結頁**（`src/permalink.js` 的 `renderPermalink(entry, basePath)`，由 `src/index.js` 的 `GET /m/:id` handler 與 demo build 共用）——用 template string 產出一份**完全獨立、自包含**的 HTML（只有 light theme），CSS 是另一份複製。
 
 改前端樣式不會影響永久連結頁，反之亦然——兩邊要分別改。
 
+### 靜態 demo（GitHub Pages）
+
+`scripts/build-demo.mjs`（`npm run build:demo`）把 app 打包成**純靜態** bundle 到 `dist-demo/`，部署到 GitHub Pages，免後端、免 API key。核心原則是「真 app 維持唯一真相」：
+
+- build 讀真的 `public/index.html`，在第一支 inline script 前注入 `<script src="mock.js">`，再把 `__BASE_PATH__` 替換成 `/md-memo`。
+- `demo/mock.js` 是瀏覽器 IIFE，monkeypatch `window.fetch` 攔 `/api/*`：history/format/delete 回預錄 JSON；`POST /api/agent` 以真 `ReadableStream` 重播 `demo/data/agent-trace.json` 的 SSE（流經 app 既有 parser）；apply 用與 server `applyProposal` 相同的合併公式產出筆記。AI 回應全為預錄，前端有「Demo mode」角標揭露。
+- 永久連結頁用 `renderPermalink` 預生成 `m/<id>/index.html`（10 筆 seed + 合併筆記 id 200）。
+- 資料在 `demo/data/`（`history.json` 10 筆雙語、`format-samples.json`、`agent-trace.json`）。測試：`test/permalink.test.mjs`、`test/demo-data.test.mjs`（跨檔一致性）。
+- CI：`.github/workflows/deploy-demo.yml` 在 push 到 main 時 build 並 force-push 到 orphan `gh-pages` 分支（須在 repo Settings → Pages 一次性指向 `gh-pages`/root）。零新依賴（build 只用 Node 內建）。
+
 ## 部署設定與限制
 
-- **`BASE_PATH`** 由 `process.env.BASE_PATH` 控制（預設 `/md-memo`）。前端讀不到 `process.env`，所以機制是：`public/index.html` 用 `__BASE_PATH__` placeholder，後端服務 SPA 時讀檔做字串替換後再回傳（`src/index.js` 裡組出 `indexHtml` 的那段，掛在 `express.static` 之前攔截 `BASE_PATH` 根路徑）。**在 index.html 新增任何路徑相關字串時務必用 `__BASE_PATH__`**，否則換 base path 部署會連錯。permalink 頁因為整段是 template literal，直接用 `${BASE_PATH}`。
+- **`BASE_PATH`** 由 `process.env.BASE_PATH` 控制（預設 `/md-memo`）。前端讀不到 `process.env`，所以機制是：`public/index.html` 用 `__BASE_PATH__` placeholder，後端服務 SPA 時讀檔做字串替換後再回傳（`src/index.js` 裡組出 `indexHtml` 的那段，掛在 `express.static` 之前攔截 `BASE_PATH` 根路徑）。**在 index.html 新增任何路徑相關字串時務必用 `__BASE_PATH__`**，否則換 base path 部署會連錯。permalink 頁（`renderPermalink`）的 basePath 由參數傳入（server 傳 `BASE_PATH`，demo build 傳 `/md-memo`）。
 - server 只綁 `127.0.0.1`（`src/index.js` 結尾的 `app.listen`），外部存取需自行架反向代理（nginx 等）。

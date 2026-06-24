@@ -3,6 +3,35 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-06-24
+
+### Added
+- **Static GitHub Pages demo** — a fully static, backend-free showcase whose AI
+  interactions (the Format button and the agent reasoning trace) are driven by
+  **pre-recorded scripts**, so anyone can try the full flow without an API key. A
+  "Demo mode" badge marks the canned responses. Live at
+  `https://lewsiafat.github.io/md-memo/`.
+- `src/permalink.js` — `renderPermalink(entry, basePath)` extracted from the server's
+  `GET /m/:id` handler so the same renderer is shared by the live server and the demo
+  build (server output is byte-identical).
+- Demo assets under `demo/`: `data/history.json` (10 bilingual seed memos),
+  `data/format-samples.json` (editor prefill + canned format result),
+  `data/agent-trace.json` (replayable agent run), and `mock.js` — a browser shim that
+  monkeypatches `window.fetch` for `/api/*` and replays the agent trace as a real SSE
+  `ReadableStream` through the app's existing parser.
+- `scripts/build-demo.mjs` + `npm run build:demo` — emits a static `dist-demo/` bundle
+  (injects the mock, replaces the `__BASE_PATH__` placeholder, pre-generates
+  `m/<id>/index.html` permalinks via `renderPermalink`, writes `.nojekyll`). Uses only
+  Node built-ins — **zero new dependencies**.
+- `.github/workflows/deploy-demo.yml` — CI builds and force-pushes the bundle to an
+  orphan `gh-pages` branch on push to `main` (or manual dispatch).
+- Tests: new `test/permalink.test.mjs` and `test/demo-data.test.mjs` (cross-file
+  consistency for the demo data); suite now at 28 tests.
+
+### Changed
+- `GET /m/:id` now renders through `renderPermalink()` from `src/permalink.js` (pure
+  refactor — the served permalink HTML is unchanged).
+
 ## [1.1.0] - 2026-06-22
 
 ### Added
