@@ -119,7 +119,7 @@ start
 → done
 ```
 
-寫入工具 `create_memo` 走 proposal → 跳出確認卡；按確認 → apply mock 把總覽加進歷史，「開啟筆記 →」連到預產 permalink。整段走前端原本 SSE UI，reasoning trace 逐行浮現。
+寫入工具 `merge_memos`（比 `create_memo` 更貼劇本：summary 顯示「合併 N 篇為…」、套用後自動帶 `sources`、與既有 sample 一致）走 proposal → 跳出確認卡；按確認 → apply mock 把總覽加進歷史，「開啟筆記 →」連到預產 permalink。整段走前端原本 SSE UI，reasoning trace 逐行浮現。
 
 ## 6. Build／部署流程
 
