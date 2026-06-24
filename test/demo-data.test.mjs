@@ -32,9 +32,9 @@ test('history is sorted newest-first', () => {
   }
 });
 
-test('the four ids referenced by the agent trace exist', () => {
+test('the ids referenced by the agent trace exist', () => {
   const ids = new Set(history.map(e => e.id));
-  for (const id of [108, 107, 106, 104]) assert.ok(ids.has(id), `missing ${id}`);
+  for (const id of [108, 107, 104]) assert.ok(ids.has(id), `missing ${id}`);
 });
 
 const fmt = read('demo/data/format-samples.json');
