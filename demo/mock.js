@@ -84,6 +84,12 @@
       return json({ markdown: r.markdown, tags: r.tags || [], id: entry.id });
     }
 
+    if (p.endsWith('/api/history/clear') && method === 'POST') {
+      const count = state.history.length;
+      state.history = [];
+      return json({ ok: true, backedUp: count > 0, count });
+    }
+
     if (p.includes('/api/history/') && method === 'DELETE') {
       const id = Number(p.split('/').pop());
       state.history = state.history.filter(e => e.id !== id);
