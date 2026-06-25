@@ -2,7 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { loadHistory, saveHistory, createEntry, insertEntry } from './store.js';
+import { loadHistory, saveHistory, createEntry, insertEntry, clearHistory } from './store.js';
 import { runAgent } from './agent.js';
 import { applyProposal } from './tools.js';
 import { renderPermalink } from './permalink.js';
@@ -130,6 +130,11 @@ app.get(`${BASE_PATH}/m/:id`, (req, res) => {
   const entry = loadHistory().find(e => e.id === id);
   if (!entry) return res.status(404).send('<h1>404 — Memo not found</h1>');
   res.send(renderPermalink(entry, BASE_PATH));
+});
+
+// POST /md-memo/api/history/clear — back up to history.bak.json, then wipe
+app.post(`${BASE_PATH}/api/history/clear`, (req, res) => {
+  res.json(clearHistory());
 });
 
 // DELETE /md-memo/api/history/:id
