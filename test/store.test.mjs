@@ -5,7 +5,7 @@ import fs from 'node:fs';
 process.env.HISTORY_FILE = '/tmp/md-memo-store-test.json';
 fs.rmSync(process.env.HISTORY_FILE, { force: true });
 
-const { loadHistory, saveHistory, createEntry, insertEntry, HISTORY_LIMIT } =
+const { loadHistory, saveHistory, createEntry, insertEntry, clearHistory, HISTORY_LIMIT } =
   await import('../src/store.js');
 
 test('loadHistory returns [] when file missing', () => {
@@ -38,4 +38,24 @@ test('insertEntry prepends and enforces the limit', () => {
   const h = loadHistory();
   assert.strictEqual(h.length, HISTORY_LIMIT);
   assert.strictEqual(h[0].markdown, `m${HISTORY_LIMIT + 4}`);
+});
+
+test('clearHistory backs up to a .bak file then empties history', () => {
+  saveHistory([createEntry({ markdown: 'keep me' }), createEntry({ markdown: 'and me' })]);
+  const r = clearHistory();
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.backedUp, true);
+  assert.strictEqual(r.count, 2);
+  assert.deepStrictEqual(loadHistory(), []);
+  const bak = process.env.HISTORY_FILE.replace(/\.json$/, '') + '.bak.json';
+  assert.ok(fs.existsSync(bak), 'backup file exists');
+  assert.strictEqual(JSON.parse(fs.readFileSync(bak, 'utf8')).length, 2);
+});
+
+test('clearHistory on a missing file reports backedUp:false', () => {
+  fs.rmSync(process.env.HISTORY_FILE, { force: true });
+  const r = clearHistory();
+  assert.strictEqual(r.backedUp, false);
+  assert.strictEqual(r.count, 0);
+  assert.deepStrictEqual(loadHistory(), []);
 });
