@@ -302,6 +302,11 @@
       gap: 8px;
     }
     #char-count { font-family: var(--mono); }
+    #mode-badge {
+      font-size: 11px; font-weight: 700; letter-spacing: .03em;
+      padding: 2px 9px; border-radius: 20px;
+      background: var(--accent-dim); color: var(--accent-h); border: 1px solid #7c6af730;
+    }
     #current-tags { display: flex; gap: 4px; flex-wrap: wrap; }
     .tag-chip {
       display: inline-flex;
@@ -547,6 +552,7 @@ Ctrl+Enter to format."></textarea>
       </div>
 
       <div id="editor-footer">
+        <span id="mode-badge">✏️ Edit Mode</span>
         <span id="char-count">0 chars</span>
         <div id="current-tags"></div>
         <span id="status-text"></span>
@@ -634,6 +640,20 @@ Ctrl+Enter to format."></textarea>
     const btnQvClose     = document.getElementById('btn-qv-close');
     const toast          = document.getElementById('toast');
 
+    // ── VIEW MODE STATE (View / Edit / Combine / Agent) ──
+    let currentMode = 'edit';
+    const modeBadge = document.getElementById('mode-badge');
+    function setMode(mode) {
+      currentMode = mode;
+      const labels = { edit: '✏️ Edit Mode', view: '👁 View Mode', combine: '⊟ Combine Mode', agent: '🤖 Agent Mode' };
+      if (modeBadge) modeBadge.textContent = labels[mode] || mode;
+    }
+    function restoreEditorMode() {
+      setMode(quickViewEntry ? 'combine' : (isPreviewMode ? 'view' : 'edit'));
+    }
+    function enterAgentMode() { document.body.classList.add('agent-open'); setMode('agent'); }
+    function exitAgentMode() { document.body.classList.remove('agent-open'); restoreEditorMode(); }
+
     // ── THEME ──
     function applyTheme(light) {
       document.body.classList.toggle('light', light);
@@ -704,6 +724,7 @@ Ctrl+Enter to format."></textarea>
       exportBtns.style.display = 'flex';
       btnNew.style.display = '';
       btnFormat.textContent = '✨ Re-format';
+      setMode('view');
     }
 
     function resetToNew() {
@@ -721,6 +742,7 @@ Ctrl+Enter to format."></textarea>
       statusText.textContent = '';
       currentTagsEl.innerHTML = '';
       closeQuickView();
+      setMode('edit');
       rawInput.focus();
     }
 
@@ -735,6 +757,7 @@ Ctrl+Enter to format."></textarea>
       charCount.textContent = currentMarkdown.length.toLocaleString() + ' chars';
       btnFormat.textContent = '✨ Format';
       statusText.textContent = '';
+      setMode('edit');
       rawInput.focus();
     });
 
@@ -785,12 +808,14 @@ Ctrl+Enter to format."></textarea>
       qvTitle.textContent = rawPreview || 'Quick View';
       qvContent.innerHTML = marked.parse(entry.markdown);
       qvPanel.classList.add('open');
+      setMode('combine');
     }
 
     function closeQuickView() {
       qvPanel.classList.remove('open');
       quickViewEntry = null;
       document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
+      setMode(isPreviewMode ? 'view' : 'edit');
     }
 
     btnQvClose.addEventListener('click', closeQuickView);
@@ -1010,6 +1035,7 @@ Ctrl+Enter to format."></textarea>
 
     loadHistoryData();
     rawInput.focus();
+    setMode('edit');
   </script>
 
   <script>
@@ -1020,7 +1046,9 @@ Ctrl+Enter to format."></textarea>
     const sendBtn = document.getElementById('agentSend');
     const trace = document.getElementById('agentTrace');
 
-    toggle && toggle.addEventListener('click', () => document.body.classList.toggle('agent-open'));
+    toggle && toggle.addEventListener('click', () => {
+      if (document.body.classList.contains('agent-open')) exitAgentMode(); else enterAgentMode();
+    });
 
     const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
