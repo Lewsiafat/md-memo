@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { loadHistory, saveHistory, createEntry, insertEntry, clearHistory } from './store.js';
 import { runAgent } from './agent.js';
 import { applyProposal } from './tools.js';
+import { loadSessions, createSession, insertSession, deleteSession } from './sessions.js';
 import { renderPermalink } from './permalink.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -144,6 +145,20 @@ app.delete(`${BASE_PATH}/api/history/:id`, (req, res) => {
   saveHistory(history);
   res.json({ ok: true });
 });
+
+// GET /md-memo/api/sessions — list saved agent sessions
+app.get(`${BASE_PATH}/api/sessions`, (req, res) => res.json(loadSessions()));
+
+// POST /md-memo/api/sessions — save one agent session
+app.post(`${BASE_PATH}/api/sessions`, (req, res) => {
+  const { question, answer, events } = req.body || {};
+  if (!question?.trim()) return res.status(400).json({ error: 'question required' });
+  const s = insertSession(createSession({ question, answer, events }));
+  res.json({ ok: true, id: s.id });
+});
+
+// DELETE /md-memo/api/sessions/:id — remove a saved session
+app.delete(`${BASE_PATH}/api/sessions/:id`, (req, res) => res.json(deleteSession(req.params.id)));
 
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`md-memo running on http://127.0.0.1:${PORT}${BASE_PATH}`);
