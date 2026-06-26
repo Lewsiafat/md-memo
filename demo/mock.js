@@ -2,7 +2,7 @@
    Loaded before the app's inline script so window.fetch is patched first. */
 (function () {
   const realFetch = window.fetch.bind(window);
-  const state = { history: [], format: null, trace: null };
+  const state = { history: [], format: null, trace: null, sessions: [] };
   let dataP;
 
   // Resolve a demo data file relative to the page (served at <base>/).
@@ -104,7 +104,30 @@
         state.history.unshift(entry);
         return json({ ok: true, id: entry.id });
       }
+      if (body.action === 'create_memo') {
+        const a = body.args || {};
+        const entry = {
+          id: Date.now(), createdAt: new Date().toISOString(), raw: '',
+          markdown: a.markdown || '', tags: a.tags || [],
+          preview: (a.markdown || '').split('\n').find(l => l.trim()) || '(empty)',
+        };
+        state.history.unshift(entry);
+        return json({ ok: true, id: entry.id });
+      }
       return json({ ok: true, id: Date.now() });
+    }
+
+    if (p.endsWith('/api/sessions') && method === 'GET') return json(state.sessions);
+    if (p.endsWith('/api/sessions') && method === 'POST') {
+      const s = { id: Date.now(), createdAt: new Date().toISOString(),
+        question: body.question || '', answer: body.answer || '', events: body.events || [] };
+      state.sessions.unshift(s);
+      return json({ ok: true, id: s.id });
+    }
+    if (p.includes('/api/sessions/') && method === 'DELETE') {
+      const id = Number(p.split('/').pop());
+      state.sessions = state.sessions.filter(s => s.id !== id);
+      return json({ ok: true });
     }
 
     return json({ error: 'unmocked: ' + p }, 404);
