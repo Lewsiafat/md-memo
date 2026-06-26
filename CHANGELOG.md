@@ -3,6 +3,19 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.3.1] - 2026-06-26
+
+### Added
+- **Optional password protection (HTTP Basic Auth)** — gate the whole app and all
+  `/api/*` behind HTTP Basic Auth when `AUTH_ENABLED=true` (default **off**, so existing
+  deployments are unaffected). Public permalink pages (`/m/:id`) stay open so shared
+  links keep working. New `src/auth.js` exposes a pure `checkPassword()` helper and a
+  `createAuth()` middleware factory, mounted before `express.json` in `src/index.js`
+  (only the password is checked; the username is ignored). Enabling without
+  `AUTH_PASSWORD` is a no-op that logs a warning, to avoid locking everyone out. New
+  `AUTH_ENABLED` / `AUTH_PASSWORD` env vars documented in `README.md`, `.env.sample`, and
+  `CLAUDE.md`. Tests: new `test/auth.test.mjs` (10 unit tests); suite now at 45 tests.
+
 ## [1.3.0] - 2026-06-26
 
 ### Added
