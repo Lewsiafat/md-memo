@@ -54,6 +54,8 @@ npm start
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter model ID |
 | `AGENT_MODEL` | `deepseek/deepseek-v4-pro` | Model for the agent loop (must support tool calling) |
 | `AGENT_LANG` | `zh-TW` | Language for all agent output (BCP-47 tag) |
+| `AUTH_ENABLED` | `false` | Enable HTTP Basic Auth for the app + all APIs (permalinks stay public) |
+| `AUTH_PASSWORD` | — | Password used when `AUTH_ENABLED=true` (username ignored) |
 
 Get your free API key at [openrouter.ai](https://openrouter.ai).
 
