@@ -1122,6 +1122,9 @@ Ctrl+Enter to format."></textarea>
       }
     }
     renderExamples();
+    const sessionList = document.getElementById('agentSessionList');
+    const saveSessionBtn = document.getElementById('agentSaveSession');
+    let currentSession = null;
 
     toggle && toggle.addEventListener('click', () => {
       if (document.body.classList.contains('agent-open')) exitAgentMode(); else enterAgentMode();
@@ -1173,6 +1176,10 @@ Ctrl+Enter to format."></textarea>
       const message = input.value.trim();
       if (!message) return;
       sendBtn.disabled = true;
+      saveSessionBtn.disabled = true;
+      currentSession = null;
+      const events = [];
+      let answer = '';
       try {
         const res = await fetch(`${BASE}/api/agent`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1191,12 +1198,73 @@ Ctrl+Enter to format."></textarea>
             const frame = buf.slice(0, idx); buf = buf.slice(idx + 2);
             const evM = frame.match(/^event: (.+)$/m);
             const dataM = frame.match(/^data: (.+)$/m);
-            if (evM && dataM) { try { renderEvent(evM[1].trim(), JSON.parse(dataM[1])); } catch {} }
+            if (evM && dataM) {
+              let data; try { data = JSON.parse(dataM[1]); } catch { continue; }
+              const ev = evM[1].trim();
+              if (ev !== 'start') events.push({ event: ev, data });
+              if (ev === 'answer') answer = data.content || '';
+              renderEvent(ev, data);
+            }
           }
         }
+        if (events.length) { currentSession = { question: message, answer, events }; saveSessionBtn.disabled = false; }
       } catch (e) { renderEvent('error', { message: e.message }); }
       finally { sendBtn.disabled = false; }
     }
+
+    saveSessionBtn && saveSessionBtn.addEventListener('click', async () => {
+      if (!currentSession) return;
+      saveSessionBtn.disabled = true;
+      try {
+        const r = await fetch(`${BASE}/api/sessions`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentSession),
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || '儲存失敗');
+        showToast('Session 已儲存', 'success');
+        loadSessions();
+      } catch (e) { showToast('Error: ' + e.message, 'error'); saveSessionBtn.disabled = false; }
+    });
+
+    function openSession(session) {
+      trace.innerHTML = '';
+      for (const e of session.events) renderEvent(e.event, e.data);
+      trace.scrollTop = trace.scrollHeight;
+    }
+
+    function renderSessionList(list) {
+      sessionList.innerHTML = '';
+      if (!list.length) { sessionList.innerHTML = '<div class="ag-side-empty">尚無已存 session</div>'; return; }
+      for (const s of list) {
+        const item = el('div', 'ag-session-item');
+        const d = new Date(s.createdAt);
+        const t = d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' +
+          d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+        item.innerHTML =
+          `<div class="ag-session-q">${esc(s.question)}</div>` +
+          `<div class="ag-session-time">${t}</div>` +
+          `<button class="ag-session-del" title="刪除">✕</button>`;
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.ag-session-del')) return;
+          openSession(s);
+        });
+        item.querySelector('.ag-session-del').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await fetch(`${BASE}/api/sessions/${s.id}`, { method: 'DELETE' });
+          loadSessions();
+        });
+        sessionList.appendChild(item);
+      }
+    }
+
+    async function loadSessions() {
+      try {
+        const r = await fetch(`${BASE}/api/sessions`);
+        renderSessionList(await r.json());
+      } catch {}
+    }
+    loadSessions();
 
     sendBtn && sendBtn.addEventListener('click', run);
     input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run(); });
