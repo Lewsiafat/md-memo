@@ -7,11 +7,20 @@ import { runAgent } from './agent.js';
 import { applyProposal } from './tools.js';
 import { loadSessions, createSession, insertSession, deleteSession } from './sessions.js';
 import { renderPermalink } from './permalink.js';
+import { createAuth } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 10026;
 const BASE_PATH = process.env.BASE_PATH || '/md-memo';
+
+// Optional HTTP Basic Auth — gated by AUTH_ENABLED (default off). Public
+// permalink pages (/m/:id) stay open so shared links work without a password.
+app.use(createAuth({
+  enabled: process.env.AUTH_ENABLED === 'true',
+  password: process.env.AUTH_PASSWORD,
+  publicPrefix: `${BASE_PATH}/m/`,
+}));
 
 app.use(express.json({ limit: '1mb' }));
 
