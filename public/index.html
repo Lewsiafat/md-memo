@@ -1233,6 +1233,19 @@ Ctrl+Enter to format."></textarea>
       trace.scrollTop = trace.scrollHeight;
     }
 
+    async function saveToMemo(session) {
+      const md = (session.answer || '').trim() || session.question;
+      try {
+        const r = await fetch(`${BASE}/api/agent/apply`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_memo', args: { markdown: md, tags: ['agent'] } }),
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || '失敗');
+        showToast('已存成 memo', 'success');
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
     function renderSessionList(list) {
       sessionList.innerHTML = '';
       if (!list.length) { sessionList.innerHTML = '<div class="ag-side-empty">尚無已存 session</div>'; return; }
@@ -1244,10 +1257,15 @@ Ctrl+Enter to format."></textarea>
         item.innerHTML =
           `<div class="ag-session-q">${esc(s.question)}</div>` +
           `<div class="ag-session-time">${t}</div>` +
+          `<span class="ag-session-tomemo">📝 存成 memo</span>` +
           `<button class="ag-session-del" title="刪除">✕</button>`;
         item.addEventListener('click', (e) => {
-          if (e.target.closest('.ag-session-del')) return;
+          if (e.target.closest('.ag-session-del') || e.target.closest('.ag-session-tomemo')) return;
           openSession(s);
+        });
+        item.querySelector('.ag-session-tomemo').addEventListener('click', (e) => {
+          e.stopPropagation();
+          saveToMemo(s);
         });
         item.querySelector('.ag-session-del').addEventListener('click', async (e) => {
           e.stopPropagation();
