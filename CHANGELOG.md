@@ -3,6 +3,37 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-06-26
+
+### Added
+- **Agent Mode workspace** — the agent panel is now a first-class three-column
+  workspace: saved sessions (left), reasoning trace + pinned input + "back to normal
+  mode" (center), example prompts (right). Server-side session persistence in
+  `src/sessions.js` (mirrors `src/store.js`, stores `data/sessions.json`, capped at 50)
+  with `GET/POST /api/sessions` and `DELETE /api/sessions/:id`. Each finished run can be
+  saved as a session, then replayed or deleted; a session's answer can be turned into a
+  memo in one click (reuses `POST /api/agent/apply` `create_memo`). A footer mode badge
+  and a centralized `setMode()` state machine (View / Edit / Agent / Combine).
+- **Safe "Clear all history"** — replaces the unbackuped, single-`confirm()`, per-item
+  DELETE loop with a recoverable flow: `clearHistory()` first copies `data/history.json`
+  to a timestamped `data/history.<ts>.bak.json` (one per clear, never overwriting old
+  backups), then writes an empty array — exposed via `POST /api/history/clear`. The Clear
+  button is now two-stage (arm → confirm, auto-disarms after 4s).
+- **Agent Mode UX polish** — a centered "thinking" animation while a run is in flight
+  (covers the gap before the first SSE event arrives), the input box clears on submit, a
+  `localStorage`-backed submission-history list under the example rail (dedup, capped at
+  12, click-to-refill), and a more prominent labeled "🤖 Agent" button in the top bar.
+- Tests: new `test/sessions.test.mjs` (5 session-store tests) plus `clearHistory` cases
+  in `test/store.test.mjs`; suite now at 35 tests.
+
+### Changed
+- `demo/mock.js` mirrors the new endpoints in-memory (`/api/sessions` ×3,
+  `/api/history/clear`) and surfaces `create_memo` results in the demo history.
+
+### Fixed
+- `package.json` version was stale at `1.1.0` (not bumped at the v1.2.0 release); it now
+  tracks the release version again.
+
 ## [1.2.0] - 2026-06-24
 
 ### Added

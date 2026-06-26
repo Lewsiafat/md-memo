@@ -14,9 +14,9 @@ A lightweight markdown memo tool with AI-powered formatting. Write in plain text
 - 📋 **Copy to clipboard** — markdown or plain text
 - 🔗 **Permalink** — shareable URL for each memo (`/md-memo/m/:id`)
 - 🌙 **Dark / Light theme** — toggle with localStorage persistence
-- 📚 **History** — last 50 memos with tag cloud filter
+- 📚 **History** — last 50 memos with tag cloud filter; safe Clear All keeps a timestamped backup
 - 🔍 **Quick view** — preview history items without leaving the editor
-- 🧠 **Agent over your notes** — ask questions or give commands ("merge this week's meeting notes"); the agent searches, reads, and proposes changes with a live reasoning trace (confirm before any write)
+- 🧠 **Agent over your notes** — ask questions or give commands ("merge this week's meeting notes"); the agent searches, reads, and proposes changes with a live reasoning trace (confirm before any write). A dedicated three-column Agent workspace lets you save, replay, and delete sessions, or turn an answer into a memo
 
 ## Stack
 
