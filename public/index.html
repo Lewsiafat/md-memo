@@ -108,6 +108,8 @@
     .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
     .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-ghost:hover:not(:disabled) { background: var(--surface3); }
+    .btn-agent { background: #6c5ce714; color: var(--accent); border: 1px solid var(--accent); }
+    .btn-agent:hover:not(:disabled) { background: #6c5ce726; }
     .btn-icon {
       padding: 6px 9px;
       background: transparent;
@@ -523,6 +525,18 @@
     .ag-answer { margin-top: 8px; }
     .ag-done { font-size: 12px; color: var(--text2, #888); }
     .ag-error { color: #d63031; font-weight: 600; }
+    .ag-thinking {
+      align-self: center; margin: auto 0; display: flex; align-items: center; gap: 10px;
+      color: var(--text2); font-size: 14px;
+    }
+    .ag-dots { display: inline-flex; gap: 5px; }
+    .ag-dots i {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+      animation: ag-bounce 1.2s ease-in-out infinite both;
+    }
+    .ag-dots i:nth-child(2) { animation-delay: .16s; }
+    .ag-dots i:nth-child(3) { animation-delay: .32s; }
+    @keyframes ag-bounce { 0%, 80%, 100% { transform: scale(.5); opacity: .5; } 40% { transform: scale(1); opacity: 1; } }
 
     /* ── MOBILE ── */
     @media (max-width: 700px) {
@@ -549,7 +563,7 @@
       <button class="btn btn-ghost" id="btn-copy">📋 Copy</button>
       <button class="btn btn-ghost" id="btn-download">⬇️ .md</button>
     </div>
-    <button class="btn-icon" id="agentToggle" title="Agent">🤖</button>
+    <button class="btn btn-agent" id="agentToggle" title="Agent Mode">🤖 Agent</button>
     <button class="btn-icon" id="btn-theme" title="Toggle theme">🌙</button>
     <button class="btn btn-primary" id="btn-format">✨ Format</button>
   </div>
@@ -644,6 +658,8 @@ Ctrl+Enter to format."></textarea>
     <aside id="agentExamples">
       <div class="ag-side-head">範例</div>
       <div id="agentExampleList"></div>
+      <div class="ag-side-head">送出紀錄</div>
+      <div id="agentSubmitList"><div class="ag-side-empty">尚無送出紀錄</div></div>
     </aside>
   </section>
 
@@ -1104,6 +1120,15 @@ Ctrl+Enter to format."></textarea>
     const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+    let thinkingEl = null;
+    function showThinking() {
+      hideThinking();
+      thinkingEl = el('div', 'ag-thinking', '<span class="ag-dots"><i></i><i></i><i></i></span><span>思考中…</span>');
+      trace.appendChild(thinkingEl);
+      trace.scrollTop = trace.scrollHeight;
+    }
+    function hideThinking() { if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; } }
+
     backBtn && backBtn.addEventListener('click', () => exitAgentMode());
 
     const AGENT_EXAMPLES = [
@@ -1122,6 +1147,29 @@ Ctrl+Enter to format."></textarea>
       }
     }
     renderExamples();
+
+    const submitList = document.getElementById('agentSubmitList');
+    const SUBMIT_KEY = 'mdmemo_agent_submits';
+    let submitHistory = [];
+    try { submitHistory = JSON.parse(localStorage.getItem(SUBMIT_KEY) || '[]'); } catch { submitHistory = []; }
+    function saveSubmitHistory() { try { localStorage.setItem(SUBMIT_KEY, JSON.stringify(submitHistory)); } catch {} }
+    function renderSubmitHistory() {
+      submitList.innerHTML = '';
+      if (!submitHistory.length) { submitList.innerHTML = '<div class="ag-side-empty">尚無送出紀錄</div>'; return; }
+      for (const msg of submitHistory) {
+        const item = el('div', 'ag-example-item', esc(msg));
+        item.title = msg;
+        item.addEventListener('click', () => { input.value = msg; input.focus(); });
+        submitList.appendChild(item);
+      }
+    }
+    function addSubmit(msg) {
+      submitHistory = [msg, ...submitHistory.filter((m) => m !== msg)].slice(0, 12);
+      saveSubmitHistory();
+      renderSubmitHistory();
+    }
+    renderSubmitHistory();
+
     const sessionList = document.getElementById('agentSessionList');
     const saveSessionBtn = document.getElementById('agentSaveSession');
     let currentSession = null;
@@ -1156,7 +1204,8 @@ Ctrl+Enter to format."></textarea>
     }
 
     function renderEvent(ev, data) {
-      if (ev === 'start') { trace.innerHTML = ''; return; }
+      if (ev === 'start') { trace.innerHTML = ''; showThinking(); return; }
+      if (ev === 'done' || ev === 'error') hideThinking();
       if (ev === 'message') trace.appendChild(el('div', 'ag-msg', `💭 ${esc(data.content)}`));
       else if (ev === 'tool_call') trace.appendChild(el('div', 'ag-tool', `🔧 ${esc(data.name)}(${esc(JSON.stringify(data.args))})`));
       else if (ev === 'tool_result') {
@@ -1169,15 +1218,20 @@ Ctrl+Enter to format."></textarea>
         trace.appendChild(a);
       } else if (ev === 'done') trace.appendChild(el('div', 'ag-done', `⏱ ${data.steps} 步 · ${data.tokens} tokens`));
       else if (ev === 'error') trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`));
+      if (thinkingEl && ev !== 'done' && ev !== 'error') trace.appendChild(thinkingEl);
       trace.scrollTop = trace.scrollHeight;
     }
 
     async function run() {
       const message = input.value.trim();
       if (!message) return;
+      input.value = '';
+      addSubmit(message);
       sendBtn.disabled = true;
       saveSessionBtn.disabled = true;
       currentSession = null;
+      trace.innerHTML = '';
+      showThinking();
       const events = [];
       let answer = '';
       try {
@@ -1209,7 +1263,7 @@ Ctrl+Enter to format."></textarea>
         }
         if (events.length) { currentSession = { question: message, answer, events }; saveSessionBtn.disabled = false; }
       } catch (e) { renderEvent('error', { message: e.message }); }
-      finally { sendBtn.disabled = false; }
+      finally { sendBtn.disabled = false; hideThinking(); }
     }
 
     saveSessionBtn && saveSessionBtn.addEventListener('click', async () => {
