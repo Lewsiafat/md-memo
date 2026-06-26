@@ -1243,6 +1243,7 @@ Ctrl+Enter to format."></textarea>
         const j = await r.json();
         if (!r.ok || !j.ok) throw new Error(j.error || '失敗');
         showToast('已存成 memo', 'success');
+        loadHistoryData();
       } catch (e) { showToast('Error: ' + e.message, 'error'); }
     }
 
