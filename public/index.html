@@ -970,16 +970,38 @@ Ctrl+Enter to format."></textarea>
       renderHistoryItems();
     }
 
+    // ── CLEAR ALL (arm → confirm; backs up server-side) ──
+    let clearArmed = false;
+    let clearTimer;
+    function disarmClear() {
+      clearArmed = false;
+      clearTimeout(clearTimer);
+      btnClearAll.textContent = 'Clear';
+      btnClearAll.style.color = 'var(--text2)';
+    }
     btnClearAll.addEventListener('click', async () => {
       if (!history.length) return;
-      if (!confirm('Clear all history?')) return;
-      for (const e of history) await fetch(`${API}/history/${e.id}`, { method: 'DELETE' });
-      history = [];
-      activeTagFilter = null;
-      renderTagCloud();
-      renderHistoryItems();
-      closeQuickView();
-      showToast('History cleared');
+      if (!clearArmed) {
+        clearArmed = true;
+        btnClearAll.textContent = 'Confirm?';
+        btnClearAll.style.color = 'var(--red)';
+        clearTimer = setTimeout(disarmClear, 4000);
+        return;
+      }
+      disarmClear();
+      try {
+        const res = await fetch(`${API}/history/clear`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Clear failed');
+        history = [];
+        activeTagFilter = null;
+        renderTagCloud();
+        renderHistoryItems();
+        closeQuickView();
+        showToast(data.backedUp ? `Cleared — backed up ${data.count} memo(s)` : 'History cleared', 'success');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+      }
     });
 
     function escHtml(s) {

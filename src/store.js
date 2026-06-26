@@ -46,3 +46,23 @@ export function insertEntry(entry) {
   saveHistory(history.slice(0, HISTORY_LIMIT));
   return entry;
 }
+
+// Back up the current history file to a timestamped sibling
+// <name>.<timestamp>.bak.json (one per clear, never overwriting an older
+// backup), then write an empty history. backedUp is false when there was no
+// file to copy (nothing to lose). Returns { ok, backedUp, count, backupFile }.
+export function clearHistory() {
+  const f = historyFile();
+  let backedUp = false;
+  let count = 0;
+  let backupFile = null;
+  if (fs.existsSync(f)) {
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    backupFile = f.replace(/\.json$/, '') + `.${ts}.bak.json`;
+    fs.copyFileSync(f, backupFile);
+    backedUp = true;
+    try { count = JSON.parse(fs.readFileSync(f, 'utf8')).length; } catch {}
+  }
+  saveHistory([]);
+  return { ok: true, backedUp, count, backupFile };
+}

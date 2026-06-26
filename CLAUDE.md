@@ -53,6 +53,7 @@ AI 不回傳結構化 tags 欄位。系統 prompt（`src/index.js` 內 `/api/for
 - `POST /md-memo/api/agent/apply` — 使用者確認後落地 agent 的寫入 proposal
 - `GET  /md-memo/api/history` — 回傳全部 history
 - `DELETE /md-memo/api/history/:id` — 刪除單筆
+- `POST /md-memo/api/history/clear` — 先把 `data/history.json` 複製成帶時間戳的 `data/history.<時間戳>.bak.json`（每次清空各留一份），再清空（前端兩段式確認）
 - `GET  /md-memo/m/:id` — **server-render** 的公開永久連結頁（用 `src/permalink.js` 的 `renderPermalink`）
 - `GET  /md-memo/` — 靜態 SPA（`express.static`）
 
