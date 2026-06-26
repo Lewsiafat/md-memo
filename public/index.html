@@ -302,6 +302,11 @@
       gap: 8px;
     }
     #char-count { font-family: var(--mono); }
+    #mode-badge {
+      font-size: 11px; font-weight: 700; letter-spacing: .03em;
+      padding: 2px 9px; border-radius: 20px;
+      background: var(--accent-dim); color: var(--accent-h); border: 1px solid #7c6af730;
+    }
     #current-tags { display: flex; gap: 4px; flex-wrap: wrap; }
     .tag-chip {
       display: inline-flex;
@@ -461,15 +466,48 @@
     #toast.success { border-color: #4ade8050; color: var(--green); }
     #toast.error { border-color: #f8717150; color: var(--red); }
 
-    /* ── AGENT PANEL ── */
-    #agentPanel { display: none; flex: 1; min-height: 0; max-width: 760px; width: 100%; margin: 0 auto; padding: 16px 20px; }
+    /* ── AGENT PANEL (3-column: sessions | main | examples) ── */
+    #agentPanel { display: none; flex: 1; min-height: 0; width: 100%; overflow: hidden; }
     body.agent-open #main { display: none; }
-    body.agent-open #agentPanel { display: flex; flex-direction: column; }
+    body.agent-open #agentPanel { display: flex; flex-direction: row; }
+
+    #agentSessions, #agentExamples {
+      width: 220px; flex-shrink: 0; display: flex; flex-direction: column;
+      background: var(--surface); overflow-y: auto;
+    }
+    #agentSessions { border-right: 1px solid var(--border); }
+    #agentExamples { border-left: 1px solid var(--border); }
+    .ag-side-head {
+      padding: 10px 13px; font-size: 12px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface);
+    }
+    .ag-side-empty { padding: 16px 13px; font-size: 12.5px; color: var(--text3); line-height: 1.6; }
+
+    #agentMain { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 14px 20px; max-width: 820px; margin: 0 auto; }
+    #agentHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-shrink: 0; }
+    #agentModeLabel { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+
     #agentTrace { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
-    #agentBar { display: flex; gap: 8px; flex-shrink: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border, #e5e0d5); }
-    #agentInput { flex: 1; padding: 10px 14px; border: 1px solid var(--border, #ccc); border-radius: 8px; font-size: 15px; background: var(--surface, #fff); color: var(--text, #111); }
-    #agentSend { padding: 10px 18px; border: none; border-radius: 8px; background: var(--accent, #6c5ce7); color: #fff; font-weight: 600; cursor: pointer; }
+    #agentBar { display: flex; gap: 8px; flex-shrink: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    #agentInput { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: var(--surface); color: var(--text); }
+    #agentSend { padding: 10px 18px; border: none; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
     #agentSend:disabled { opacity: .5; cursor: default; }
+
+    .ag-session-item, .ag-example-item {
+      padding: 9px 13px; border-bottom: 1px solid var(--border); cursor: pointer;
+      font-size: 13px; color: var(--text); line-height: 1.45; transition: background .12s; position: relative;
+    }
+    .ag-session-item:hover, .ag-example-item:hover { background: var(--surface2); }
+    .ag-session-q { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+    .ag-session-time { font-size: 10.5px; color: var(--text3); font-family: var(--mono); margin-top: 3px; }
+    .ag-session-tomemo { display: inline-block; margin-top: 6px; font-size: 11.5px; color: var(--accent); }
+    .ag-session-del {
+      position: absolute; right: 8px; top: 8px; opacity: 0; color: var(--red);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 6px; font-size: 10.5px; cursor: pointer; transition: opacity .15s;
+    }
+    .ag-session-item:hover .ag-session-del { opacity: 1; }
     .ag-msg { color: var(--text2, #666); font-size: 14px; }
     .ag-tool { font-family: var(--mono, monospace); font-size: 12.5px; background: #6c5ce715; color: var(--accent, #6c5ce7); padding: 4px 10px; border-radius: 6px; align-self: flex-start; }
     .ag-result { font-size: 12px; }
@@ -494,6 +532,9 @@
       #history-panel { width: 100%; height: auto; max-height: 45vh; }
       #quickview-panel.open { width: 100%; border-left: none; border-top: 1px solid var(--border); }
       #work-area { flex-direction: column; }
+      body.agent-open #agentPanel { flex-direction: column; overflow: auto; }
+      #agentSessions, #agentExamples { width: 100%; max-height: 22vh; border: none; border-bottom: 1px solid var(--border); }
+      #agentMain { max-width: none; padding: 12px 14px; }
     }
   </style>
 </head>
@@ -547,6 +588,7 @@ Ctrl+Enter to format."></textarea>
       </div>
 
       <div id="editor-footer">
+        <span id="mode-badge">✏️ Edit Mode</span>
         <span id="char-count">0 chars</span>
         <div id="current-tags"></div>
         <span id="status-text"></span>
@@ -581,11 +623,28 @@ Ctrl+Enter to format."></textarea>
   </div>
 
   <section id="agentPanel">
-    <div id="agentTrace" class="md-render-host"></div>
-    <div id="agentBar">
-      <input id="agentInput" type="text" placeholder="問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）" />
-      <button id="agentSend">送出</button>
+    <aside id="agentSessions">
+      <div class="ag-side-head">已存 Session</div>
+      <div id="agentSessionList"><div class="ag-side-empty">尚無已存 session</div></div>
+    </aside>
+
+    <div id="agentMain">
+      <div id="agentHeader">
+        <span id="agentModeLabel">🤖 Agent Mode</span>
+        <button class="btn btn-ghost" id="agentBack">← 返回一般模式</button>
+      </div>
+      <div id="agentTrace" class="md-render-host"></div>
+      <div id="agentBar">
+        <input id="agentInput" type="text" placeholder="問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）" />
+        <button id="agentSend">送出</button>
+        <button class="btn btn-ghost" id="agentSaveSession" disabled>💾 存 Session</button>
+      </div>
     </div>
+
+    <aside id="agentExamples">
+      <div class="ag-side-head">範例</div>
+      <div id="agentExampleList"></div>
+    </aside>
   </section>
 
   <div id="toast"></div>
@@ -633,6 +692,20 @@ Ctrl+Enter to format."></textarea>
     const btnQvRestore   = document.getElementById('btn-qv-restore');
     const btnQvClose     = document.getElementById('btn-qv-close');
     const toast          = document.getElementById('toast');
+
+    // ── VIEW MODE STATE (View / Edit / Combine / Agent) ──
+    let currentMode = 'edit';
+    const modeBadge = document.getElementById('mode-badge');
+    function setMode(mode) {
+      currentMode = mode;
+      const labels = { edit: '✏️ Edit Mode', view: '👁 View Mode', combine: '⊟ Combine Mode', agent: '🤖 Agent Mode' };
+      if (modeBadge) modeBadge.textContent = labels[mode] || mode;
+    }
+    function restoreEditorMode() {
+      setMode(quickViewEntry ? 'combine' : (isPreviewMode ? 'view' : 'edit'));
+    }
+    function enterAgentMode() { document.body.classList.add('agent-open'); setMode('agent'); }
+    function exitAgentMode() { document.body.classList.remove('agent-open'); restoreEditorMode(); }
 
     // ── THEME ──
     function applyTheme(light) {
@@ -704,6 +777,7 @@ Ctrl+Enter to format."></textarea>
       exportBtns.style.display = 'flex';
       btnNew.style.display = '';
       btnFormat.textContent = '✨ Re-format';
+      setMode('view');
     }
 
     function resetToNew() {
@@ -721,6 +795,7 @@ Ctrl+Enter to format."></textarea>
       statusText.textContent = '';
       currentTagsEl.innerHTML = '';
       closeQuickView();
+      setMode('edit');
       rawInput.focus();
     }
 
@@ -735,6 +810,7 @@ Ctrl+Enter to format."></textarea>
       charCount.textContent = currentMarkdown.length.toLocaleString() + ' chars';
       btnFormat.textContent = '✨ Format';
       statusText.textContent = '';
+      setMode('edit');
       rawInput.focus();
     });
 
@@ -785,12 +861,14 @@ Ctrl+Enter to format."></textarea>
       qvTitle.textContent = rawPreview || 'Quick View';
       qvContent.innerHTML = marked.parse(entry.markdown);
       qvPanel.classList.add('open');
+      setMode('combine');
     }
 
     function closeQuickView() {
       qvPanel.classList.remove('open');
       quickViewEntry = null;
       document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
+      setMode(isPreviewMode ? 'view' : 'edit');
     }
 
     btnQvClose.addEventListener('click', closeQuickView);
@@ -1010,6 +1088,7 @@ Ctrl+Enter to format."></textarea>
 
     loadHistoryData();
     rawInput.focus();
+    setMode('edit');
   </script>
 
   <script>
@@ -1019,11 +1098,37 @@ Ctrl+Enter to format."></textarea>
     const input = document.getElementById('agentInput');
     const sendBtn = document.getElementById('agentSend');
     const trace = document.getElementById('agentTrace');
-
-    toggle && toggle.addEventListener('click', () => document.body.classList.toggle('agent-open'));
+    const backBtn = document.getElementById('agentBack');
+    const exampleList = document.getElementById('agentExampleList');
 
     const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    backBtn && backBtn.addEventListener('click', () => exitAgentMode());
+
+    const AGENT_EXAMPLES = [
+      '幫我把標籤相近的筆記整理成一篇總結',
+      '搜尋跟「部署」有關的筆記並條列重點',
+      '把最近的會議筆記合併成一份摘要',
+      '列出目前所有標籤與數量',
+      '找出彼此相關的筆記並建議連結',
+    ];
+    function renderExamples() {
+      exampleList.innerHTML = '';
+      for (const ex of AGENT_EXAMPLES) {
+        const item = el('div', 'ag-example-item', esc(ex));
+        item.addEventListener('click', () => { input.value = ex; input.focus(); });
+        exampleList.appendChild(item);
+      }
+    }
+    renderExamples();
+    const sessionList = document.getElementById('agentSessionList');
+    const saveSessionBtn = document.getElementById('agentSaveSession');
+    let currentSession = null;
+
+    toggle && toggle.addEventListener('click', () => {
+      if (document.body.classList.contains('agent-open')) exitAgentMode(); else enterAgentMode();
+    });
 
     function renderProposal(data) {
       const card = el('div', 'ag-proposal');
@@ -1071,6 +1176,10 @@ Ctrl+Enter to format."></textarea>
       const message = input.value.trim();
       if (!message) return;
       sendBtn.disabled = true;
+      saveSessionBtn.disabled = true;
+      currentSession = null;
+      const events = [];
+      let answer = '';
       try {
         const res = await fetch(`${BASE}/api/agent`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1089,12 +1198,92 @@ Ctrl+Enter to format."></textarea>
             const frame = buf.slice(0, idx); buf = buf.slice(idx + 2);
             const evM = frame.match(/^event: (.+)$/m);
             const dataM = frame.match(/^data: (.+)$/m);
-            if (evM && dataM) { try { renderEvent(evM[1].trim(), JSON.parse(dataM[1])); } catch {} }
+            if (evM && dataM) {
+              let data; try { data = JSON.parse(dataM[1]); } catch { continue; }
+              const ev = evM[1].trim();
+              if (ev !== 'start') events.push({ event: ev, data });
+              if (ev === 'answer') answer = data.content || '';
+              renderEvent(ev, data);
+            }
           }
         }
+        if (events.length) { currentSession = { question: message, answer, events }; saveSessionBtn.disabled = false; }
       } catch (e) { renderEvent('error', { message: e.message }); }
       finally { sendBtn.disabled = false; }
     }
+
+    saveSessionBtn && saveSessionBtn.addEventListener('click', async () => {
+      if (!currentSession) return;
+      saveSessionBtn.disabled = true;
+      try {
+        const r = await fetch(`${BASE}/api/sessions`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentSession),
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || '儲存失敗');
+        showToast('Session 已儲存', 'success');
+        loadSessions();
+      } catch (e) { showToast('Error: ' + e.message, 'error'); saveSessionBtn.disabled = false; }
+    });
+
+    function openSession(session) {
+      trace.innerHTML = '';
+      for (const e of session.events) renderEvent(e.event, e.data);
+      trace.scrollTop = trace.scrollHeight;
+    }
+
+    async function saveToMemo(session) {
+      const md = (session.answer || '').trim() || session.question;
+      try {
+        const r = await fetch(`${BASE}/api/agent/apply`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_memo', args: { markdown: md, tags: ['agent'] } }),
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || '失敗');
+        showToast('已存成 memo', 'success');
+        loadHistoryData();
+      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    function renderSessionList(list) {
+      sessionList.innerHTML = '';
+      if (!list.length) { sessionList.innerHTML = '<div class="ag-side-empty">尚無已存 session</div>'; return; }
+      for (const s of list) {
+        const item = el('div', 'ag-session-item');
+        const d = new Date(s.createdAt);
+        const t = d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' +
+          d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+        item.innerHTML =
+          `<div class="ag-session-q">${esc(s.question)}</div>` +
+          `<div class="ag-session-time">${t}</div>` +
+          `<span class="ag-session-tomemo">📝 存成 memo</span>` +
+          `<button class="ag-session-del" title="刪除">✕</button>`;
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.ag-session-del') || e.target.closest('.ag-session-tomemo')) return;
+          openSession(s);
+        });
+        item.querySelector('.ag-session-tomemo').addEventListener('click', (e) => {
+          e.stopPropagation();
+          saveToMemo(s);
+        });
+        item.querySelector('.ag-session-del').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await fetch(`${BASE}/api/sessions/${s.id}`, { method: 'DELETE' });
+          loadSessions();
+        });
+        sessionList.appendChild(item);
+      }
+    }
+
+    async function loadSessions() {
+      try {
+        const r = await fetch(`${BASE}/api/sessions`);
+        renderSessionList(await r.json());
+      } catch {}
+    }
+    loadSessions();
 
     sendBtn && sendBtn.addEventListener('click', run);
     input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run(); });
