@@ -40,16 +40,17 @@ test('insertEntry prepends and enforces the limit', () => {
   assert.strictEqual(h[0].markdown, `m${HISTORY_LIMIT + 4}`);
 });
 
-test('clearHistory backs up to a .bak file then empties history', () => {
+test('clearHistory backs up to a timestamped .bak.json then empties history', () => {
   saveHistory([createEntry({ markdown: 'keep me' }), createEntry({ markdown: 'and me' })]);
   const r = clearHistory();
   assert.strictEqual(r.ok, true);
   assert.strictEqual(r.backedUp, true);
   assert.strictEqual(r.count, 2);
+  assert.ok(typeof r.backupFile === 'string', 'backupFile is a string');
+  assert.ok(/\.\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.bak\.json$/.test(r.backupFile), `backupFile is timestamped: ${r.backupFile}`);
+  assert.ok(fs.existsSync(r.backupFile), 'backup file exists on disk');
+  assert.strictEqual(JSON.parse(fs.readFileSync(r.backupFile, 'utf8')).length, 2);
   assert.deepStrictEqual(loadHistory(), []);
-  const bak = process.env.HISTORY_FILE.replace(/\.json$/, '') + '.bak.json';
-  assert.ok(fs.existsSync(bak), 'backup file exists');
-  assert.strictEqual(JSON.parse(fs.readFileSync(bak, 'utf8')).length, 2);
 });
 
 test('clearHistory on a missing file reports backedUp:false', () => {
@@ -57,5 +58,6 @@ test('clearHistory on a missing file reports backedUp:false', () => {
   const r = clearHistory();
   assert.strictEqual(r.backedUp, false);
   assert.strictEqual(r.count, 0);
+  assert.strictEqual(r.backupFile, null);
   assert.deepStrictEqual(loadHistory(), []);
 });

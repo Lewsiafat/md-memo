@@ -977,7 +977,7 @@ Ctrl+Enter to format."></textarea>
       clearArmed = false;
       clearTimeout(clearTimer);
       btnClearAll.textContent = 'Clear';
-      btnClearAll.style.color = '';
+      btnClearAll.style.color = 'var(--text2)';
     }
     btnClearAll.addEventListener('click', async () => {
       if (!history.length) return;

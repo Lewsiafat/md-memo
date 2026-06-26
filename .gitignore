@@ -1,5 +1,6 @@
 node_modules/
 .env
 data/history.json
+data/*.bak.json
 *.log
 dist-demo/
