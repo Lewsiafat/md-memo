@@ -3,6 +3,43 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-06-29
+
+### Added
+- **Edit existing memos (Save / Reformat / Discard)** — opening a saved memo and hitting
+  ✏️ Edit now offers three actions in the top bar: **💾 Save** overwrites the entry
+  verbatim with no AI call (new `PUT /md-memo/api/history/:id`, backed by a new
+  `updateEntry(id, { markdown, tags })` helper in `src/store.js` that overwrites in place
+  — preserving `id`/`createdAt`/`raw`, recomputing `preview`, never reordering);
+  **✨ Reformat** re-runs the AI and asks (native `confirm()`) whether to overwrite the
+  existing memo or save the result as a new one (`POST /md-memo/api/format` now accepts an
+  optional `id` in the body — overwrite when present and found, otherwise create new; the
+  response shape is unchanged); **🗑 Discard** reverts the editor (native `confirm()`).
+  Button visibility is centralized in `updateEditControls()` (Save only while editing an
+  existing memo, Discard only while the editor holds typed text).
+
+### Changed
+- **History panel renamed to "Memo List".**
+- **Agent panel UX** — Approve/Skip proposal cards now render **after** the answer
+  summary (proposals are buffered and flushed post-summary, replay-safe for saved
+  sessions and the demo); submission-history records are individually **deletable**
+  (hover-revealed ✕, silent delete); tool calls collapse to a **one-line** `<details>`
+  (`🔧 name` / `📋 name`) that expands to the full args/result JSON.
+- The static demo mock (`demo/mock.js`) mirrors the new overwrite behavior
+  (`PUT /api/history/:id` and `/api/format` overwrite-by-id) so the GitHub Pages demo
+  doesn't regress.
+
+### Fixed
+- **Long-output format truncation** — raised the `/api/format` output cap to 32k
+  (`AI_MAX_TOKENS`, default `32768`). When a model still truncates at its own limit the
+  response carries `truncated: true`, the UI warns, and history keeps the full original
+  input.
+
+### Tests
+- Suite now at 50 tests (added `updateEntry` store tests); `npm run smoke` and
+  `npm run build:demo` green; cross-file contracts (tags / `BASE_PATH` / dual-render)
+  verified intact.
+
 ## [1.3.1] - 2026-06-26
 
 ### Added
