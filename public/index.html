@@ -624,7 +624,7 @@ Ctrl+Enter to format."></textarea>
       </div>
 
       <div id="history-header">
-        <h2>History</h2>
+        <h2>Memo List</h2>
         <div style="display:flex;gap:6px;align-items:center">
           <span id="history-count"></span>
           <button class="btn-icon" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2)" id="btn-clear-all">Clear</button>
@@ -1098,7 +1098,7 @@ Ctrl+Enter to format."></textarea>
         renderTagCloud();
         renderHistoryItems();
         closeQuickView();
-        showToast(data.backedUp ? `Cleared — backed up ${data.count} memo(s)` : 'History cleared', 'success');
+        showToast(data.backedUp ? `Cleared — backed up ${data.count} memo(s)` : 'Memo list cleared', 'success');
       } catch (err) {
         showToast('Error: ' + err.message, 'error');
       }
