@@ -566,6 +566,8 @@
     </div>
     <button class="btn btn-agent" id="agentToggle" title="Agent Mode">🤖 Agent</button>
     <button class="btn-icon" id="btn-theme" title="Toggle theme">🌙</button>
+    <button class="btn btn-ghost" id="btn-save" style="display:none">💾 Save</button>
+    <button class="btn btn-ghost" id="btn-discard" style="display:none">🗑 Discard</button>
     <button class="btn btn-primary" id="btn-format">✨ Format</button>
   </div>
 
@@ -685,6 +687,8 @@ Ctrl+Enter to format."></textarea>
     const preview        = document.getElementById('preview');
     const loadingOverlay = document.getElementById('loading-overlay');
     const btnFormat      = document.getElementById('btn-format');
+    const btnSave        = document.getElementById('btn-save');
+    const btnDiscard     = document.getElementById('btn-discard');
     const btnNew         = document.getElementById('btn-new');
     const btnEdit        = document.getElementById('btn-edit');
     const btnShare       = document.getElementById('btn-share');
@@ -717,6 +721,14 @@ Ctrl+Enter to format."></textarea>
       currentMode = mode;
       const labels = { edit: '✏️ Edit Mode', view: '👁 View Mode', combine: '⊟ Combine Mode', agent: '🤖 Agent Mode' };
       if (modeBadge) modeBadge.textContent = labels[mode] || mode;
+      updateEditControls();
+    }
+    // Save shows only when editing an existing memo; Discard only when the
+    // editor (textarea) holds typed content. Editing = not preview, not agent.
+    function updateEditControls() {
+      const editing = currentMode !== 'agent' && !isPreviewMode;
+      btnSave.style.display    = (editing && currentId != null) ? '' : 'none';
+      btnDiscard.style.display = (editing && rawInput.value.trim().length > 0) ? '' : 'none';
     }
     function restoreEditorMode() {
       setMode(quickViewEntry ? 'combine' : (isPreviewMode ? 'view' : 'edit'));
@@ -746,6 +758,7 @@ Ctrl+Enter to format."></textarea>
     // ── CHAR COUNT ──
     rawInput.addEventListener('input', () => {
       charCount.textContent = rawInput.value.length.toLocaleString() + ' chars';
+      updateEditControls();
     });
 
     // ── FORMAT ──
