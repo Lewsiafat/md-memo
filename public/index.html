@@ -849,6 +849,29 @@ Ctrl+Enter to format."></textarea>
       rawInput.focus();
     });
 
+    btnSave.addEventListener('click', async () => {
+      if (currentId == null) return;
+      const markdown = rawInput.value;
+      try {
+        const res = await fetch(`${API}/history/${currentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown, tags: currentTags })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Save failed');
+        currentMarkdown = markdown;
+        showPreview(currentMarkdown);
+        renderCurrentTags(currentTags);
+        loadHistoryData();
+        statusText.textContent = '✓ Saved';
+        showToast('Saved!', 'success');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+        statusText.textContent = '✗ Error';
+      }
+    });
+
     // ── SHARE / PERMALINK ──
     btnShare.addEventListener('click', async () => {
       if (!currentId) return;
