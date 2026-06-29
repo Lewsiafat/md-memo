@@ -2,7 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { loadHistory, saveHistory, createEntry, insertEntry, clearHistory } from './store.js';
+import { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory } from './store.js';
 import { parseFormatResult } from './format.js';
 import { runAgent } from './agent.js';
 import { applyProposal } from './tools.js';
@@ -145,6 +145,15 @@ app.delete(`${BASE_PATH}/api/history/:id`, (req, res) => {
   const history = loadHistory().filter(e => e.id !== id);
   saveHistory(history);
   res.json({ ok: true });
+});
+
+// PUT /md-memo/api/history/:id — overwrite an entry's markdown/tags verbatim (no LLM)
+app.put(`${BASE_PATH}/api/history/:id`, (req, res) => {
+  const id = Number(req.params.id);
+  const { markdown, tags } = req.body || {};
+  const entry = updateEntry(id, { markdown, tags });
+  if (!entry) return res.status(404).json({ ok: false, error: 'Memo not found' });
+  res.json({ ok: true, entry });
 });
 
 // GET /md-memo/api/sessions — list saved agent sessions
