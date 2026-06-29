@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { loadHistory, saveHistory, createEntry, insertEntry, clearHistory } from './store.js';
+import { parseFormatResult } from './format.js';
 import { runAgent } from './agent.js';
 import { applyProposal } from './tools.js';
 import { loadSessions, createSession, insertSession, deleteSession } from './sessions.js';
@@ -30,15 +31,6 @@ const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.ht
   .replace(/__BASE_PATH__/g, BASE_PATH);
 app.get([BASE_PATH, `${BASE_PATH}/`], (req, res) => res.type('html').send(indexHtml));
 app.use(BASE_PATH, express.static(path.join(__dirname, '..', 'public')));
-
-// Parse tags from markdown — AI appends <!-- tags: a, b, c --> at the end
-function parseTags(raw) {
-  const match = raw.match(/<!--\s*tags:\s*([^>]+?)-->/i);
-  if (!match) return { markdown: raw.trim(), tags: [] };
-  const tags = match[1].split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-  const markdown = raw.replace(/<!--\s*tags:[^>]+-->/gi, '').trim();
-  return { markdown, tags };
-}
 
 // POST /md-memo/api/format
 app.post(`${BASE_PATH}/api/format`, async (req, res) => {
@@ -71,7 +63,7 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
           },
           { role: 'user', content: text }
         ],
-        max_tokens: 4096,
+        max_tokens: Number(process.env.AI_MAX_TOKENS) || 32768,
         temperature: 0.3
       })
     });
@@ -83,13 +75,13 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
     }
 
     const data = await response.json();
-    const raw = data.choices?.[0]?.message?.content?.trim() || '';
-    const { markdown, tags } = parseTags(raw);
+    const { markdown, tags, truncated } = parseFormatResult(data);
 
-    // Save to history
+    // Save to history (full raw input is always preserved here, even if the
+    // formatted markdown was truncated at the model's output cap)
     const entry = insertEntry(createEntry({ raw: text, markdown, tags }));
 
-    res.json({ markdown, tags, id: entry.id });
+    res.json({ markdown, tags, id: entry.id, truncated });
   } catch (err) {
     console.error('Format error:', err);
     res.status(500).json({ error: err.message });

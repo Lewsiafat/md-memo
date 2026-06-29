@@ -467,6 +467,7 @@
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     #toast.success { border-color: #4ade8050; color: var(--green); }
     #toast.error { border-color: #f8717150; color: var(--red); }
+    #toast.warn { border-color: #fbbf2450; color: var(--amber); }
 
     /* ── AGENT PANEL (3-column: sessions | main | examples) ── */
     #agentPanel { display: none; flex: 1; min-height: 0; width: 100%; overflow: hidden; }
@@ -771,10 +772,15 @@ Ctrl+Enter to format."></textarea>
         currentId = data.id;
         showPreview(currentMarkdown);
         renderCurrentTags(currentTags);
-        statusText.textContent = '✓ Formatted';
         loadHistoryData();
         closeQuickView();
-        showToast('Formatted!', 'success');
+        if (data.truncated) {
+          statusText.textContent = '⚠ Output truncated';
+          showToast('Output truncated — original kept in history', 'warn');
+        } else {
+          statusText.textContent = '✓ Formatted';
+          showToast('Formatted!', 'success');
+        }
       } catch (err) {
         showToast('Error: ' + err.message, 'error');
         statusText.textContent = '✗ Error';
