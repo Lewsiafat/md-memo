@@ -5,7 +5,7 @@ import fs from 'node:fs';
 process.env.HISTORY_FILE = '/tmp/md-memo-store-test.json';
 fs.rmSync(process.env.HISTORY_FILE, { force: true });
 
-const { loadHistory, saveHistory, createEntry, insertEntry, clearHistory, HISTORY_LIMIT } =
+const { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, HISTORY_LIMIT } =
   await import('../src/store.js');
 
 test('loadHistory returns [] when file missing', () => {
@@ -60,4 +60,31 @@ test('clearHistory on a missing file reports backedUp:false', () => {
   assert.strictEqual(r.count, 0);
   assert.strictEqual(r.backupFile, null);
   assert.deepStrictEqual(loadHistory(), []);
+});
+
+test('updateEntry overwrites markdown/tags in place and recomputes preview', () => {
+  saveHistory([{ id: 42, createdAt: 'c', raw: 'r', markdown: '# Old\n\nbody', tags: ['x'], preview: '# Old' }]);
+  const updated = updateEntry(42, { markdown: '# New\n\nnew body', tags: ['y', 'z'] });
+  assert.strictEqual(updated.markdown, '# New\n\nnew body');
+  assert.strictEqual(updated.preview, '# New');
+  assert.deepStrictEqual(updated.tags, ['y', 'z']);
+  assert.strictEqual(updated.id, 42);            // id preserved
+  assert.strictEqual(updated.raw, 'r');          // raw preserved
+  assert.strictEqual(loadHistory()[0].markdown, '# New\n\nnew body');
+});
+
+test('updateEntry returns null for an unknown id', () => {
+  saveHistory([]);
+  assert.strictEqual(updateEntry(99999, { markdown: 'x' }), null);
+});
+
+test('updateEntry keeps position (does not reorder)', () => {
+  saveHistory([
+    { id: 2, createdAt: 'b', raw: '', markdown: 'B', tags: [], preview: 'B' },
+    { id: 1, createdAt: 'a', raw: '', markdown: 'A', tags: [], preview: 'A' },
+  ]);
+  updateEntry(1, { markdown: 'A2' });
+  const h = loadHistory();
+  assert.strictEqual(h[0].id, 2);                // top entry unchanged
+  assert.strictEqual(h[1].markdown, 'A2');       // updated in place at index 1
 });

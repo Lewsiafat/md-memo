@@ -511,8 +511,17 @@
       padding: 1px 6px; font-size: 10.5px; cursor: pointer; transition: opacity .15s;
     }
     .ag-session-item:hover .ag-session-del { opacity: 1; }
+    .ag-submit-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+    .ag-submit-del {
+      position: absolute; right: 8px; top: 8px; opacity: 0; color: var(--red);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 6px; font-size: 10.5px; cursor: pointer; transition: opacity .15s;
+    }
+    .ag-example-item:hover .ag-submit-del { opacity: 1; }
     .ag-msg { color: var(--text2, #666); font-size: 14px; }
     .ag-tool { font-family: var(--mono, monospace); font-size: 12.5px; background: #6c5ce715; color: var(--accent, #6c5ce7); padding: 4px 10px; border-radius: 6px; align-self: flex-start; }
+    .ag-tool > summary, .ag-result > summary { cursor: pointer; }
+    .ag-tool pre { margin: 6px 0 0; background: #00000008; padding: 8px 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; }
     .ag-result { font-size: 12px; }
     .ag-result pre { background: #00000008; padding: 8px 10px; border-radius: 6px; overflow-x: auto; }
     .ag-proposal { border: 1px solid var(--accent, #6c5ce7); border-radius: 10px; padding: 12px 14px; background: #6c5ce70a; }
@@ -566,6 +575,8 @@
     </div>
     <button class="btn btn-agent" id="agentToggle" title="Agent Mode">🤖 Agent</button>
     <button class="btn-icon" id="btn-theme" title="Toggle theme">🌙</button>
+    <button class="btn btn-ghost" id="btn-save" style="display:none">💾 Save</button>
+    <button class="btn btn-ghost" id="btn-discard" style="display:none">🗑 Discard</button>
     <button class="btn btn-primary" id="btn-format">✨ Format</button>
   </div>
 
@@ -624,7 +635,7 @@ Ctrl+Enter to format."></textarea>
       </div>
 
       <div id="history-header">
-        <h2>History</h2>
+        <h2>Memo List</h2>
         <div style="display:flex;gap:6px;align-items:center">
           <span id="history-count"></span>
           <button class="btn-icon" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2)" id="btn-clear-all">Clear</button>
@@ -685,6 +696,8 @@ Ctrl+Enter to format."></textarea>
     const preview        = document.getElementById('preview');
     const loadingOverlay = document.getElementById('loading-overlay');
     const btnFormat      = document.getElementById('btn-format');
+    const btnSave        = document.getElementById('btn-save');
+    const btnDiscard     = document.getElementById('btn-discard');
     const btnNew         = document.getElementById('btn-new');
     const btnEdit        = document.getElementById('btn-edit');
     const btnShare       = document.getElementById('btn-share');
@@ -717,6 +730,14 @@ Ctrl+Enter to format."></textarea>
       currentMode = mode;
       const labels = { edit: '✏️ Edit Mode', view: '👁 View Mode', combine: '⊟ Combine Mode', agent: '🤖 Agent Mode' };
       if (modeBadge) modeBadge.textContent = labels[mode] || mode;
+      updateEditControls();
+    }
+    // Save shows only when editing an existing memo; Discard only when the
+    // editor (textarea) holds typed content. Editing = not preview, not agent.
+    function updateEditControls() {
+      const editing = currentMode !== 'agent' && !isPreviewMode;
+      btnSave.style.display    = (editing && currentId != null) ? '' : 'none';
+      btnDiscard.style.display = (editing && rawInput.value.trim().length > 0) ? '' : 'none';
     }
     function restoreEditorMode() {
       setMode(quickViewEntry ? 'combine' : (isPreviewMode ? 'view' : 'edit'));
@@ -746,6 +767,7 @@ Ctrl+Enter to format."></textarea>
     // ── CHAR COUNT ──
     rawInput.addEventListener('input', () => {
       charCount.textContent = rawInput.value.length.toLocaleString() + ' chars';
+      updateEditControls();
     });
 
     // ── FORMAT ──
@@ -757,12 +779,18 @@ Ctrl+Enter to format."></textarea>
     async function doFormat() {
       const text = rawInput.value.trim();
       if (!text) { showToast('Write something first!', 'error'); return; }
+      // Reformatting a loaded memo: ask whether to overwrite it or save anew.
+      let overwriteId = null;
+      if (currentId != null) {
+        overwriteId = confirm('覆蓋目前這筆筆記？\n\n確定 = 覆蓋既有\n取消 = 另存為新筆記')
+          ? currentId : null;
+      }
       setLoading(true);
       try {
         const res = await fetch(`${API}/format`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+          body: JSON.stringify(overwriteId != null ? { text, id: overwriteId } : { text })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Format failed');
@@ -830,10 +858,45 @@ Ctrl+Enter to format."></textarea>
       exportBtns.style.display = 'none';
       rawInput.value = currentMarkdown;
       charCount.textContent = currentMarkdown.length.toLocaleString() + ' chars';
-      btnFormat.textContent = '✨ Format';
+      btnFormat.textContent = currentId != null ? '✨ Reformat' : '✨ Format';
       statusText.textContent = '';
       setMode('edit');
       rawInput.focus();
+    });
+
+    btnSave.addEventListener('click', async () => {
+      if (currentId == null) return;
+      const markdown = rawInput.value;
+      try {
+        const res = await fetch(`${API}/history/${currentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown, tags: currentTags })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Save failed');
+        currentMarkdown = markdown;
+        showPreview(currentMarkdown);
+        renderCurrentTags(currentTags);
+        loadHistoryData();
+        statusText.textContent = '✓ Saved';
+        showToast('Saved!', 'success');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+        statusText.textContent = '✗ Error';
+      }
+    });
+
+    btnDiscard.addEventListener('click', () => {
+      if (!confirm('捨棄目前的編輯內容？')) return;
+      if (quickViewEntry) closeQuickView();        // Combine: also close quick view
+      if (currentId != null) {
+        rawInput.value = currentMarkdown;          // revert textarea to last saved
+        showPreview(currentMarkdown);              // return to View of the loaded memo
+        renderCurrentTags(currentTags);
+      } else {
+        resetToNew();                              // new composition: clear the editor
+      }
     });
 
     // ── SHARE / PERMALINK ──
@@ -1098,7 +1161,7 @@ Ctrl+Enter to format."></textarea>
         renderTagCloud();
         renderHistoryItems();
         closeQuickView();
-        showToast(data.backedUp ? `Cleared — backed up ${data.count} memo(s)` : 'History cleared', 'success');
+        showToast(data.backedUp ? `Cleared — backed up ${data.count} memo(s)` : 'Memo list cleared', 'success');
       } catch (err) {
         showToast('Error: ' + err.message, 'error');
       }
@@ -1127,6 +1190,7 @@ Ctrl+Enter to format."></textarea>
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     let thinkingEl = null;
+    let pendingProposals = [];
     function showThinking() {
       hideThinking();
       thinkingEl = el('div', 'ag-thinking', '<span class="ag-dots"><i></i><i></i><i></i></span><span>思考中…</span>');
@@ -1163,14 +1227,24 @@ Ctrl+Enter to format."></textarea>
       submitList.innerHTML = '';
       if (!submitHistory.length) { submitList.innerHTML = '<div class="ag-side-empty">尚無送出紀錄</div>'; return; }
       for (const msg of submitHistory) {
-        const item = el('div', 'ag-example-item', esc(msg));
+        const item = el('div', 'ag-example-item');
         item.title = msg;
+        item.appendChild(el('span', 'ag-submit-text', esc(msg)));
+        const del = el('button', 'ag-submit-del', '✕');
+        del.title = '刪除';
+        del.addEventListener('click', (e) => { e.stopPropagation(); removeSubmit(msg); });
+        item.appendChild(del);
         item.addEventListener('click', () => { input.value = msg; input.focus(); });
         submitList.appendChild(item);
       }
     }
     function addSubmit(msg) {
       submitHistory = [msg, ...submitHistory.filter((m) => m !== msg)].slice(0, 12);
+      saveSubmitHistory();
+      renderSubmitHistory();
+    }
+    function removeSubmit(msg) {
+      submitHistory = submitHistory.filter((m) => m !== msg);
       saveSubmitHistory();
       renderSubmitHistory();
     }
@@ -1209,21 +1283,30 @@ Ctrl+Enter to format."></textarea>
       });
     }
 
+    function flushProposals() {
+      for (const data of pendingProposals) renderProposal(data);
+      pendingProposals = [];
+    }
+
     function renderEvent(ev, data) {
-      if (ev === 'start') { trace.innerHTML = ''; showThinking(); return; }
+      if (ev === 'start') { trace.innerHTML = ''; pendingProposals = []; showThinking(); return; }
       if (ev === 'done' || ev === 'error') hideThinking();
       if (ev === 'message') trace.appendChild(el('div', 'ag-msg', `💭 ${esc(data.content)}`));
-      else if (ev === 'tool_call') trace.appendChild(el('div', 'ag-tool', `🔧 ${esc(data.name)}(${esc(JSON.stringify(data.args))})`));
+      else if (ev === 'tool_call') {
+        const d = el('details', 'ag-tool'); d.appendChild(el('summary', null, `🔧 ${esc(data.name)}`));
+        d.appendChild(el('pre', null, esc(JSON.stringify(data.args, null, 2)))); trace.appendChild(d);
+      }
       else if (ev === 'tool_result') {
-        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, '結果'));
+        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, `📋 ${esc(data.name || '結果')}`));
         d.appendChild(el('pre', null, esc(JSON.stringify(data.result, null, 2)))); trace.appendChild(d);
-      } else if (ev === 'proposal') renderProposal(data);
+      } else if (ev === 'proposal') pendingProposals.push(data);
       else if (ev === 'answer') {
         const a = el('div', 'ag-answer md-render');
         a.innerHTML = window.marked ? marked.parse(data.content || '') : esc(data.content || '');
         trace.appendChild(a);
-      } else if (ev === 'done') trace.appendChild(el('div', 'ag-done', `⏱ ${data.steps} 步 · ${data.tokens} tokens`));
-      else if (ev === 'error') trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`));
+        flushProposals();                       // proposals render AFTER the summary
+      } else if (ev === 'done') { trace.appendChild(el('div', 'ag-done', `⏱ ${data.steps} 步 · ${data.tokens} tokens`)); flushProposals(); }
+      else if (ev === 'error') { trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`)); flushProposals(); }
       if (thinkingEl && ev !== 'done' && ev !== 'error') trace.appendChild(thinkingEl);
       trace.scrollTop = trace.scrollHeight;
     }
@@ -1237,6 +1320,7 @@ Ctrl+Enter to format."></textarea>
       saveSessionBtn.disabled = true;
       currentSession = null;
       trace.innerHTML = '';
+      pendingProposals = [];
       showThinking();
       const events = [];
       let answer = '';
@@ -1289,6 +1373,7 @@ Ctrl+Enter to format."></textarea>
 
     function openSession(session) {
       trace.innerHTML = '';
+      pendingProposals = [];
       for (const e of session.events) renderEvent(e.event, e.data);
       trace.scrollTop = trace.scrollHeight;
     }

@@ -72,6 +72,16 @@
 
     if (p.endsWith('/api/format') && method === 'POST') {
       const r = state.format.result;
+      // Reformat → overwrite: when the client passes an id, update that entry.
+      if (body.id != null) {
+        const existing = state.history.find(e => e.id === Number(body.id));
+        if (existing) {
+          existing.markdown = r.markdown;
+          existing.tags = r.tags || [];
+          existing.preview = r.markdown.split('\n').find(l => l.trim()) || '(empty)';
+          return json({ markdown: r.markdown, tags: r.tags || [], id: existing.id });
+        }
+      }
       const entry = {
         id: Date.now(),
         createdAt: new Date().toISOString(),
@@ -88,6 +98,18 @@
       const count = state.history.length;
       state.history = [];
       return json({ ok: true, backedUp: count > 0, count });
+    }
+
+    if (p.includes('/api/history/') && method === 'PUT') {
+      const id = Number(p.split('/').pop());
+      const entry = state.history.find(e => e.id === id);
+      if (!entry) return json({ ok: false, error: 'Memo not found' }, 404);
+      if (body.markdown != null) {
+        entry.markdown = body.markdown;
+        entry.preview = body.markdown.split('\n').find(l => l.trim()) || '(empty)';
+      }
+      if (body.tags != null) entry.tags = body.tags;
+      return json({ ok: true, entry });
     }
 
     if (p.includes('/api/history/') && method === 'DELETE') {

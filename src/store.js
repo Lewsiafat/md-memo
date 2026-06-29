@@ -47,6 +47,21 @@ export function insertEntry(entry) {
   return entry;
 }
 
+// Overwrite an existing entry's markdown/tags in place (no reorder, no new id).
+// Recomputes preview. Returns the entry, or null when id is not found.
+export function updateEntry(id, { markdown, tags }) {
+  const history = loadHistory();
+  const entry = history.find(e => e.id === id);
+  if (!entry) return null;
+  if (markdown != null) {
+    entry.markdown = markdown;
+    entry.preview = markdown.split('\n').find(l => l.trim()) || '(empty)';
+  }
+  if (tags != null) entry.tags = tags;
+  saveHistory(history);
+  return entry;
+}
+
 // Back up the current history file to a timestamped sibling
 // <name>.<timestamp>.bak.json (one per clear, never overwriting an older
 // backup), then write an empty history. backedUp is false when there was no

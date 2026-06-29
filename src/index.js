@@ -2,7 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { loadHistory, saveHistory, createEntry, insertEntry, clearHistory } from './store.js';
+import { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory } from './store.js';
 import { parseFormatResult } from './format.js';
 import { runAgent } from './agent.js';
 import { applyProposal } from './tools.js';
@@ -77,9 +77,12 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
     const data = await response.json();
     const { markdown, tags, truncated } = parseFormatResult(data);
 
-    // Save to history (full raw input is always preserved here, even if the
-    // formatted markdown was truncated at the model's output cap)
-    const entry = insertEntry(createEntry({ raw: text, markdown, tags }));
+    // Persist. When the client passes an existing id (Edit-mode Reformat →
+    // overwrite), update that entry in place; otherwise create a new entry.
+    // raw input is always preserved on new entries even if output was truncated.
+    let entry;
+    if (req.body.id != null) entry = updateEntry(Number(req.body.id), { markdown, tags });
+    if (!entry) entry = insertEntry(createEntry({ raw: text, markdown, tags }));
 
     res.json({ markdown, tags, id: entry.id, truncated });
   } catch (err) {
@@ -145,6 +148,15 @@ app.delete(`${BASE_PATH}/api/history/:id`, (req, res) => {
   const history = loadHistory().filter(e => e.id !== id);
   saveHistory(history);
   res.json({ ok: true });
+});
+
+// PUT /md-memo/api/history/:id — overwrite an entry's markdown/tags verbatim (no LLM)
+app.put(`${BASE_PATH}/api/history/:id`, (req, res) => {
+  const id = Number(req.params.id);
+  const { markdown, tags } = req.body || {};
+  const entry = updateEntry(id, { markdown, tags });
+  if (!entry) return res.status(404).json({ ok: false, error: 'Memo not found' });
+  res.json({ ok: true, entry });
 });
 
 // GET /md-memo/api/sessions — list saved agent sessions
