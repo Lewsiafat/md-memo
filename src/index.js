@@ -77,9 +77,12 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
     const data = await response.json();
     const { markdown, tags, truncated } = parseFormatResult(data);
 
-    // Save to history (full raw input is always preserved here, even if the
-    // formatted markdown was truncated at the model's output cap)
-    const entry = insertEntry(createEntry({ raw: text, markdown, tags }));
+    // Persist. When the client passes an existing id (Edit-mode Reformat →
+    // overwrite), update that entry in place; otherwise create a new entry.
+    // raw input is always preserved on new entries even if output was truncated.
+    let entry;
+    if (req.body.id != null) entry = updateEntry(Number(req.body.id), { markdown, tags });
+    if (!entry) entry = insertEntry(createEntry({ raw: text, markdown, tags }));
 
     res.json({ markdown, tags, id: entry.id, truncated });
   } catch (err) {
