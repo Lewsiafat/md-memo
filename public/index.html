@@ -1181,6 +1181,7 @@ Ctrl+Enter to format."></textarea>
     const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
     let thinkingEl = null;
+    let pendingProposals = [];
     function showThinking() {
       hideThinking();
       thinkingEl = el('div', 'ag-thinking', '<span class="ag-dots"><i></i><i></i><i></i></span><span>思考中…</span>');
@@ -1263,21 +1264,27 @@ Ctrl+Enter to format."></textarea>
       });
     }
 
+    function flushProposals() {
+      for (const data of pendingProposals) renderProposal(data);
+      pendingProposals = [];
+    }
+
     function renderEvent(ev, data) {
-      if (ev === 'start') { trace.innerHTML = ''; showThinking(); return; }
+      if (ev === 'start') { trace.innerHTML = ''; pendingProposals = []; showThinking(); return; }
       if (ev === 'done' || ev === 'error') hideThinking();
       if (ev === 'message') trace.appendChild(el('div', 'ag-msg', `💭 ${esc(data.content)}`));
       else if (ev === 'tool_call') trace.appendChild(el('div', 'ag-tool', `🔧 ${esc(data.name)}(${esc(JSON.stringify(data.args))})`));
       else if (ev === 'tool_result') {
         const d = el('details', 'ag-result'); d.appendChild(el('summary', null, '結果'));
         d.appendChild(el('pre', null, esc(JSON.stringify(data.result, null, 2)))); trace.appendChild(d);
-      } else if (ev === 'proposal') renderProposal(data);
+      } else if (ev === 'proposal') pendingProposals.push(data);
       else if (ev === 'answer') {
         const a = el('div', 'ag-answer md-render');
         a.innerHTML = window.marked ? marked.parse(data.content || '') : esc(data.content || '');
         trace.appendChild(a);
-      } else if (ev === 'done') trace.appendChild(el('div', 'ag-done', `⏱ ${data.steps} 步 · ${data.tokens} tokens`));
-      else if (ev === 'error') trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`));
+        flushProposals();                       // proposals render AFTER the summary
+      } else if (ev === 'done') { trace.appendChild(el('div', 'ag-done', `⏱ ${data.steps} 步 · ${data.tokens} tokens`)); flushProposals(); }
+      else if (ev === 'error') { trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`)); flushProposals(); }
       if (thinkingEl && ev !== 'done' && ev !== 'error') trace.appendChild(thinkingEl);
       trace.scrollTop = trace.scrollHeight;
     }
@@ -1291,6 +1298,7 @@ Ctrl+Enter to format."></textarea>
       saveSessionBtn.disabled = true;
       currentSession = null;
       trace.innerHTML = '';
+      pendingProposals = [];
       showThinking();
       const events = [];
       let answer = '';
@@ -1343,6 +1351,7 @@ Ctrl+Enter to format."></textarea>
 
     function openSession(session) {
       trace.innerHTML = '';
+      pendingProposals = [];
       for (const e of session.events) renderEvent(e.event, e.data);
       trace.scrollTop = trace.scrollHeight;
     }
