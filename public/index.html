@@ -511,6 +511,13 @@
       padding: 1px 6px; font-size: 10.5px; cursor: pointer; transition: opacity .15s;
     }
     .ag-session-item:hover .ag-session-del { opacity: 1; }
+    .ag-submit-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+    .ag-submit-del {
+      position: absolute; right: 8px; top: 8px; opacity: 0; color: var(--red);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 6px; font-size: 10.5px; cursor: pointer; transition: opacity .15s;
+    }
+    .ag-example-item:hover .ag-submit-del { opacity: 1; }
     .ag-msg { color: var(--text2, #666); font-size: 14px; }
     .ag-tool { font-family: var(--mono, monospace); font-size: 12.5px; background: #6c5ce715; color: var(--accent, #6c5ce7); padding: 4px 10px; border-radius: 6px; align-self: flex-start; }
     .ag-result { font-size: 12px; }
@@ -1218,14 +1225,24 @@ Ctrl+Enter to format."></textarea>
       submitList.innerHTML = '';
       if (!submitHistory.length) { submitList.innerHTML = '<div class="ag-side-empty">尚無送出紀錄</div>'; return; }
       for (const msg of submitHistory) {
-        const item = el('div', 'ag-example-item', esc(msg));
+        const item = el('div', 'ag-example-item');
         item.title = msg;
+        item.appendChild(el('span', 'ag-submit-text', esc(msg)));
+        const del = el('button', 'ag-submit-del', '✕');
+        del.title = '刪除';
+        del.addEventListener('click', (e) => { e.stopPropagation(); removeSubmit(msg); });
+        item.appendChild(del);
         item.addEventListener('click', () => { input.value = msg; input.focus(); });
         submitList.appendChild(item);
       }
     }
     function addSubmit(msg) {
       submitHistory = [msg, ...submitHistory.filter((m) => m !== msg)].slice(0, 12);
+      saveSubmitHistory();
+      renderSubmitHistory();
+    }
+    function removeSubmit(msg) {
+      submitHistory = submitHistory.filter((m) => m !== msg);
       saveSubmitHistory();
       renderSubmitHistory();
     }
