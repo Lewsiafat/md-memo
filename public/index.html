@@ -878,6 +878,18 @@ Ctrl+Enter to format."></textarea>
       }
     });
 
+    btnDiscard.addEventListener('click', () => {
+      if (!confirm('捨棄目前的編輯內容？')) return;
+      if (quickViewEntry) closeQuickView();        // Combine: also close quick view
+      if (currentId != null) {
+        rawInput.value = currentMarkdown;          // revert textarea to last saved
+        showPreview(currentMarkdown);              // return to View of the loaded memo
+        renderCurrentTags(currentTags);
+      } else {
+        resetToNew();                              // new composition: clear the editor
+      }
+    });
+
     // ── SHARE / PERMALINK ──
     btnShare.addEventListener('click', async () => {
       if (!currentId) return;
