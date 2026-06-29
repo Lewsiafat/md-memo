@@ -520,6 +520,8 @@
     .ag-example-item:hover .ag-submit-del { opacity: 1; }
     .ag-msg { color: var(--text2, #666); font-size: 14px; }
     .ag-tool { font-family: var(--mono, monospace); font-size: 12.5px; background: #6c5ce715; color: var(--accent, #6c5ce7); padding: 4px 10px; border-radius: 6px; align-self: flex-start; }
+    .ag-tool > summary, .ag-result > summary { cursor: pointer; }
+    .ag-tool pre { margin: 6px 0 0; background: #00000008; padding: 8px 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; }
     .ag-result { font-size: 12px; }
     .ag-result pre { background: #00000008; padding: 8px 10px; border-radius: 6px; overflow-x: auto; }
     .ag-proposal { border: 1px solid var(--accent, #6c5ce7); border-radius: 10px; padding: 12px 14px; background: #6c5ce70a; }
@@ -1290,9 +1292,12 @@ Ctrl+Enter to format."></textarea>
       if (ev === 'start') { trace.innerHTML = ''; pendingProposals = []; showThinking(); return; }
       if (ev === 'done' || ev === 'error') hideThinking();
       if (ev === 'message') trace.appendChild(el('div', 'ag-msg', `💭 ${esc(data.content)}`));
-      else if (ev === 'tool_call') trace.appendChild(el('div', 'ag-tool', `🔧 ${esc(data.name)}(${esc(JSON.stringify(data.args))})`));
+      else if (ev === 'tool_call') {
+        const d = el('details', 'ag-tool'); d.appendChild(el('summary', null, `🔧 ${esc(data.name)}`));
+        d.appendChild(el('pre', null, esc(JSON.stringify(data.args, null, 2)))); trace.appendChild(d);
+      }
       else if (ev === 'tool_result') {
-        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, '結果'));
+        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, `📋 ${esc(data.name || '結果')}`));
         d.appendChild(el('pre', null, esc(JSON.stringify(data.result, null, 2)))); trace.appendChild(d);
       } else if (ev === 'proposal') pendingProposals.push(data);
       else if (ev === 'answer') {
