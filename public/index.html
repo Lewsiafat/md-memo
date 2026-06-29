@@ -770,12 +770,18 @@ Ctrl+Enter to format."></textarea>
     async function doFormat() {
       const text = rawInput.value.trim();
       if (!text) { showToast('Write something first!', 'error'); return; }
+      // Reformatting a loaded memo: ask whether to overwrite it or save anew.
+      let overwriteId = null;
+      if (currentId != null) {
+        overwriteId = confirm('覆蓋目前這筆筆記？\n\n確定 = 覆蓋既有\n取消 = 另存為新筆記')
+          ? currentId : null;
+      }
       setLoading(true);
       try {
         const res = await fetch(`${API}/format`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+          body: JSON.stringify(overwriteId != null ? { text, id: overwriteId } : { text })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Format failed');
@@ -843,7 +849,7 @@ Ctrl+Enter to format."></textarea>
       exportBtns.style.display = 'none';
       rawInput.value = currentMarkdown;
       charCount.textContent = currentMarkdown.length.toLocaleString() + ' chars';
-      btnFormat.textContent = '✨ Format';
+      btnFormat.textContent = currentId != null ? '✨ Reformat' : '✨ Format';
       statusText.textContent = '';
       setMode('edit');
       rawInput.focus();
