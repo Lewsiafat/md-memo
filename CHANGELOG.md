@@ -3,6 +3,18 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.4.1] - 2026-06-30
+
+### Fixed
+- **Agent proposal apply now refreshes the Memo List immediately** — after approving a
+  write proposal in Agent mode (e.g. `merge_memos` / `create_memo`) and returning to
+  normal mode, the newly created memo did not appear in the Memo List until a full page
+  reload. The apply handler in `renderProposal()` (`public/index.html`) was missing a
+  `loadHistoryData()` call after a successful `POST /api/agent/apply`, leaving the
+  front-end in-memory `historyData` cache stale (the "save as memo" path already refreshed
+  via `saveToMemo()`). Added the refresh so all write proposals
+  (`create_memo`/`merge_memos`/`link_memos`/`retag_memo`) update the list right away.
+
 ## [1.4.0] - 2026-06-29
 
 ### Added
