@@ -566,18 +566,19 @@
 
   <div id="topbar">
     <h1>md<span>-</span>memo</h1>
-    <button class="btn btn-ghost" id="btn-new" style="display:none">＋ New</button>
+    <button class="btn btn-ghost" id="btn-new" data-i18n="btnNew" style="display:none">＋ New</button>
     <div id="export-btns" style="display:none">
-      <button class="btn btn-ghost" id="btn-edit">✏️ Edit</button>
-      <button class="btn btn-ghost" id="btn-share">🔗 Share</button>
-      <button class="btn btn-ghost" id="btn-copy">📋 Copy</button>
-      <button class="btn btn-ghost" id="btn-download">⬇️ .md</button>
+      <button class="btn btn-ghost" id="btn-edit" data-i18n="btnEdit">✏️ Edit</button>
+      <button class="btn btn-ghost" id="btn-share" data-i18n="btnShare">🔗 Share</button>
+      <button class="btn btn-ghost" id="btn-copy" data-i18n="btnCopy">📋 Copy</button>
+      <button class="btn btn-ghost" id="btn-download" data-i18n="btnDownload">⬇️ .md</button>
     </div>
-    <button class="btn btn-agent" id="agentToggle" title="Agent Mode">🤖 Agent</button>
-    <button class="btn-icon" id="btn-theme" title="Toggle theme">🌙</button>
-    <button class="btn btn-ghost" id="btn-save" style="display:none">💾 Save</button>
-    <button class="btn btn-ghost" id="btn-discard" style="display:none">🗑 Discard</button>
-    <button class="btn btn-primary" id="btn-format">✨ Format</button>
+    <button class="btn btn-agent" id="agentToggle" data-i18n="btnAgent" data-i18n-title="titleAgentMode" title="Agent Mode">🤖 Agent</button>
+    <button class="btn-icon" id="btn-theme" data-i18n-title="titleToggleTheme" title="Toggle theme">🌙</button>
+    <button class="btn-icon" id="btn-lang" data-i18n-title="langToggleTitle" title="Switch language">中文</button>
+    <button class="btn btn-ghost" id="btn-save" data-i18n="btnSave" style="display:none">💾 Save</button>
+    <button class="btn btn-ghost" id="btn-discard" data-i18n="btnDiscard" style="display:none">🗑 Discard</button>
+    <button class="btn btn-primary" id="btn-format" data-i18n="btnFormat">✨ Format</button>
   </div>
 
   <div id="main">
@@ -586,7 +587,7 @@
       <div id="work-area">
 
         <div id="editor-area">
-          <textarea id="raw-input" placeholder="Paste or type your raw notes here…
+          <textarea id="raw-input" data-i18n-ph="rawInputPlaceholder" placeholder="Paste or type your raw notes here…
 
 Ctrl+Enter to format."></textarea>
 
@@ -596,15 +597,15 @@ Ctrl+Enter to format."></textarea>
 
           <div id="loading-overlay">
             <div class="spinner"></div>
-            <div class="loading-text">Formatting…</div>
+            <div class="loading-text" data-i18n="loadingText">Formatting…</div>
           </div>
         </div>
 
         <div id="quickview-panel">
           <div id="quickview-header">
-            <span id="quickview-title">Quick View</span>
-            <button class="btn btn-ghost" id="btn-qv-restore" style="padding:3px 9px;font-size:11px">↩ Restore</button>
-            <button class="btn-icon" id="btn-qv-close" title="Close">✕</button>
+            <span id="quickview-title" data-i18n="quickviewTitle">Quick View</span>
+            <button class="btn btn-ghost" id="btn-qv-restore" data-i18n="btnQvRestore" style="padding:3px 9px;font-size:11px">↩ Restore</button>
+            <button class="btn-icon" id="btn-qv-close" data-i18n-title="titleQvClose" title="Close">✕</button>
           </div>
           <div id="quickview-body">
             <div id="quickview-content" class="md-render"></div>
@@ -614,7 +615,7 @@ Ctrl+Enter to format."></textarea>
       </div>
 
       <div id="editor-footer">
-        <span id="mode-badge">✏️ Edit Mode</span>
+        <span id="mode-badge" data-i18n="modeEdit">✏️ Edit Mode</span>
         <span id="char-count">0 chars</span>
         <div id="current-tags"></div>
         <span id="status-text"></span>
@@ -624,54 +625,54 @@ Ctrl+Enter to format."></textarea>
     <div id="history-panel">
       <div id="tag-section">
         <div id="tag-toggle">
-          <span>🏷 Tags</span>
+          <span data-i18n="tagsHeading">🏷 Tags</span>
           <span id="tag-toggle-arrow">▼</span>
         </div>
         <div id="tag-cloud-wrap">
           <div id="tag-cloud">
-            <span style="font-size:12px;color:var(--text3);padding:4px 0">No tags yet</span>
+            <span data-i18n="noTagsYet" style="font-size:12px;color:var(--text3);padding:4px 0">No tags yet</span>
           </div>
         </div>
       </div>
 
       <div id="history-header">
-        <h2>Memo List</h2>
+        <h2 data-i18n="historyHeading">Memo List</h2>
         <div style="display:flex;gap:6px;align-items:center">
           <span id="history-count"></span>
-          <button class="btn-icon" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2)" id="btn-clear-all">Clear</button>
+          <button class="btn-icon" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text2)" id="btn-clear-all" data-i18n="btnClear">Clear</button>
         </div>
       </div>
 
       <div id="history-list">
-        <div id="history-empty">No formatted memos yet.<br>Write something and hit Format!</div>
+        <div id="history-empty" data-i18n-html="historyEmpty">No formatted memos yet.<br>Write something and hit Format!</div>
       </div>
     </div>
   </div>
 
   <section id="agentPanel">
     <aside id="agentSessions">
-      <div class="ag-side-head">已存 Session</div>
-      <div id="agentSessionList"><div class="ag-side-empty">尚無已存 session</div></div>
+      <div class="ag-side-head" data-i18n="agentSavedSessions">已存 Session</div>
+      <div id="agentSessionList"><div class="ag-side-empty" data-i18n="agentEmptySessions">尚無已存 session</div></div>
     </aside>
 
     <div id="agentMain">
       <div id="agentHeader">
-        <span id="agentModeLabel">🤖 Agent Mode</span>
-        <button class="btn btn-ghost" id="agentBack">← 返回一般模式</button>
+        <span id="agentModeLabel" data-i18n="agentModeLabel">🤖 Agent Mode</span>
+        <button class="btn btn-ghost" id="agentBack" data-i18n="agentBack">← 返回一般模式</button>
       </div>
       <div id="agentTrace" class="md-render-host"></div>
       <div id="agentBar">
-        <input id="agentInput" type="text" placeholder="問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）" />
-        <button id="agentSend">送出</button>
-        <button class="btn btn-ghost" id="agentSaveSession" disabled>💾 存 Session</button>
+        <input id="agentInput" type="text" data-i18n-ph="agentInputPlaceholder" placeholder="問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）" />
+        <button id="agentSend" data-i18n="agentSend">送出</button>
+        <button class="btn btn-ghost" id="agentSaveSession" data-i18n="agentSaveSession" disabled>💾 存 Session</button>
       </div>
     </div>
 
     <aside id="agentExamples">
-      <div class="ag-side-head">範例</div>
+      <div class="ag-side-head" data-i18n="agentExamplesHeading">範例</div>
       <div id="agentExampleList"></div>
-      <div class="ag-side-head">送出紀錄</div>
-      <div id="agentSubmitList"><div class="ag-side-empty">尚無送出紀錄</div></div>
+      <div class="ag-side-head" data-i18n="agentSentHeading">送出紀錄</div>
+      <div id="agentSubmitList"><div class="ag-side-empty" data-i18n="agentEmptySubmits">尚無送出紀錄</div></div>
     </aside>
   </section>
 
@@ -680,6 +681,262 @@ Ctrl+Enter to format."></textarea>
   <script>
     const API = '__BASE_PATH__/api';
     const BASE = location.origin + '__BASE_PATH__';
+
+    // ── I18N ──
+    const I18N = {
+      en: {
+        // Topbar buttons
+        btnNew: '＋ New',
+        btnEdit: '✏️ Edit',
+        btnShare: '🔗 Share',
+        btnCopy: '📋 Copy',
+        btnDownload: '⬇️ .md',
+        btnAgent: '🤖 Agent',
+        btnSave: '💾 Save',
+        btnDiscard: '🗑 Discard',
+        btnFormat: '✨ Format',
+        btnReformat: '✨ Reformat',
+        // Topbar title attributes
+        titleAgentMode: 'Agent Mode',
+        titleToggleTheme: 'Toggle theme',
+        langToggleTitle: 'Switch language',
+        // Editor area
+        rawInputPlaceholder: 'Paste or type your raw notes here…\n\nCtrl+Enter to format.',
+        loadingText: 'Formatting…',
+        // Quick view
+        quickviewTitle: 'Quick View',
+        btnQvRestore: '↩ Restore',
+        titleQvClose: 'Close',
+        // Editor footer: mode badge labels
+        modeEdit: '✏️ Edit Mode',
+        modeView: '👁 View Mode',
+        modeCombine: '⊟ Combine Mode',
+        modeAgent: '🤖 Agent Mode',
+        // Editor footer: char count + status
+        charCount: '{count} chars',
+        statusTruncated: '⚠ Output truncated',
+        statusFormatted: '✓ Formatted',
+        statusError: '✗ Error',
+        statusSaved: '✓ Saved',
+        statusRestored: '↩ Restored',
+        // Tag section / cloud
+        tagsHeading: '🏷 Tags',
+        noTagsYet: 'No tags yet',
+        tagAll: 'All',
+        // Memo list (history) panel
+        historyHeading: 'Memo List',
+        btnClear: 'Clear',
+        btnClearConfirm: 'Confirm?',
+        historyEmpty: 'No formatted memos yet.\nWrite something and hit Format!',
+        historyEmptyTagged: 'No memos tagged "{tag}"',
+        // History item action button titles
+        titleCopyLink: 'Copy link',
+        titleDelete: 'Delete',
+        // Toasts
+        toastWriteFirst: 'Write something first!',
+        toastTruncated: 'Output truncated — original kept in history',
+        toastFormatted: 'Formatted!',
+        toastSaved: 'Saved!',
+        toastLinkCopied: '🔗 Link copied!',
+        toastCopied: 'Copied!',
+        toastDownloaded: 'Downloaded!',
+        toastMemoRestored: 'Memo restored',
+        toastSessionSaved: 'Session saved',
+        toastSavedAsMemo: 'Saved as memo',
+        toastCleared: 'Cleared — backed up {count} memo(s)',
+        toastMemoListCleared: 'Memo list cleared',
+        toastErrorPrefix: 'Error: {message}',
+        // confirm() dialogs
+        confirmOverwrite: 'Overwrite this memo?\n\nOK = overwrite the existing one\nCancel = save as a new memo',
+        confirmDiscard: 'Discard the current edits?',
+        // Fallback error messages (Error constructors)
+        errFormatFailed: 'Format failed',
+        errSaveFailed: 'Save failed',
+        errClearFailed: 'Clear failed',
+        // Agent panel: side headings
+        agentSavedSessions: 'Saved Sessions',
+        agentExamplesHeading: 'Examples',
+        agentSentHeading: 'Sent',
+        agentEmptySessions: 'No saved sessions yet',
+        agentEmptySubmits: 'No sent history yet',
+        // Agent panel: main
+        agentModeLabel: '🤖 Agent Mode',
+        agentBack: '← Back to normal mode',
+        agentInputPlaceholder: 'Ask your memo library, or have it organize / merge…（⌘/Ctrl + Enter to send）',
+        agentSend: 'Send',
+        agentSaveSession: '💾 Save Session',
+        // Agent: thinking
+        agentThinking: 'Thinking…',
+        // Agent: example prompts array
+        agentExamples: [
+          'Help me organize notes with similar tags into a summary',
+          'Search for notes related to "deployment" and list the key points',
+          'Merge my recent meeting notes into a single summary',
+          'List all current tags and their counts',
+          'Find related notes and suggest links between them',
+        ],
+        // Agent: proposal card
+        agentProposalPrefix: 'Proposal: {summary}',
+        agentApply: '✓ Apply',
+        agentSkip: '✗ Skip',
+        agentApplying: 'Applying…',
+        agentApplied: '✓ Applied',
+        agentOpenMemo: 'Open memo →',
+        // Agent: trace event labels
+        agentDone: '⏱ {steps} steps · {tokens} tokens',
+        agentResultFallback: 'Result',
+        // Agent: session item
+        agentSessionToMemo: '📝 Save as memo',
+        // Agent: per-item delete title
+        agentDeleteTitle: 'Delete',
+        // Agent: fallback error messages (Error constructors)
+        agentErrApplyFailed: 'Apply failed',
+        agentErrSaveFailed: 'Save failed',
+        agentErrFailed: 'Failed',
+        // Language toggle button visible label
+        langButtonLabel: '中文',
+      },
+      'zh-TW': {
+        // Topbar buttons
+        btnNew: '＋ 新增',
+        btnEdit: '✏️ 編輯',
+        btnShare: '🔗 分享',
+        btnCopy: '📋 複製',
+        btnDownload: '⬇️ .md',
+        btnAgent: '🤖 Agent',
+        btnSave: '💾 儲存',
+        btnDiscard: '🗑 捨棄',
+        btnFormat: '✨ 整理',
+        btnReformat: '✨ 重新整理',
+        // Topbar title attributes
+        titleAgentMode: 'Agent 模式',
+        titleToggleTheme: '切換主題',
+        langToggleTitle: '切換語言',
+        // Editor area
+        rawInputPlaceholder: '在此貼上或輸入你的原始筆記…\n\nCtrl+Enter 整理。',
+        loadingText: '整理中…',
+        // Quick view
+        quickviewTitle: '快速檢視',
+        btnQvRestore: '↩ 還原',
+        titleQvClose: '關閉',
+        // Editor footer: mode badge labels
+        modeEdit: '✏️ 編輯模式',
+        modeView: '👁 檢視模式',
+        modeCombine: '⊟ 並排模式',
+        modeAgent: '🤖 Agent 模式',
+        // Editor footer: char count + status
+        charCount: '{count} 字元',
+        statusTruncated: '⚠ 輸出已截斷',
+        statusFormatted: '✓ 已整理',
+        statusError: '✗ 錯誤',
+        statusSaved: '✓ 已儲存',
+        statusRestored: '↩ 已還原',
+        // Tag section / cloud
+        tagsHeading: '🏷 標籤',
+        noTagsYet: '尚無標籤',
+        tagAll: '全部',
+        // Memo list (history) panel
+        historyHeading: 'Memo List',
+        btnClear: '清空',
+        btnClearConfirm: '確定？',
+        historyEmpty: '尚無已整理的筆記。\n寫點東西並按整理！',
+        historyEmptyTagged: '沒有標籤為「{tag}」的筆記',
+        // History item action button titles
+        titleCopyLink: '複製連結',
+        titleDelete: '刪除',
+        // Toasts
+        toastWriteFirst: '先寫點東西吧！',
+        toastTruncated: '輸出已截斷 — 原文完整保留在 history',
+        toastFormatted: '已整理！',
+        toastSaved: '已儲存！',
+        toastLinkCopied: '🔗 連結已複製！',
+        toastCopied: '已複製！',
+        toastDownloaded: '已下載！',
+        toastMemoRestored: '筆記已還原',
+        toastSessionSaved: 'Session 已儲存',
+        toastSavedAsMemo: '已存成 memo',
+        toastCleared: '已清空 — 已備份 {count} 筆筆記',
+        toastMemoListCleared: 'Memo list 已清空',
+        toastErrorPrefix: '錯誤：{message}',
+        // confirm() dialogs
+        confirmOverwrite: '覆蓋目前這筆筆記？\n\n確定 = 覆蓋既有\n取消 = 另存為新筆記',
+        confirmDiscard: '捨棄目前的編輯內容？',
+        // Fallback error messages (Error constructors)
+        errFormatFailed: '整理失敗',
+        errSaveFailed: '儲存失敗',
+        errClearFailed: '清空失敗',
+        // Agent panel: side headings
+        agentSavedSessions: '已存 Session',
+        agentExamplesHeading: '範例',
+        agentSentHeading: '送出紀錄',
+        agentEmptySessions: '尚無已存 session',
+        agentEmptySubmits: '尚無送出紀錄',
+        // Agent panel: main
+        agentModeLabel: '🤖 Agent Mode',
+        agentBack: '← 返回一般模式',
+        agentInputPlaceholder: '問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）',
+        agentSend: '送出',
+        agentSaveSession: '💾 存 Session',
+        // Agent: thinking
+        agentThinking: '思考中…',
+        // Agent: example prompts array
+        agentExamples: [
+          '幫我把標籤相近的筆記整理成一篇總結',
+          '搜尋跟「部署」有關的筆記並條列重點',
+          '把最近的會議筆記合併成一份摘要',
+          '列出目前所有標籤與數量',
+          '找出彼此相關的筆記並建議連結',
+        ],
+        // Agent: proposal card
+        agentProposalPrefix: '提案：{summary}',
+        agentApply: '✓ 套用',
+        agentSkip: '✗ 略過',
+        agentApplying: '套用中…',
+        agentApplied: '✓ 已套用',
+        agentOpenMemo: '開啟筆記 →',
+        // Agent: trace event labels
+        agentDone: '⏱ {steps} 步 · {tokens} tokens',
+        agentResultFallback: '結果',
+        // Agent: session item
+        agentSessionToMemo: '📝 存成 memo',
+        // Agent: per-item delete title
+        agentDeleteTitle: '刪除',
+        // Agent: fallback error messages (Error constructors)
+        agentErrApplyFailed: '套用失敗',
+        agentErrSaveFailed: '儲存失敗',
+        agentErrFailed: '失敗',
+        // Language toggle button visible label
+        langButtonLabel: 'EN',
+      },
+    };
+    let lang = localStorage.getItem('md-memo-lang') || 'en';
+    function t(k) { const v = (I18N[lang] && I18N[lang][k]); return (v !== undefined ? v : I18N.en[k]) ?? k; }
+    function tf(k, vars) { let s = t(k); for (const [n, val] of Object.entries(vars || {})) s = s.replaceAll('{' + n + '}', val); return s; }
+    // Components in the agent IIFE register re-render hooks here so a live
+    // language toggle updates their already-rendered dynamic content.
+    window.__i18nRerender = window.__i18nRerender || [];
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.getAttribute('data-i18n-title')); });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = escHtml(t(el.getAttribute('data-i18n-html'))).replace(/\n/g, '<br>'); });
+      // Language toggle button shows the language it switches TO.
+      const langBtn = document.getElementById('btn-lang');
+      if (langBtn) langBtn.textContent = t('langButtonLabel');
+      // Re-render dynamic, JS-built strings.
+      if (typeof renderTagCloud === 'function') renderTagCloud();
+      if (typeof renderHistoryItems === 'function') renderHistoryItems();
+      // mode badge + char count reflect current state in the active language.
+      if (typeof modeBadge !== 'undefined' && modeBadge) {
+        const m = { edit: 'modeEdit', view: 'modeView', combine: 'modeCombine', agent: 'modeAgent' }[currentMode];
+        if (m) modeBadge.textContent = t(m);
+      }
+      if (typeof charCount !== 'undefined' && charCount) {
+        charCount.textContent = tf('charCount', { count: (rawInput.value.length).toLocaleString() });
+      }
+      window.__i18nRerender.forEach(fn => { try { fn(); } catch {} });
+    }
 
     // State
     let currentMarkdown = '';
@@ -728,8 +985,8 @@ Ctrl+Enter to format."></textarea>
     const modeBadge = document.getElementById('mode-badge');
     function setMode(mode) {
       currentMode = mode;
-      const labels = { edit: '✏️ Edit Mode', view: '👁 View Mode', combine: '⊟ Combine Mode', agent: '🤖 Agent Mode' };
-      if (modeBadge) modeBadge.textContent = labels[mode] || mode;
+      const labels = { edit: 'modeEdit', view: 'modeView', combine: 'modeCombine', agent: 'modeAgent' };
+      if (modeBadge) modeBadge.textContent = labels[mode] ? t(labels[mode]) : mode;
       updateEditControls();
     }
     // Save shows only when editing an existing memo; Discard only when the
@@ -755,6 +1012,14 @@ Ctrl+Enter to format."></textarea>
     applyTheme(localStorage.getItem('md-memo-theme') === 'light');
     btnTheme.addEventListener('click', () => applyTheme(!document.body.classList.contains('light')));
 
+    // ── LANGUAGE TOGGLE ──
+    const btnLang = document.getElementById('btn-lang');
+    btnLang.addEventListener('click', () => {
+      lang = (lang === 'en' ? 'zh-TW' : 'en');
+      localStorage.setItem('md-memo-lang', lang);
+      applyLang();
+    });
+
     // ── TOAST ──
     let toastTimer;
     function showToast(msg, type = '') {
@@ -766,7 +1031,7 @@ Ctrl+Enter to format."></textarea>
 
     // ── CHAR COUNT ──
     rawInput.addEventListener('input', () => {
-      charCount.textContent = rawInput.value.length.toLocaleString() + ' chars';
+      charCount.textContent = tf('charCount', { count: rawInput.value.length.toLocaleString() });
       updateEditControls();
     });
 
@@ -778,11 +1043,11 @@ Ctrl+Enter to format."></textarea>
 
     async function doFormat() {
       const text = rawInput.value.trim();
-      if (!text) { showToast('Write something first!', 'error'); return; }
+      if (!text) { showToast(t('toastWriteFirst'), 'error'); return; }
       // Reformatting a loaded memo: ask whether to overwrite it or save anew.
       let overwriteId = null;
       if (currentId != null) {
-        overwriteId = confirm('覆蓋目前這筆筆記？\n\n確定 = 覆蓋既有\n取消 = 另存為新筆記')
+        overwriteId = confirm(t('confirmOverwrite'))
           ? currentId : null;
       }
       setLoading(true);
@@ -793,7 +1058,7 @@ Ctrl+Enter to format."></textarea>
           body: JSON.stringify(overwriteId != null ? { text, id: overwriteId } : { text })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Format failed');
+        if (!res.ok) throw new Error(data.error || t('errFormatFailed'));
 
         currentMarkdown = data.markdown;
         currentTags = data.tags || [];
@@ -803,15 +1068,15 @@ Ctrl+Enter to format."></textarea>
         loadHistoryData();
         closeQuickView();
         if (data.truncated) {
-          statusText.textContent = '⚠ Output truncated';
-          showToast('Output truncated — original kept in history', 'warn');
+          statusText.textContent = t('statusTruncated');
+          showToast(t('toastTruncated'), 'warn');
         } else {
-          statusText.textContent = '✓ Formatted';
-          showToast('Formatted!', 'success');
+          statusText.textContent = t('statusFormatted');
+          showToast(t('toastFormatted'), 'success');
         }
       } catch (err) {
-        showToast('Error: ' + err.message, 'error');
-        statusText.textContent = '✗ Error';
+        showToast(tf('toastErrorPrefix', { message: err.message }), 'error');
+        statusText.textContent = t('statusError');
       } finally {
         setLoading(false);
       }
@@ -826,7 +1091,7 @@ Ctrl+Enter to format."></textarea>
       rawInput.style.display = 'none';
       exportBtns.style.display = 'flex';
       btnNew.style.display = '';
-      btnFormat.textContent = '✨ Re-format';
+      btnFormat.textContent = t('btnReformat');
       setMode('view');
     }
 
@@ -840,8 +1105,8 @@ Ctrl+Enter to format."></textarea>
       rawInput.value = '';
       exportBtns.style.display = 'none';
       btnNew.style.display = 'none';
-      btnFormat.textContent = '✨ Format';
-      charCount.textContent = '0 chars';
+      btnFormat.textContent = t('btnFormat');
+      charCount.textContent = tf('charCount', { count: (0).toLocaleString() });
       statusText.textContent = '';
       currentTagsEl.innerHTML = '';
       closeQuickView();
@@ -857,8 +1122,8 @@ Ctrl+Enter to format."></textarea>
       rawInput.style.display = '';
       exportBtns.style.display = 'none';
       rawInput.value = currentMarkdown;
-      charCount.textContent = currentMarkdown.length.toLocaleString() + ' chars';
-      btnFormat.textContent = currentId != null ? '✨ Reformat' : '✨ Format';
+      charCount.textContent = tf('charCount', { count: currentMarkdown.length.toLocaleString() });
+      btnFormat.textContent = currentId != null ? t('btnReformat') : t('btnFormat');
       statusText.textContent = '';
       setMode('edit');
       rawInput.focus();
@@ -874,21 +1139,21 @@ Ctrl+Enter to format."></textarea>
           body: JSON.stringify({ markdown, tags: currentTags })
         });
         const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Save failed');
+        if (!res.ok || !data.ok) throw new Error(data.error || t('errSaveFailed'));
         currentMarkdown = markdown;
         showPreview(currentMarkdown);
         renderCurrentTags(currentTags);
         loadHistoryData();
-        statusText.textContent = '✓ Saved';
-        showToast('Saved!', 'success');
+        statusText.textContent = t('statusSaved');
+        showToast(t('toastSaved'), 'success');
       } catch (err) {
-        showToast('Error: ' + err.message, 'error');
-        statusText.textContent = '✗ Error';
+        showToast(tf('toastErrorPrefix', { message: err.message }), 'error');
+        statusText.textContent = t('statusError');
       }
     });
 
     btnDiscard.addEventListener('click', () => {
-      if (!confirm('捨棄目前的編輯內容？')) return;
+      if (!confirm(t('confirmDiscard'))) return;
       if (quickViewEntry) closeQuickView();        // Combine: also close quick view
       if (currentId != null) {
         rawInput.value = currentMarkdown;          // revert textarea to last saved
@@ -910,7 +1175,7 @@ Ctrl+Enter to format."></textarea>
         ta.value = url; document.body.appendChild(ta); ta.select();
         document.execCommand('copy'); document.body.removeChild(ta);
       }
-      showToast('🔗 Link copied!', 'success');
+      showToast(t('toastLinkCopied'), 'success');
     });
 
     // ── COPY MARKDOWN ──
@@ -918,12 +1183,12 @@ Ctrl+Enter to format."></textarea>
       if (!currentMarkdown) return;
       try {
         await navigator.clipboard.writeText(currentMarkdown);
-        showToast('Copied!', 'success');
+        showToast(t('toastCopied'), 'success');
       } catch {
         const ta = document.createElement('textarea');
         ta.value = currentMarkdown; document.body.appendChild(ta); ta.select();
         document.execCommand('copy'); document.body.removeChild(ta);
-        showToast('Copied!', 'success');
+        showToast(t('toastCopied'), 'success');
       }
     });
 
@@ -936,14 +1201,14 @@ Ctrl+Enter to format."></textarea>
       const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       a.href = url; a.download = `memo-${ts}.md`; a.click();
       URL.revokeObjectURL(url);
-      showToast('Downloaded!', 'success');
+      showToast(t('toastDownloaded'), 'success');
     });
 
     // ── QUICK VIEW ──
     function openQuickView(entry) {
       quickViewEntry = entry;
       const rawPreview = (entry.preview || '').replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
-      qvTitle.textContent = rawPreview || 'Quick View';
+      qvTitle.textContent = rawPreview || t('quickviewTitle');
       qvContent.innerHTML = marked.parse(entry.markdown);
       qvPanel.classList.add('open');
       setMode('combine');
@@ -963,11 +1228,11 @@ Ctrl+Enter to format."></textarea>
       currentTags = quickViewEntry.tags || [];
       currentId = quickViewEntry.id;
       rawInput.value = quickViewEntry.raw;
-      charCount.textContent = quickViewEntry.raw.length.toLocaleString() + ' chars';
+      charCount.textContent = tf('charCount', { count: quickViewEntry.raw.length.toLocaleString() });
       showPreview(currentMarkdown);
       renderCurrentTags(currentTags);
-      statusText.textContent = '↩ Restored';
-      showToast('Memo restored', 'success');
+      statusText.textContent = t('statusRestored');
+      showToast(t('toastMemoRestored'), 'success');
       closeQuickView();
     });
 
@@ -1023,13 +1288,13 @@ Ctrl+Enter to format."></textarea>
 
       tagCloud.innerHTML = '';
       if (!tags.length) {
-        tagCloud.innerHTML = '<span style="font-size:12px;color:var(--text3);padding:4px 0">No tags yet</span>';
+        tagCloud.innerHTML = '<span data-i18n="noTagsYet" style="font-size:12px;color:var(--text3);padding:4px 0">' + escHtml(t('noTagsYet')) + '</span>';
         return;
       }
 
       const allChip = document.createElement('span');
       allChip.className = 'tag-filter-chip' + (!activeTagFilter ? ' active' : '');
-      allChip.innerHTML = `All <span class="tag-count">${history.length}</span>`;
+      allChip.innerHTML = `${escHtml(t('tagAll'))} <span class="tag-count">${history.length}</span>`;
       allChip.addEventListener('click', () => setTagFilter(null));
       tagCloud.appendChild(allChip);
 
@@ -1050,8 +1315,8 @@ Ctrl+Enter to format."></textarea>
       if (!filtered.length) {
         historyEmpty.style.display = '';
         historyEmpty.textContent = activeTagFilter
-          ? `No memos tagged "${activeTagFilter}"`
-          : 'No formatted memos yet.\nWrite something and hit Format!';
+          ? tf('historyEmptyTagged', { tag: activeTagFilter })
+          : t('historyEmpty');
         return;
       }
       historyEmpty.style.display = 'none';
@@ -1074,8 +1339,8 @@ Ctrl+Enter to format."></textarea>
           <div class="hi-preview">${escHtml(rawPreview)}</div>
           ${tagsHtml ? `<div class="hi-tags">${tagsHtml}</div>` : ''}
           <div class="hi-actions">
-            <button class="hi-action-btn share" title="Copy link">🔗</button>
-            <button class="hi-action-btn delete" title="Delete">✕</button>
+            <button class="hi-action-btn share" title="${escHtml(t('titleCopyLink'))}">🔗</button>
+            <button class="hi-action-btn delete" title="${escHtml(t('titleDelete'))}">✕</button>
           </div>
         `;
 
@@ -1088,7 +1353,7 @@ Ctrl+Enter to format."></textarea>
             ta.value = url; document.body.appendChild(ta); ta.select();
             document.execCommand('copy'); document.body.removeChild(ta);
           }
-          showToast('🔗 Link copied!', 'success');
+          showToast(t('toastLinkCopied'), 'success');
         });
 
         item.querySelector('.delete').addEventListener('click', async e => {
@@ -1117,11 +1382,11 @@ Ctrl+Enter to format."></textarea>
         currentTags = entry.tags || [];
         currentId = entry.id;
         rawInput.value = entry.raw;
-        charCount.textContent = entry.raw.length.toLocaleString() + ' chars';
+        charCount.textContent = tf('charCount', { count: entry.raw.length.toLocaleString() });
         showPreview(entry.markdown);
         renderCurrentTags(currentTags);
-        statusText.textContent = '↩ Restored';
-        showToast('Memo restored', 'success');
+        statusText.textContent = t('statusRestored');
+        showToast(t('toastMemoRestored'), 'success');
         closeQuickView();
       }
     }
@@ -1139,14 +1404,14 @@ Ctrl+Enter to format."></textarea>
     function disarmClear() {
       clearArmed = false;
       clearTimeout(clearTimer);
-      btnClearAll.textContent = 'Clear';
+      btnClearAll.textContent = t('btnClear');
       btnClearAll.style.color = 'var(--text2)';
     }
     btnClearAll.addEventListener('click', async () => {
       if (!history.length) return;
       if (!clearArmed) {
         clearArmed = true;
-        btnClearAll.textContent = 'Confirm?';
+        btnClearAll.textContent = t('btnClearConfirm');
         btnClearAll.style.color = 'var(--red)';
         clearTimer = setTimeout(disarmClear, 4000);
         return;
@@ -1155,15 +1420,15 @@ Ctrl+Enter to format."></textarea>
       try {
         const res = await fetch(`${API}/history/clear`, { method: 'POST' });
         const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error || 'Clear failed');
+        if (!res.ok || !data.ok) throw new Error(data.error || t('errClearFailed'));
         history = [];
         activeTagFilter = null;
         renderTagCloud();
         renderHistoryItems();
         closeQuickView();
-        showToast(data.backedUp ? `Cleared — backed up ${data.count} memo(s)` : 'Memo list cleared', 'success');
+        showToast(data.backedUp ? tf('toastCleared', { count: data.count }) : t('toastMemoListCleared'), 'success');
       } catch (err) {
-        showToast('Error: ' + err.message, 'error');
+        showToast(tf('toastErrorPrefix', { message: err.message }), 'error');
       }
     });
 
@@ -1174,6 +1439,7 @@ Ctrl+Enter to format."></textarea>
     loadHistoryData();
     rawInput.focus();
     setMode('edit');
+    applyLang();
   </script>
 
   <script>
@@ -1193,7 +1459,7 @@ Ctrl+Enter to format."></textarea>
     let pendingProposals = [];
     function showThinking() {
       hideThinking();
-      thinkingEl = el('div', 'ag-thinking', '<span class="ag-dots"><i></i><i></i><i></i></span><span>思考中…</span>');
+      thinkingEl = el('div', 'ag-thinking', '<span class="ag-dots"><i></i><i></i><i></i></span><span>' + esc(t('agentThinking')) + '</span>');
       trace.appendChild(thinkingEl);
       trace.scrollTop = trace.scrollHeight;
     }
@@ -1201,16 +1467,10 @@ Ctrl+Enter to format."></textarea>
 
     backBtn && backBtn.addEventListener('click', () => exitAgentMode());
 
-    const AGENT_EXAMPLES = [
-      '幫我把標籤相近的筆記整理成一篇總結',
-      '搜尋跟「部署」有關的筆記並條列重點',
-      '把最近的會議筆記合併成一份摘要',
-      '列出目前所有標籤與數量',
-      '找出彼此相關的筆記並建議連結',
-    ];
     function renderExamples() {
       exampleList.innerHTML = '';
-      for (const ex of AGENT_EXAMPLES) {
+      const examples = (I18N[lang] && I18N[lang].agentExamples) || I18N.en.agentExamples;
+      for (const ex of examples) {
         const item = el('div', 'ag-example-item', esc(ex));
         item.addEventListener('click', () => { input.value = ex; input.focus(); });
         exampleList.appendChild(item);
@@ -1225,13 +1485,13 @@ Ctrl+Enter to format."></textarea>
     function saveSubmitHistory() { try { localStorage.setItem(SUBMIT_KEY, JSON.stringify(submitHistory)); } catch {} }
     function renderSubmitHistory() {
       submitList.innerHTML = '';
-      if (!submitHistory.length) { submitList.innerHTML = '<div class="ag-side-empty">尚無送出紀錄</div>'; return; }
+      if (!submitHistory.length) { submitList.innerHTML = '<div class="ag-side-empty">' + esc(t('agentEmptySubmits')) + '</div>'; return; }
       for (const msg of submitHistory) {
         const item = el('div', 'ag-example-item');
         item.title = msg;
         item.appendChild(el('span', 'ag-submit-text', esc(msg)));
         const del = el('button', 'ag-submit-del', '✕');
-        del.title = '刪除';
+        del.title = t('agentDeleteTitle');
         del.addEventListener('click', (e) => { e.stopPropagation(); removeSubmit(msg); });
         item.appendChild(del);
         item.addEventListener('click', () => { input.value = msg; input.focus(); });
@@ -1260,25 +1520,25 @@ Ctrl+Enter to format."></textarea>
 
     function renderProposal(data) {
       const card = el('div', 'ag-proposal');
-      card.appendChild(el('div', 'ag-proposal-title', `提案：${esc(data.summary)}`));
+      card.appendChild(el('div', 'ag-proposal-title', tf('agentProposalPrefix', { summary: esc(data.summary) })));
       const actions = el('div', 'ag-proposal-actions');
-      const apply = el('button', 'ag-apply', '✓ 套用');
-      const skip = el('button', 'ag-skip', '✗ 略過');
+      const apply = el('button', 'ag-apply', t('agentApply'));
+      const skip = el('button', 'ag-skip', t('agentSkip'));
       actions.appendChild(apply); actions.appendChild(skip);
       card.appendChild(actions); trace.appendChild(card);
 
       skip.addEventListener('click', () => { card.classList.add('ag-skipped'); apply.disabled = skip.disabled = true; });
       apply.addEventListener('click', async () => {
-        apply.disabled = skip.disabled = true; apply.textContent = '套用中…';
+        apply.disabled = skip.disabled = true; apply.textContent = t('agentApplying');
         try {
           const r = await fetch(`${BASE}/api/agent/apply`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: data.action, args: data.args }),
           });
           const j = await r.json();
-          if (!r.ok || !j.ok) throw new Error(j.error || '套用失敗');
-          apply.textContent = '✓ 已套用';
-          if (j.id) { const a = el('a', 'ag-permalink', '開啟筆記 →'); a.href = `${BASE}/m/${j.id}`; a.target = '_blank'; card.appendChild(a); }
+          if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrApplyFailed'));
+          apply.textContent = t('agentApplied');
+          if (j.id) { const a = el('a', 'ag-permalink', t('agentOpenMemo')); a.href = `${BASE}/m/${j.id}`; a.target = '_blank'; card.appendChild(a); }
           loadHistoryData();                       // 刷新 in-memory 快取，退出 agent mode 後 Memo List 立即可見
         } catch (e) { apply.textContent = '✗ ' + e.message; apply.disabled = skip.disabled = false; }
       });
@@ -1298,7 +1558,7 @@ Ctrl+Enter to format."></textarea>
         d.appendChild(el('pre', null, esc(JSON.stringify(data.args, null, 2)))); trace.appendChild(d);
       }
       else if (ev === 'tool_result') {
-        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, `📋 ${esc(data.name || '結果')}`));
+        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, `📋 ${esc(data.name || t('agentResultFallback'))}`));
         d.appendChild(el('pre', null, esc(JSON.stringify(data.result, null, 2)))); trace.appendChild(d);
       } else if (ev === 'proposal') pendingProposals.push(data);
       else if (ev === 'answer') {
@@ -1306,7 +1566,7 @@ Ctrl+Enter to format."></textarea>
         a.innerHTML = window.marked ? marked.parse(data.content || '') : esc(data.content || '');
         trace.appendChild(a);
         flushProposals();                       // proposals render AFTER the summary
-      } else if (ev === 'done') { trace.appendChild(el('div', 'ag-done', `⏱ ${data.steps} 步 · ${data.tokens} tokens`)); flushProposals(); }
+      } else if (ev === 'done') { trace.appendChild(el('div', 'ag-done', esc(tf('agentDone', { steps: data.steps, tokens: data.tokens })))); flushProposals(); }
       else if (ev === 'error') { trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`)); flushProposals(); }
       if (thinkingEl && ev !== 'done' && ev !== 'error') trace.appendChild(thinkingEl);
       trace.scrollTop = trace.scrollHeight;
@@ -1366,10 +1626,10 @@ Ctrl+Enter to format."></textarea>
           body: JSON.stringify(currentSession),
         });
         const j = await r.json();
-        if (!r.ok || !j.ok) throw new Error(j.error || '儲存失敗');
-        showToast('Session 已儲存', 'success');
+        if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrSaveFailed'));
+        showToast(t('toastSessionSaved'), 'success');
         loadSessions();
-      } catch (e) { showToast('Error: ' + e.message, 'error'); saveSessionBtn.disabled = false; }
+      } catch (e) { showToast(tf('toastErrorPrefix', { message: e.message }), 'error'); saveSessionBtn.disabled = false; }
     });
 
     function openSession(session) {
@@ -1387,25 +1647,25 @@ Ctrl+Enter to format."></textarea>
           body: JSON.stringify({ action: 'create_memo', args: { markdown: md, tags: ['agent'] } }),
         });
         const j = await r.json();
-        if (!r.ok || !j.ok) throw new Error(j.error || '失敗');
-        showToast('已存成 memo', 'success');
+        if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrFailed'));
+        showToast(t('toastSavedAsMemo'), 'success');
         loadHistoryData();
-      } catch (e) { showToast('Error: ' + e.message, 'error'); }
+      } catch (e) { showToast(tf('toastErrorPrefix', { message: e.message }), 'error'); }
     }
 
     function renderSessionList(list) {
       sessionList.innerHTML = '';
-      if (!list.length) { sessionList.innerHTML = '<div class="ag-side-empty">尚無已存 session</div>'; return; }
+      if (!list.length) { sessionList.innerHTML = '<div class="ag-side-empty">' + esc(t('agentEmptySessions')) + '</div>'; return; }
       for (const s of list) {
         const item = el('div', 'ag-session-item');
         const d = new Date(s.createdAt);
-        const t = d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' +
+        const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' +
           d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
         item.innerHTML =
           `<div class="ag-session-q">${esc(s.question)}</div>` +
-          `<div class="ag-session-time">${t}</div>` +
-          `<span class="ag-session-tomemo">📝 存成 memo</span>` +
-          `<button class="ag-session-del" title="刪除">✕</button>`;
+          `<div class="ag-session-time">${timeStr}</div>` +
+          `<span class="ag-session-tomemo">${esc(t('agentSessionToMemo'))}</span>` +
+          `<button class="ag-session-del" title="${esc(t('agentDeleteTitle'))}">✕</button>`;
         item.addEventListener('click', (e) => {
           if (e.target.closest('.ag-session-del') || e.target.closest('.ag-session-tomemo')) return;
           openSession(s);
@@ -1430,6 +1690,10 @@ Ctrl+Enter to format."></textarea>
       } catch {}
     }
     loadSessions();
+
+    // Register re-render hooks so a live language toggle (applyLang) refreshes
+    // this panel's JS-built dynamic content.
+    window.__i18nRerender.push(renderExamples, renderSubmitHistory, loadSessions);
 
     sendBtn && sendBtn.addEventListener('click', run);
     input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run(); });
