@@ -1279,6 +1279,7 @@ Ctrl+Enter to format."></textarea>
           if (!r.ok || !j.ok) throw new Error(j.error || '套用失敗');
           apply.textContent = '✓ 已套用';
           if (j.id) { const a = el('a', 'ag-permalink', '開啟筆記 →'); a.href = `${BASE}/m/${j.id}`; a.target = '_blank'; card.appendChild(a); }
+          loadHistoryData();                       // 刷新 in-memory 快取，退出 agent mode 後 Memo List 立即可見
         } catch (e) { apply.textContent = '✗ ' + e.message; apply.disabled = skip.disabled = false; }
       });
     }
