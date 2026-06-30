@@ -1,3 +1,5 @@
+**English** · [繁體中文](./README.zh-TW.md)
+
 # Demo build
 
 Static, backend-free showcase of md-memo for GitHub Pages. AI responses are pre-recorded.

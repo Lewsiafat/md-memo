@@ -1,3 +1,5 @@
+**English** · [繁體中文](./README.zh-TW.md)
+
 # md-memo
 
 A lightweight markdown memo tool with AI-powered formatting. Write in plain text, get back clean structured markdown instantly.
