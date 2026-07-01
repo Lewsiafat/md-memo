@@ -17,40 +17,54 @@ export function renderPermalink(entry, basePath) {
   <title>${preview} — md-memo</title>
   <meta property="og:title" content="${preview}">
   <meta property="og:description" content="Shared via md-memo">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     :root {
-      --bg:#f7f5f0; --surface:#fff; --border:#e5e0d5;
-      --text:#1a1814; --text2:#888070; --accent:#6c5ce7;
-      --mono:'JetBrains Mono','Fira Code',monospace;
+      --bg:#ece8de; --surface:#f5f1e8; --border:#d9d2c1;
+      --text:#23211b; --text2:#5a5447; --text3:#a89f8c;
+      --accent:#936f33; --accent-h:#7e5e29; --accent-line:rgba(147,111,51,.4);
+      --code-bg:#eae3d3;
+      --serif-display:'Instrument Serif',Georgia,'Songti TC',serif;
+      --serif-body:'Literata',Georgia,'Songti TC',serif;
+      --mono:'IBM Plex Mono',ui-monospace,'Menlo',monospace;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:-apple-system,'PingFang TC',sans-serif;line-height:1.7;min-height:100vh}
-    header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px}
-    header a{font-size:14px;font-weight:800;color:var(--accent);text-decoration:none;letter-spacing:.04em}
-    header a span{color:#aaa;font-weight:400}
-    .meta{margin-left:auto;font-size:12px;color:var(--text2)}
+    body{background:var(--bg);color:var(--text);font-family:var(--serif-body);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:12px}
+    header a{display:inline-flex;align-items:center;gap:10px;font-family:var(--serif-display);font-size:26px;font-weight:400;color:var(--text);text-decoration:none;letter-spacing:.005em;line-height:1}
+    header a::before{content:"";width:10px;height:10px;border:1.1px solid var(--accent);border-radius:50%;background:radial-gradient(circle,var(--accent) 0 1.3px,transparent 1.6px);flex-shrink:0}
+    header a span{color:var(--accent);font-weight:400}
+    .meta{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text2)}
     .tags{display:flex;gap:6px;flex-wrap:wrap;margin-left:8px}
-    .tag{font-size:11px;padding:2px 9px;border-radius:20px;background:#6c5ce715;color:var(--accent);border:1px solid #6c5ce730;font-weight:600}
-    main{max-width:740px;margin:48px auto;padding:0 24px 80px}
-    .copy-btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:32px;text-decoration:none;transition:opacity .15s}
-    .copy-btn:hover{opacity:.85}
-    .md h1,.md h2,.md h3,.md h4{font-weight:700;margin:1.3em 0 .45em;line-height:1.3;color:var(--text)}
-    .md h1{font-size:1.7em;border-bottom:1px solid var(--border);padding-bottom:.3em}
-    .md h2{font-size:1.3em}.md h3{font-size:1.1em}
-    .md p{margin:.65em 0}
-    .md ul,.md ol{margin:.65em 0 .65em 1.5em}.md li{margin:.3em 0}
-    .md code{background:#f0ece4;color:#5a4fcf;padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:.87em}
-    .md pre{background:#f5f2ec;border:1px solid var(--border);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:.9em 0}
-    .md pre code{background:none;padding:0;color:#333;font-size:.87em}
-    .md blockquote{border-left:3px solid var(--accent);margin:.9em 0;padding:.35em .9em;color:var(--text2);font-style:italic;background:#f9f7ff;border-radius:0 6px 6px 0}
+    .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:2px;background:transparent;color:var(--text2);border:1px solid var(--border)}
+    main{max-width:680px;margin:52px auto;padding:0 28px 80px}
+    .copy-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:var(--bg);border:none;border-radius:2px;padding:9px 18px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-bottom:36px;text-decoration:none;transition:background .15s}
+    .copy-btn:hover{background:var(--accent-h)}
+    .md h1,.md h2{font-family:var(--serif-display);font-weight:400;line-height:1.1;letter-spacing:.005em;margin:1.1em 0 .4em;color:var(--text)}
+    .md h3,.md h4{font-family:var(--serif-body);font-weight:600;margin:1.3em 0 .4em;line-height:1.3;color:var(--text)}
+    .md h1{font-size:2.2em;margin-top:.1em}
+    .md h2{font-size:1.55em;display:flex;align-items:center;gap:.5em}
+    .md h2::before{content:"";width:7px;height:7px;background:var(--accent);transform:rotate(45deg);flex-shrink:0}
+    .md h3{font-size:1.12em}
+    .md p{margin:.7em 0}
+    .md ol{margin:.7em 0 .7em 1.4em}.md li{margin:.32em 0}
+    .md ul{list-style:none;margin:.7em 0;padding-left:0}
+    .md ul li{position:relative;padding-left:22px}
+    .md ul li::before{content:"";position:absolute;left:3px;top:.64em;width:5px;height:5px;background:var(--accent);transform:rotate(45deg)}
+    .md code{background:var(--code-bg);color:var(--accent-h);padding:1px 6px;border-radius:3px;border:1px solid var(--border);font-family:var(--mono);font-size:.82em}
+    .md pre{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:14px 16px;overflow-x:auto;margin:.9em 0}
+    .md pre code{background:none;border:none;padding:0;color:var(--text);font-size:.85em}
+    .md blockquote{border-left:2px solid var(--accent);margin:.9em 0;padding:.2em 0 .2em 1.1em;color:var(--text2);font-style:italic}
     .md table{border-collapse:collapse;width:100%;margin:.9em 0;font-size:.9em}
     .md th,.md td{border:1px solid var(--border);padding:7px 12px;text-align:left}
-    .md th{background:#f5f2ec;font-weight:600}
+    .md th{background:var(--surface);font-weight:600}
     .md hr{border:none;border-top:1px solid var(--border);margin:1.4em 0}
-    .md strong{font-weight:700}
+    .md strong{font-weight:600;color:var(--text)}
     .md a{color:var(--accent)}
-    footer{text-align:center;padding:24px;font-size:12px;color:var(--text2);border-top:1px solid var(--border)}
+    footer{text-align:center;padding:24px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text2);border-top:1px solid var(--border)}
     footer a{color:var(--accent);text-decoration:none}
   </style>
 </head>
