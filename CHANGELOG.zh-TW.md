@@ -9,7 +9,8 @@
 
 開源發布整備：完整實作 `docs/md-memo-code-review.md` 全面審查的所有發現
 （R-01–R-02 發布阻斷、S-01–S-05 安全、B-01–B-04 bug、P-01–P-04 打磨；
-P-05 git 歷史密鑰掃描已執行——乾淨）。
+P-05 git 歷史密鑰掃描已執行——乾淨）。同時隨附全新「Colophon」視覺設計
+（見下方 Changed）。
 
 ### Added
 - **`LICENSE`（MIT）** 與 `package.json` 中繼資料 — `license`、`author`、`repository`、
@@ -41,6 +42,20 @@ P-05 git 歷史密鑰掃描已執行——乾淨）。
 - **`parseTags` 容許含 `>` 的標籤** — regex 改為 lazy match 至 `-->`。（B-04）
 
 ### Changed
+- **全新「Colophon」視覺設計** — 一套暖色紙感的外觀，套用到 SPA（`public/index.html`）
+  與伺服器渲染的永久連結頁（`src/permalink.js`）。三字體系統（**Instrument Serif** 用於
+  logo 與標題、**Literata** 用於內文／閱讀文字、**IBM Plex Mono** 用於所有 UI chrome）、
+  暖羊皮紙色票搭配 golden-brown 強調色（Light「Writing」）與炭黑 Dark「Reading」主題、
+  方角、菱形 bullet、單一左側 margin rule 的開放式書寫面（無框 textarea）、mono 大寫小標。
+  純換皮膚 — 不動 DOM、API、agent loop、路由或資料流。透過 Design MCP 從 claude.ai/design
+  專案匯入。Memo List 面板加寬至 372px，閱讀欄改為貼齊 margin rule 的左對齊。零新依賴 —
+  字體走 Google Fonts CDN，與既有 `marked` CDN 用法一致；靜態 GitHub Pages demo 會自動
+  跟隨 SPA 改動，並以新樣式重新產生永久連結頁。
+- **預設主題改為 Light「Writing」**（原為 Dark）。顯式選擇 `dark` 仍會透過 localStorage
+  保存 — init 改為 `applyTheme(localStorage.getItem('md-memo-theme') !== 'dark')`。
+- **字數僅在書寫情境顯示** — footer 的字數計數現在只在 Edit 與 Combine 模式出現（由
+  `setMode()` 設定的 `body.mode-*` class 控制），不再與 View mode 顯示的 memo tags 重疊。
+- **Topbar 版面** — 主題（☀️/🌙）與語言（中文/EN）切換鈕移到 ✨ Format 按鈕的右側。
 - **後端 agent 字串跟隨 `AGENT_LANG`** — proposal 摘要與步數上限訊息預設英文；
   `zh*` 語系（預設 `zh-TW`）維持原繁體中文。（P-01）
 - README 新增 Design Docs 段落，指向 `specs/` 與 `docs/plans/`。（P-04）

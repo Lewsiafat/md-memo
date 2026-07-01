@@ -15,7 +15,7 @@ A lightweight markdown memo tool with AI-powered formatting. Write in plain text
 - 🏷️ **Auto tags** — AI generates relevant tags automatically
 - 📋 **Copy to clipboard** — markdown or plain text
 - 🔗 **Permalink** — shareable URL for each memo (`/md-memo/m/:id`)
-- 🌙 **Dark / Light theme** — toggle with localStorage persistence
+- 🎨 **Colophon design** — a warm, paper-like aesthetic (Instrument Serif / Literata / IBM Plex Mono); **Light "Writing" is the default**, with a Dark "Reading" theme toggle (localStorage-persisted)
 - 📚 **Memo List** — last 50 memos with tag cloud filter; safe Clear All keeps a timestamped backup
 - ✏️ **Edit existing memos** — open a saved memo and **Save** (verbatim overwrite, no AI), **Reformat** (re-run the AI, then overwrite the entry or save as a new one), or **Discard**
 - 🔍 **Quick view** — preview history items without leaving the editor
@@ -25,6 +25,7 @@ A lightweight markdown memo tool with AI-powered formatting. Write in plain text
 
 - **Backend**: Node.js + Express (ES Modules)
 - **Frontend**: Vanilla JS, no framework, no build step
+- **Type**: Instrument Serif · Literata · IBM Plex Mono (Google Fonts CDN)
 - **AI**: [OpenRouter](https://openrouter.ai) (bring your own key, any model)
 - **Storage**: JSON file (no database needed)
 

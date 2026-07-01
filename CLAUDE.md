@@ -67,7 +67,7 @@ AI 不回傳結構化 tags 欄位。系統 prompt（`src/index.js` 內 `/api/for
 
 markdown 在兩個地方各自渲染、CSS 各自獨立、互不影響：
 
-1. **SPA**（`public/index.html`）——客戶端 `marked`，支援 dark/light 切換，狀態機在 editor / preview 模式間切換（`isPreviewMode`），另有 quick view 面板可預覽 history 而不離開編輯器。樣式用 `.md-render` class。
+1. **SPA**（`public/index.html`）——客戶端 `marked`，支援 dark/light 切換（**預設 light「Writing」**，Colophon 設計，字體用 Instrument Serif / Literata / IBM Plex Mono），狀態機在 editor / preview 模式間切換（`isPreviewMode`），另有 quick view 面板可預覽 history 而不離開編輯器。樣式用 `.md-render` class。
 2. **永久連結頁**（`src/permalink.js` 的 `renderPermalink(entry, basePath)`，由 `src/index.js` 的 `GET /m/:id` handler 與 demo build 共用）——用 template string 產出一份**完全獨立、自包含**的 HTML（只有 light theme），CSS 是另一份複製。
 
 改前端樣式不會影響永久連結頁，反之亦然——兩邊要分別改。

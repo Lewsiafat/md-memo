@@ -10,6 +10,7 @@ All notable changes to this project are documented here, following
 Open-source release readiness: implements every finding from the full code review in
 `docs/md-memo-code-review.md` (R-01–R-02 release blockers, S-01–S-05 security,
 B-01–B-04 bugs, P-01–P-04 polish; P-05 git-history secret scan performed — clean).
+Also ships the new "Colophon" visual redesign (see Changed below).
 
 ### Added
 - **`LICENSE` (MIT)** plus `package.json` metadata — `license`, `author`, `repository`,
@@ -44,6 +45,27 @@ B-01–B-04 bugs, P-01–P-04 polish; P-05 git-history secret scan performed —
 - **`parseTags` accepts tags containing `>`** — lazy regex match up to `-->`. (B-04)
 
 ### Changed
+- **New "Colophon" visual design** — a warm, paper-like aesthetic applied across the SPA
+  (`public/index.html`) and the server-rendered permalink page (`src/permalink.js`).
+  A three-typeface system (**Instrument Serif** for the wordmark and headings,
+  **Literata** for body / reading text, **IBM Plex Mono** for all UI chrome), a warm
+  parchment palette with a golden-brown accent (Light "Writing") plus a charcoal Dark
+  "Reading" theme, square corners, diamond bullets, an open writing surface with a single
+  left margin rule (no boxed textarea), and mono small-caps section labels. Purely a
+  restyle — no DOM, API, agent-loop, routing, or data-flow changes. Imported from a
+  claude.ai/design project via the Design MCP. The Memo List panel widens to 372px and the
+  reading column is left-aligned against the margin rule. Zero new dependencies — fonts
+  load from the Google Fonts CDN, consistent with the existing `marked` CDN usage; the
+  static GitHub Pages demo picks up the SPA restyle automatically and regenerates the
+  permalink pages with the new styling.
+- **Light "Writing" is now the default theme** (previously Dark). An explicit `dark`
+  choice still persists via localStorage — the init flips to `applyTheme(localStorage
+  .getItem('md-memo-theme') !== 'dark')`.
+- **Char count is scoped to writing contexts** — the footer counter now shows only in Edit
+  and Combine modes (driven by a `body.mode-*` class set in `setMode()`), so it no longer
+  overlaps the memo's tags shown in View mode.
+- **Top-bar layout** — the theme (☀️/🌙) and language (中文/EN) toggles moved to the right
+  of the ✨ Format button.
 - **Backend agent strings follow `AGENT_LANG`** — proposal summaries and the step-limit
   message default to English; `zh*` locales (default `zh-TW`) keep the original
   Traditional Chinese. (P-01)

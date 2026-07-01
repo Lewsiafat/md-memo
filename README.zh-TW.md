@@ -15,7 +15,7 @@
 - 🏷️ **自動標籤** — AI 自動產生相關標籤
 - 📋 **複製到剪貼簿** — markdown 或純文字
 - 🔗 **永久連結** — 每筆筆記皆有可分享的網址（`/md-memo/m/:id`）
-- 🌙 **深色 / 淺色主題** — 以 localStorage 持久化切換
+- 🎨 **Colophon 設計** — 暖色紙感外觀（Instrument Serif / Literata / IBM Plex Mono）；**預設為淺色「Writing」**，可切換深色「Reading」主題（以 localStorage 持久化）
 - 📚 **Memo List** — 最近 50 筆筆記，附標籤雲篩選；安全的 Clear All 會保留帶時間戳的備份
 - ✏️ **編輯既有筆記** — 開啟已存的筆記並可 **Save**（原樣覆蓋，不跑 AI）、**Reformat**（重跑 AI，接著覆蓋該筆或另存為新筆記）或 **Discard**
 - 🔍 **快速檢視** — 不離開編輯器即可預覽 history 項目
@@ -25,6 +25,7 @@
 
 - **後端**：Node.js + Express（ES Modules）
 - **前端**：Vanilla JS，無框架、無 build step
+- **字體**：Instrument Serif · Literata · IBM Plex Mono（Google Fonts CDN）
 - **AI**：[OpenRouter](https://openrouter.ai)（自帶 key，任意模型）
 - **儲存**：JSON 檔案（不需資料庫）
 
