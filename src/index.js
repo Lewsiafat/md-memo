@@ -173,6 +173,7 @@ app.post(`${BASE_PATH}/api/sessions`, (req, res) => {
 // DELETE /md-memo/api/sessions/:id — remove a saved session
 app.delete(`${BASE_PATH}/api/sessions/:id`, (req, res) => res.json(deleteSession(req.params.id)));
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`md-memo running on http://127.0.0.1:${PORT}${BASE_PATH}`);
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
+  console.log(`md-memo running on http://${HOST}:${PORT}${BASE_PATH}`);
 });

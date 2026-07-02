@@ -54,6 +54,7 @@ npm start
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `10026` | Server port |
+| `HOST` | `127.0.0.1` | Bind address — set `0.0.0.0` when deploying to Railway/Render/Docker (enable auth first!) |
 | `BASE_PATH` | `/md-memo` | URL base path |
 | `OPENROUTER_API_KEY` | — | Your OpenRouter API key (required for AI) |
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter model ID |

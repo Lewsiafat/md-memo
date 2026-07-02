@@ -54,6 +54,7 @@ npm start
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `10026` | 伺服器埠號 |
+| `HOST` | `127.0.0.1` | 綁定位址——部署到 Railway/Render/Docker 時設 `0.0.0.0`（請先啟用 auth！） |
 | `BASE_PATH` | `/md-memo` | URL base path |
 | `OPENROUTER_API_KEY` | — | 你的 OpenRouter API key（AI 必需） |
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter 模型 ID |
