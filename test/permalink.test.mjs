@@ -26,3 +26,15 @@ test('renderPermalink strips heading marks and escapes angle brackets in the tit
   const html = renderPermalink({ ...entry, preview: '## A <x> B' }, '/md-memo');
   assert.ok(html.includes('<title>A &lt;x&gt; B — md-memo</title>'));
 });
+
+test('renderPermalink escapes XSS vectors in markdown, tags, and preview', () => {
+  const html = renderPermalink({
+    ...entry,
+    markdown: '</script><script>alert(1)</script>',
+    tags: ['<img src=x onerror=1>'],
+    preview: 'x" onload="alert(1)',
+  }, '/md-memo');
+  assert.ok(!html.includes('</script><script>'));
+  assert.ok(!html.includes('<img src=x'));
+  assert.ok(!html.includes('content="x" onload='));
+});
