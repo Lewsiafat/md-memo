@@ -17,13 +17,13 @@ npm run smoke                        # 無 API key 的 agent 整合 smoke
 npm run build:demo                   # 產出靜態 demo bundle 到 dist-demo/（GitHub Pages 用）
 ```
 
-開啟 http://localhost:10026/md-memo/ 。沒有 lint、沒有 build；測試見下方 Agent 段落（`node --test`）。
+開啟 http://localhost:10026/md-memo/ 。沒有 lint、沒有 build；測試見下方 Agent 段落（`node --test`）。CI（`.github/workflows/test.yml`）在 push main 與 PR 時跑 `npm test` 與 `npm run smoke`。
 
 ### 環境變數
 
-`npm start` / `npm run dev` 以 `node --env-file-if-exists=.env` 啟動：專案根目錄的 `.env`（若存在）自動載入，沒有 `.env`（例如 Railway/Render 改用平台 env vars）也不會 crash。沒裝 dotenv，靠 Node 內建（需 20.12+）。
+`npm start` / `npm run dev` 以 `node --env-file-if-exists=.env` 啟動：專案根目錄的 `.env`（若存在）自動載入，沒有 `.env`（例如 Railway/Render 改用平台 env vars）也不會 crash。沒裝 dotenv，靠 Node 內建（`--env-file-if-exists` 需 22.9+，`package.json` 已聲明 `engines`）。
 
-變數：`OPENROUTER_API_KEY`（AI 必需）、`PORT`（預設 10026）、`BASE_PATH`（預設 `/md-memo`，見下）、`AI_MODEL`（`/api/format` 用，預設 `deepseek/deepseek-v4-flash`）、`AI_MAX_TOKENS`（`/api/format` 輸出上限，預設 `32768`；模型仍可能因自身上限截斷，此時回傳 `truncated:true`，前端警告且 history 保留完整原文）、`AGENT_MODEL`（agent 用，須支援 tools；未設則 fallback `AI_MODEL`，再無則 `deepseek/deepseek-v4-pro`）、`AGENT_LANG`（agent 回應語言，BCP-47，預設 `zh-TW`）、`AUTH_ENABLED`（選用 HTTP Basic Auth 開關，預設 `false`）、`AUTH_PASSWORD`（啟用時的密碼，username 任意忽略）。`AUTH_ENABLED=true` 時保護整個 app 與所有 `/api/*`，但永久連結 `/m/:id` 維持公開；`AUTH_ENABLED=true` 卻沒設 `AUTH_PASSWORD` 則不啟用（warn，避免空密碼或誤鎖）。middleware 在 `src/auth.js`，於 `src/index.js` 最前面 `app.use`。
+變數：`OPENROUTER_API_KEY`（AI 必需）、`PORT`（預設 10026）、`HOST`（綁定位址，預設 `127.0.0.1`；部署 Railway/Render/Docker 時設 `0.0.0.0`）、`BASE_PATH`（預設 `/md-memo`，見下）、`AI_MODEL`（`/api/format` 用，預設 `deepseek/deepseek-v4-flash`）、`AI_MAX_TOKENS`（`/api/format` 輸出上限，預設 `32768`；模型仍可能因自身上限截斷，此時回傳 `truncated:true`，前端警告且 history 保留完整原文）、`AGENT_MODEL`（agent 用，須支援 tools；未設則 fallback `AI_MODEL`，再無則 `deepseek/deepseek-v4-pro`）、`AGENT_LANG`（agent 回應語言，BCP-47，預設 `zh-TW`；非 `zh*` 時後端產生的 proposal 摘要與步數上限訊息也改用英文）、`AUTH_ENABLED`（選用 HTTP Basic Auth 開關，預設 `false`）、`AUTH_PASSWORD`（啟用時的密碼，username 任意忽略）。`AUTH_ENABLED=true` 時保護整個 app 與所有 `/api/*`，但永久連結 `/m/:id` 維持公開；`AUTH_ENABLED=true` 卻沒設 `AUTH_PASSWORD` 則不啟用（warn，避免空密碼或誤鎖）。middleware 在 `src/auth.js`，於 `src/index.js` 最前面 `app.use`。
 
 ## 架構
 
@@ -85,4 +85,4 @@ markdown 在兩個地方各自渲染、CSS 各自獨立、互不影響：
 ## 部署設定與限制
 
 - **`BASE_PATH`** 由 `process.env.BASE_PATH` 控制（預設 `/md-memo`）。前端讀不到 `process.env`，所以機制是：`public/index.html` 用 `__BASE_PATH__` placeholder，後端服務 SPA 時讀檔做字串替換後再回傳（`src/index.js` 裡組出 `indexHtml` 的那段，掛在 `express.static` 之前攔截 `BASE_PATH` 根路徑）。**在 index.html 新增任何路徑相關字串時務必用 `__BASE_PATH__`**，否則換 base path 部署會連錯。permalink 頁（`renderPermalink`）的 basePath 由參數傳入（server 傳 `BASE_PATH`，demo build 傳 `/md-memo`）。
-- server 只綁 `127.0.0.1`（`src/index.js` 結尾的 `app.listen`），外部存取需自行架反向代理（nginx 等）。
+- server 預設綁 `127.0.0.1`（`src/index.js` 結尾的 `app.listen`），可用 `HOST` 環境變數覆寫（如 `HOST=0.0.0.0` 供 Railway/Render/Docker）；本機部署的外部存取需自行架反向代理（nginx 等）。

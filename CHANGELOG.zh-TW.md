@@ -5,6 +5,47 @@
 本專案所有重要變更皆記錄於此，遵循
 [Keep a Changelog](https://keepachangelog.com/) 與 [Semantic Versioning](https://semver.org/)。
 
+## [1.5.0] - 2026-07-02
+
+開源發布整備：完整實作 `docs/md-memo-code-review.md` 全面審查的所有發現
+（R-01–R-02 發布阻斷、S-01–S-05 安全、B-01–B-04 bug、P-01–P-04 打磨；
+P-05 git 歷史密鑰掃描已執行——乾淨）。
+
+### Added
+- **`LICENSE`（MIT）** 與 `package.json` 中繼資料 — `license`、`author`、`repository`、
+  `keywords`、`engines`（`node >= 22.9.0`，`--env-file-if-exists` 所需）；README 已標明
+  Node 版本前置需求。（R-01/R-02）
+- **`HOST` 環境變數**控制綁定位址（預設仍為 `127.0.0.1`）；部署 Railway/Render/Docker
+  時設 `HOST=0.0.0.0` — 已寫入 README 設定表與 `.env.sample`。（B-01）
+- **CI workflow** `.github/workflows/test.yml` — push main 與 pull request 時跑
+  `npm test` + `npm run smoke`。（P-02）
+- **`CONTRIBUTING.md` / `SECURITY.md`** 社群文件。（P-03）
+- **`docs/md-memo-code-review.md`** — 驅動本次發布的審查報告。
+
+### Security
+- **修復公開永久連結頁的 stored XSS（三個向量）** — `src/permalink.js` 對
+  preview/`og:title`、tags 做完整 HTML 跳脫，JSON blob 防 `</script>` breakout，
+  並附回歸測試。（S-01）
+- **`marked` 輸出以 DOMPurify 消毒** — 兩套獨立渲染環境（permalink 模板與 SPA，
+  共四處 `marked.parse` 呼叫點）全數包覆。（S-02）
+- **`POST /api/history/clear` CSRF 防護** — 要求 JSON content type（否則 415）；
+  SPA 呼叫端已明確送出。（S-03）
+- **Timing-safe 密碼比對** — `checkPassword` 改以 SHA-256 digest 配合
+  `crypto.timingSafeEqual` 比較。（S-04）
+- **通用 500 回應** — 內部錯誤細節只留在 server log。（S-05）
+
+### Fixed
+- **`/api/agent/apply` 驗證輸入** — `create_memo`/`merge_memos` 缺少非空 `markdown`
+  時回 `ok: false`（HTTP 400），不再拋出未捕捉的 `TypeError` 500。（B-02）
+- **單調遞增 id** — `store.js`/`sessions.js` 同毫秒連續建立不再碰撞。（B-03）
+- **`parseTags` 容許含 `>` 的標籤** — regex 改為 lazy match 至 `-->`。（B-04）
+
+### Changed
+- **後端 agent 字串跟隨 `AGENT_LANG`** — proposal 摘要與步數上限訊息預設英文；
+  `zh*` 語系（預設 `zh-TW`）維持原繁體中文。（P-01）
+- README 新增 Design Docs 段落，指向 `specs/` 與 `docs/plans/`。（P-04）
+- 測試套件由 50 個成長為 59 個（涵蓋上述修正的回歸測試）。
+
 ## [1.4.1] - 2026-06-30
 
 ### Fixed

@@ -5,6 +5,51 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-07-02
+
+Open-source release readiness: implements every finding from the full code review in
+`docs/md-memo-code-review.md` (R-01–R-02 release blockers, S-01–S-05 security,
+B-01–B-04 bugs, P-01–P-04 polish; P-05 git-history secret scan performed — clean).
+
+### Added
+- **`LICENSE` (MIT)** plus `package.json` metadata — `license`, `author`, `repository`,
+  `keywords`, and `engines` (`node >= 22.9.0`, required by `--env-file-if-exists`);
+  README now states the Node prerequisite. (R-01/R-02)
+- **`HOST` environment variable** for the bind address (default stays `127.0.0.1`);
+  set `HOST=0.0.0.0` for Railway/Render/Docker deploys — documented in the README
+  config table and `.env.sample`. (B-01)
+- **CI workflow** `.github/workflows/test.yml` — runs `npm test` + `npm run smoke` on
+  pushes to main and on pull requests. (P-02)
+- **`CONTRIBUTING.md` / `SECURITY.md`** community files. (P-03)
+- **`docs/md-memo-code-review.md`** — the review report that drove this release.
+
+### Security
+- **Stored XSS on public permalink pages fixed (3 vectors)** — proper HTML escaping for
+  preview/`og:title`, tags, and a `</script>`-breakout-safe JSON blob in
+  `src/permalink.js`, with regression tests. (S-01)
+- **`marked` output sanitized with DOMPurify** in both independent render environments
+  (permalink template and SPA — all four `marked.parse` call sites). (S-02)
+- **CSRF guard on `POST /api/history/clear`** — requires a JSON content type (415
+  otherwise); the SPA caller sends it explicitly. (S-03)
+- **Timing-safe password comparison** — `checkPassword` now compares SHA-256 digests via
+  `crypto.timingSafeEqual`. (S-04)
+- **Generic 500 responses** — internal error text is logged server-side only. (S-05)
+
+### Fixed
+- **`/api/agent/apply` validates input** — `create_memo`/`merge_memos` without a
+  non-empty `markdown` now return `ok: false` (HTTP 400) instead of an uncaught
+  `TypeError` 500. (B-02)
+- **Monotonic ids** — `store.js`/`sessions.js` ids no longer collide on same-millisecond
+  inserts. (B-03)
+- **`parseTags` accepts tags containing `>`** — lazy regex match up to `-->`. (B-04)
+
+### Changed
+- **Backend agent strings follow `AGENT_LANG`** — proposal summaries and the step-limit
+  message default to English; `zh*` locales (default `zh-TW`) keep the original
+  Traditional Chinese. (P-01)
+- README gains a Design Docs section pointing to `specs/` and `docs/plans/`. (P-04)
+- Test suite grew from 50 to 59 tests (regression coverage for the fixes above).
+
 ## [1.4.1] - 2026-06-30
 
 ### Fixed
