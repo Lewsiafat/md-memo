@@ -87,7 +87,7 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
     res.json({ markdown, tags, id: entry.id, truncated });
   } catch (err) {
     console.error('Format error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
@@ -137,8 +137,10 @@ app.get(`${BASE_PATH}/m/:id`, (req, res) => {
   res.send(renderPermalink(entry, BASE_PATH));
 });
 
-// POST /md-memo/api/history/clear — back up to history.bak.json, then wipe
+// POST /md-memo/api/history/clear — back up to history.bak.json, then wipe.
+// Requires a JSON content type so plain cross-origin HTML forms can't trigger it (CSRF).
 app.post(`${BASE_PATH}/api/history/clear`, (req, res) => {
+  if (!req.is('application/json')) return res.status(415).json({ error: 'JSON required' });
   res.json(clearHistory());
 });
 

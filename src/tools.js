@@ -185,10 +185,14 @@ function existingIds() {
 export function applyProposal({ action, args = {} }) {
   switch (action) {
     case 'create_memo': {
+      if (typeof args.markdown !== 'string' || !args.markdown.trim())
+        return { ok: false, error: 'markdown (non-empty string) required' };
       const entry = insertEntry(createEntry({ markdown: args.markdown, tags: args.tags || [] }));
       return { ok: true, id: entry.id };
     }
     case 'merge_memos': {
+      if (typeof args.markdown !== 'string' || !args.markdown.trim())
+        return { ok: false, error: 'markdown (non-empty string) required' };
       const ids = (args.source_ids || []).map(Number);
       const have = existingIds();
       const missing = ids.filter(id => !have.has(id));

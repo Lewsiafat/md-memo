@@ -1498,7 +1498,7 @@ Ctrl+Enter to format."></textarea>
       }
       disarmClear();
       try {
-        const res = await fetch(`${API}/history/clear`, { method: 'POST' });
+        const res = await fetch(`${API}/history/clear`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || t('errClearFailed'));
         history = [];

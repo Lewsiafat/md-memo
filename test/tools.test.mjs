@@ -79,6 +79,20 @@ test('applyProposal merge_memos records sources and validates ids', () => {
   assert.strictEqual(bad.ok, false);
 });
 
+test('applyProposal create_memo without markdown returns ok:false, does not throw', () => {
+  saveHistory([]);
+  const r = applyProposal({ action: 'create_memo', args: {} });
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.error);
+});
+
+test('applyProposal merge_memos without markdown returns ok:false, does not throw', () => {
+  saveHistory([{ id: 1, markdown: 'a', tags: [], preview: 'a', createdAt: 't', raw: '' }]);
+  const r = applyProposal({ action: 'merge_memos', args: { source_ids: [1] } });
+  assert.strictEqual(r.ok, false);
+  assert.ok(r.error);
+});
+
 test('applyProposal link_memos cross-links and validates', async () => {
   saveHistory([
     { id: 1, markdown: 'a', tags: [], preview: 'a', createdAt: 't', raw: '' },
