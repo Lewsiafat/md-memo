@@ -4,6 +4,7 @@ const MAX_STEPS = 8;
 
 // Language for all agent output (BCP-47 tag). Default zh-TW (繁體中文).
 const RESPONSE_LANG = process.env.AGENT_LANG || 'zh-TW';
+const LANG_ZH = RESPONSE_LANG.startsWith('zh');
 
 const SYSTEM = `You are an agent that helps the user manage a markdown notebook.
 You can search and read memos, and propose changes (create/merge/link/retag).
@@ -73,6 +74,8 @@ export async function runAgent(message, emit, { callModel = callOpenRouter, prio
       messages.push({ role: 'tool', tool_call_id: tc.id, content: toolContent });
     }
   }
-  emit('answer', { content: `（已達 ${MAX_STEPS} 步上限，未能完成；以上為目前進度。）` });
+  emit('answer', { content: LANG_ZH
+    ? `（已達 ${MAX_STEPS} 步上限，未能完成；以上為目前進度。）`
+    : `(Reached the ${MAX_STEPS}-step limit; partial progress above.)` });
   emit('done', { steps: MAX_STEPS, tokens: totalTokens });
 }
