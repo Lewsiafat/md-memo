@@ -2,10 +2,10 @@
 
 // Parse tags from markdown — the AI appends <!-- tags: a, b, c --> at the end.
 export function parseTags(raw) {
-  const match = raw.match(/<!--\s*tags:\s*([^>]+?)-->/i);
+  const match = raw.match(/<!--\s*tags:\s*(.*?)-->/is);
   if (!match) return { markdown: raw.trim(), tags: [] };
   const tags = match[1].split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-  const markdown = raw.replace(/<!--\s*tags:[^>]+-->/gi, '').trim();
+  const markdown = raw.replace(/<!--\s*tags:.*?-->/gis, '').trim();
   return { markdown, tags };
 }
 

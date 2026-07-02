@@ -1,14 +1,19 @@
+import crypto from 'node:crypto';
+
 // Optional HTTP Basic Auth — gated by AUTH_ENABLED (default off). See CLAUDE.md.
 // Only the password is checked; the username is ignored.
 
 // Pure: does this Authorization header carry the expected password?
+// Compares fixed-length sha256 digests via timingSafeEqual to avoid timing side channels.
 export function checkPassword(authHeader, expected) {
   if (!expected) return false;
   const [scheme, encoded] = (authHeader || '').split(' ');
   if (scheme !== 'Basic' || !encoded) return false;
   const decoded = Buffer.from(encoded, 'base64').toString('utf8');
   const password = decoded.slice(decoded.indexOf(':') + 1);
-  return password === expected;
+  const a = crypto.createHash('sha256').update(password).digest();
+  const b = crypto.createHash('sha256').update(expected).digest();
+  return crypto.timingSafeEqual(a, b);
 }
 
 // Factory: returns Express middleware. Pass-through when disabled or misconfigured

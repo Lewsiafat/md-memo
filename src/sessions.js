@@ -24,9 +24,18 @@ function saveSessions(sessions) {
   fs.writeFileSync(f, JSON.stringify(sessions, null, 2));
 }
 
+// Monotonic id generator: Date.now(), bumped by 1 when two calls land in the
+// same millisecond, so rapid inserts never collide.
+let lastId = 0;
+function nextId() {
+  const now = Date.now();
+  lastId = now > lastId ? now : lastId + 1;
+  return lastId;
+}
+
 // Build a session record. answer/events default to empty.
 export function createSession({ question, answer = '', events = [] }) {
-  return { id: Date.now(), createdAt: new Date().toISOString(), question, answer, events };
+  return { id: nextId(), createdAt: new Date().toISOString(), question, answer, events };
 }
 
 // Prepend, enforce the limit, persist. Returns the session.

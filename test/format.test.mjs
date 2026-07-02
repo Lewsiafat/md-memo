@@ -15,6 +15,18 @@ test('parseFormatResult: complete response (finish_reason stop) → not truncate
   assert.equal(result.markdown, '# Title\n\nSome body text.');
 });
 
+test('parseFormatResult: tag containing ">" → still parsed, tags line stripped', () => {
+  const data = {
+    choices: [{
+      finish_reason: 'stop',
+      message: { content: '# Title\n\nSome body text.\n\n<!-- tags: alpha, c>d -->' },
+    }],
+  };
+  const result = parseFormatResult(data);
+  assert.deepEqual(result.tags, ['alpha', 'c>d']);
+  assert.equal(result.markdown, '# Title\n\nSome body text.');
+});
+
 test('parseFormatResult: truncated response (finish_reason length, no tags line) → truncated, empty tags, content kept', () => {
   const data = {
     choices: [{

@@ -162,16 +162,27 @@ export function runReadTool(name, args) {
 }
 
 // ---- Write proposals (loop emits these; nothing is mutated until apply) ----
+// Summaries follow AGENT_LANG (default zh-TW): zh-* keeps 繁體中文, anything else English.
+const LANG_ZH = (process.env.AGENT_LANG || 'zh-TW').startsWith('zh');
+
 export function buildProposal(name, args) {
   switch (name) {
     case 'create_memo':
-      return { action: name, args, summary: `建立新筆記（${(args.tags || []).join(', ') || '無標籤'}）` };
+      return { action: name, args, summary: LANG_ZH
+        ? `建立新筆記（${(args.tags || []).join(', ') || '無標籤'}）`
+        : `New memo (${(args.tags || []).join(', ') || 'no tags'})` };
     case 'merge_memos':
-      return { action: name, args, summary: `合併 ${(args.source_ids || []).length} 篇為「${args.title || '未命名'}」` };
+      return { action: name, args, summary: LANG_ZH
+        ? `合併 ${(args.source_ids || []).length} 篇為「${args.title || '未命名'}」`
+        : `Merge ${(args.source_ids || []).length} memos into "${args.title || 'Untitled'}"` };
     case 'link_memos':
-      return { action: name, args, summary: `連結 ${(args.ids || []).length} 篇筆記` };
+      return { action: name, args, summary: LANG_ZH
+        ? `連結 ${(args.ids || []).length} 篇筆記`
+        : `Link ${(args.ids || []).length} memos` };
     case 'retag_memo':
-      return { action: name, args, summary: `重設 #${args.id} 標籤為 ${(args.tags || []).join(', ')}` };
+      return { action: name, args, summary: LANG_ZH
+        ? `重設 #${args.id} 標籤為 ${(args.tags || []).join(', ')}`
+        : `Retag #${args.id} to ${(args.tags || []).join(', ')}` };
     default:
       return { action: name, args, summary: name };
   }
@@ -185,10 +196,14 @@ function existingIds() {
 export function applyProposal({ action, args = {} }) {
   switch (action) {
     case 'create_memo': {
+      if (typeof args.markdown !== 'string' || !args.markdown.trim())
+        return { ok: false, error: 'markdown (non-empty string) required' };
       const entry = insertEntry(createEntry({ markdown: args.markdown, tags: args.tags || [] }));
       return { ok: true, id: entry.id };
     }
     case 'merge_memos': {
+      if (typeof args.markdown !== 'string' || !args.markdown.trim())
+        return { ok: false, error: 'markdown (non-empty string) required' };
       const ids = (args.source_ids || []).map(Number);
       const have = existingIds();
       const missing = ids.filter(id => !have.has(id));

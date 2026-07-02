@@ -30,6 +30,8 @@ A lightweight markdown memo tool with AI-powered formatting. Write in plain text
 
 ## Quick Start
 
+Requires Node.js >= 22.9 (for the built-in `--env-file-if-exists` flag).
+
 ```bash
 # Clone
 git clone https://github.com/Lewsiafat/md-memo.git
@@ -52,6 +54,7 @@ npm start
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `10026` | Server port |
+| `HOST` | `127.0.0.1` | Bind address — set `0.0.0.0` when deploying to Railway/Render/Docker (enable auth first!) |
 | `BASE_PATH` | `/md-memo` | URL base path |
 | `OPENROUTER_API_KEY` | — | Your OpenRouter API key (required for AI) |
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter model ID |
@@ -80,6 +83,10 @@ The app is a single Express server serving static files. Deploy anywhere Node.js
 - **VPS**: Run with `node src/index.js`, put behind nginx
 - **Railway / Render**: Set env vars, deploy directly
 - **Docker**: Add your own `Dockerfile` (contributions welcome!)
+
+## Design Docs
+
+Design history and specs live in `specs/` and `docs/plans/`.
 
 ## License
 

@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1164,7 +1165,7 @@ Ctrl+Enter to format."></textarea>
     // ── PREVIEW / EDIT ──
     function showPreview(md) {
       isPreviewMode = true;
-      preview.innerHTML = marked.parse(md);
+      preview.innerHTML = DOMPurify.sanitize(marked.parse(md));
       preview.className = 'md-render';
       previewWrap.classList.add('visible');
       rawInput.style.display = 'none';
@@ -1288,7 +1289,7 @@ Ctrl+Enter to format."></textarea>
       quickViewEntry = entry;
       const rawPreview = (entry.preview || '').replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
       qvTitle.textContent = rawPreview || t('quickviewTitle');
-      qvContent.innerHTML = marked.parse(entry.markdown);
+      qvContent.innerHTML = DOMPurify.sanitize(marked.parse(entry.markdown));
       qvPanel.classList.add('open');
       setMode('combine');
     }
@@ -1497,7 +1498,7 @@ Ctrl+Enter to format."></textarea>
       }
       disarmClear();
       try {
-        const res = await fetch(`${API}/history/clear`, { method: 'POST' });
+        const res = await fetch(`${API}/history/clear`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || t('errClearFailed'));
         history = [];
@@ -1642,7 +1643,7 @@ Ctrl+Enter to format."></textarea>
       } else if (ev === 'proposal') pendingProposals.push(data);
       else if (ev === 'answer') {
         const a = el('div', 'ag-answer md-render');
-        a.innerHTML = window.marked ? marked.parse(data.content || '') : esc(data.content || '');
+        a.innerHTML = window.marked ? DOMPurify.sanitize(marked.parse(data.content || '')) : esc(data.content || '');
         trace.appendChild(a);
         flushProposals();                       // proposals render AFTER the summary
       } else if (ev === 'done') { trace.appendChild(el('div', 'ag-done', esc(tf('agentDone', { steps: data.steps, tokens: data.tokens })))); flushProposals(); }

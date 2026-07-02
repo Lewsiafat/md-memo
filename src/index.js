@@ -87,7 +87,7 @@ Generate 1–5 short, relevant lowercase tags that best describe the content top
     res.json({ markdown, tags, id: entry.id, truncated });
   } catch (err) {
     console.error('Format error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
@@ -137,8 +137,10 @@ app.get(`${BASE_PATH}/m/:id`, (req, res) => {
   res.send(renderPermalink(entry, BASE_PATH));
 });
 
-// POST /md-memo/api/history/clear — back up to history.bak.json, then wipe
+// POST /md-memo/api/history/clear — back up to history.bak.json, then wipe.
+// Requires a JSON content type so plain cross-origin HTML forms can't trigger it (CSRF).
 app.post(`${BASE_PATH}/api/history/clear`, (req, res) => {
+  if (!req.is('application/json')) return res.status(415).json({ error: 'JSON required' });
   res.json(clearHistory());
 });
 
@@ -173,6 +175,7 @@ app.post(`${BASE_PATH}/api/sessions`, (req, res) => {
 // DELETE /md-memo/api/sessions/:id — remove a saved session
 app.delete(`${BASE_PATH}/api/sessions/:id`, (req, res) => res.json(deleteSession(req.params.id)));
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`md-memo running on http://127.0.0.1:${PORT}${BASE_PATH}`);
+const HOST = process.env.HOST || '127.0.0.1';
+app.listen(PORT, HOST, () => {
+  console.log(`md-memo running on http://${HOST}:${PORT}${BASE_PATH}`);
 });

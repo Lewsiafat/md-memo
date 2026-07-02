@@ -3,6 +3,16 @@
   "version": "1.4.1",
   "type": "module",
   "description": "Quick AI-powered markdown memo tool",
+  "license": "MIT",
+  "author": "Lewsiafat",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lewsiafat/md-memo.git"
+  },
+  "engines": {
+    "node": ">=22.9.0"
+  },
+  "keywords": ["markdown", "memo", "notes", "ai", "openrouter", "agent"],
   "main": "src/index.js",
   "scripts": {
     "start": "node --env-file-if-exists=.env src/index.js",
