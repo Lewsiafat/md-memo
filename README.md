@@ -30,6 +30,8 @@ A lightweight markdown memo tool with AI-powered formatting. Write in plain text
 
 ## Quick Start
 
+Requires Node.js >= 22.9 (for the built-in `--env-file-if-exists` flag).
+
 ```bash
 # Clone
 git clone https://github.com/Lewsiafat/md-memo.git
@@ -80,6 +82,10 @@ The app is a single Express server serving static files. Deploy anywhere Node.js
 - **VPS**: Run with `node src/index.js`, put behind nginx
 - **Railway / Render**: Set env vars, deploy directly
 - **Docker**: Add your own `Dockerfile` (contributions welcome!)
+
+## Design Docs
+
+Design history and specs live in `specs/` and `docs/plans/`.
 
 ## License
 
