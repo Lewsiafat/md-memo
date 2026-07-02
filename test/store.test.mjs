@@ -30,6 +30,13 @@ test('createEntry attaches optional sources/links only when given', () => {
   assert.deepStrictEqual(rich.links, [2]);
 });
 
+test('insertEntry: consecutive inserts yield distinct ids (no same-ms collision)', () => {
+  saveHistory([]);
+  const a = insertEntry(createEntry({ markdown: 'a' }));
+  const b = insertEntry(createEntry({ markdown: 'b' }));
+  assert.notStrictEqual(a.id, b.id);
+});
+
 test('insertEntry prepends and enforces the limit', () => {
   saveHistory([]);
   for (let i = 0; i < HISTORY_LIMIT + 5; i++) {

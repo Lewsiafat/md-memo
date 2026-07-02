@@ -24,10 +24,19 @@ export function saveHistory(history) {
   fs.writeFileSync(f, JSON.stringify(history, null, 2));
 }
 
+// Monotonic id generator: Date.now(), bumped by 1 when two calls land in the
+// same millisecond, so rapid inserts never collide.
+let lastId = 0;
+function nextId() {
+  const now = Date.now();
+  lastId = now > lastId ? now : lastId + 1;
+  return lastId;
+}
+
 // Build a history entry. sources/links are attached only when provided.
 export function createEntry({ raw = '', markdown, tags = [], sources, links }) {
   const entry = {
-    id: Date.now(),
+    id: nextId(),
     createdAt: new Date().toISOString(),
     raw,
     markdown,

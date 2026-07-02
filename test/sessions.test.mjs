@@ -26,6 +26,13 @@ test('createSession defaults answer/events when omitted', () => {
   assert.deepStrictEqual(s.events, []);
 });
 
+test('insertSession: consecutive inserts yield distinct ids (no same-ms collision)', () => {
+  fs.rmSync(process.env.SESSIONS_FILE, { force: true });
+  const a = insertSession(createSession({ question: 'a' }));
+  const b = insertSession(createSession({ question: 'b' }));
+  assert.notStrictEqual(a.id, b.id);
+});
+
 test('insertSession prepends and enforces the limit', () => {
   fs.rmSync(process.env.SESSIONS_FILE, { force: true });
   for (let i = 0; i < SESSIONS_LIMIT + 3; i++) insertSession(createSession({ question: `q${i}` }));
