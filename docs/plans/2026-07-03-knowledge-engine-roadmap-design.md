@@ -1,6 +1,6 @@
 # md-memo 知識引擎演進藍圖（Knowledge Engine Roadmap）
 
-日期：2026-07-03　狀態：待審閱（roadmap / design）
+日期：2026-07-03　狀態：方向已核可；Phase 0.5 與 OSS 成長軌道為同日追加，待審閱（roadmap / design）
 範圍：整體演進方向的分解與排序。每個 Phase 之後各自走「spec → 實作計畫 → 實作」流程，本文件不含逐行實作細節。
 
 ---
@@ -74,8 +74,18 @@ md-memo 從「快速 AI markdown 筆記工具」演進為**端到端的知識重
 50 筆上限與無標題身分是後面一切的地基問題。
 - `HISTORY_LIMIT` 改為環境變數（預設 1000；文件註明 JSON 全檔重寫的規模特性）。
 - memo 增加 `title`（取第一個標題行）與穩定 `slug`（wiki 身分用；舊資料 lazy 補齊，欄位皆 optional 保持向後相容）。
-- `GET /api/history` 支援分頁/篩選參數（`limit`/`offset`/`tag`），SPA Memo List 對應調整（載入更多）。
-- 驗收：既有 59+ 測試全綠；新增 title/slug/分頁測試；舊 `history.json` 無需遷移即可用。
+- `GET /api/history` 支援分頁/篩選參數（`limit`/`offset`/`tag`），並改回**輕量欄位**（id/title/preview/tags/createdAt，不含全文）；新增 `GET /api/history/:id` 供單篇抓全文（quickview 用）。SPA 的對應改動放 Phase 0.5。
+- 驗收：既有 59+ 測試全綠；新增 title/slug/分頁/單篇端點測試；舊 `history.json` 無需遷移即可用。
+
+### Phase 0.5 — Memo List 可用性：搜尋與大量筆記的操作（S–M，僅依賴 Phase 0）
+50 筆上限解除後，列表從「一眼掃完」變成「要找得到」。目標：1,000 筆時仍好操作。
+- **即時搜尋框**：置於 Memo List 頂部，輸入即過濾已載入項（debounce，比對 title/preview/tags）；按 Enter 觸發**全庫搜尋** `GET /api/history/search?q=`——後端重用 `src/tools.js` 的 `searchMemos` 計分，UI 搜尋與 agent 的 `search_memos` 同一套行為，改一處兩邊受益。
+- **tag 篩選**：點列表項上的 tag 即過濾該 tag（單選，再點取消）；篩選狀態顯示於搜尋框旁可清除的 chip。
+- **分頁載入**：列表底部「載入更多」（承 Phase 0 API）；預設載最新 50 筆，滾到底再抓。
+- **排序切換**：新→舊（預設）／舊→新。
+- **鍵盤操作**：`/` 聚焦搜尋框、`↑`/`↓` 在列表移動、Enter 開 quickview、Esc 清除搜尋。
+- **計數列**：顯示「符合 n / 全部 N」，讓使用者對庫的規模有感。
+- 驗收：search 端點測試（重用 `searchMemos` 的行為一致性測試）；SPA 過濾/分頁/鍵盤操作以 1,000 筆 seed 手動走查；demo 的 mock.js 同步支援 search 路由。
 
 ### Phase 1 — Wiki 核心（M）
 把「LLM wiki concept」落地成可見功能。
@@ -112,12 +122,38 @@ md-memo 從「快速 AI markdown 筆記工具」演進為**端到端的知識重
 ```
 Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 4
    │                        │
+   ├──► Phase 0.5（僅依賴 0）│
    └──► Phase 3（僅依賴 0）  │
               │             │
               └──► Phase 5 ◄┘（依賴 2 的 compose 與 3 的佇列）
 ```
 
-## 7. 風險與對策
+## 7. OSS 成長軌道（與開發並行，非程式碼 Phase）
+
+目標：讓專案值得 star（第一眼看懂、十秒內玩到）、值得 fork（讀得完、改得動、部署得起來）。分兩個里程碑，與 Phase 節奏綁定。
+
+### 定位（所有素材共用的一句話）
+「Self-hosted 的 AI 筆記引擎：純文字進、結構化知識出——無框架、零 build、一個依賴。」
+差異化：usememos 等自架筆記**沒有 AI 結構化與 agent**；Obsidian 不是 self-hosted web app；Notion AI 不開源。「兩個檔案承載邏輯、一個下午讀完整個 codebase」本身就是對開發者的賣點，README 要明說。
+
+### M1 — 現在就能做（不依賴任何 Phase）
+- **README 首屏轉換率**：hero 動圖（15 秒 GIF：貼文字 → format → agent 合併兩篇筆記）；**live demo 連結置頂**——GitHub Pages demo 是本專案最大的轉換資產，訪客不裝任何東西就能玩到 agent；badges（CI、license、node、PRs welcome）。
+- **降低部署門檻**：`Dockerfile` + `docker-compose.yml`；Deploy to Railway / Render 一鍵按鈕（`HOST=0.0.0.0` 已支援）。
+- **GitHub 門面**：repo description 與 topics 補齊（`self-hosted`、`ai`、`notes`、`knowledge-base`、`markdown`、`openrouter`、`agent`）；About 區塊掛 demo 連結。
+- **社群機制**：issue templates（bug / feature）、PR template、開 GitHub Discussions；從本藍圖切出 `good first issue`（如：排序切換、鍵盤操作、CLI 子命令都是理想的小任務）。
+- **Release 紀律**：每次 tag 同步發 GitHub Release（內容取自 CHANGELOG，已雙語）。
+
+### M2 — 有亮點才對外發聲（綁 Phase 出貨）
+- **發文時機**：Phase 1（wiki）或 Phase 3（MCP）出貨後才發 Show HN / r/selfhosted——「AI 筆記」不稀奇，「筆記庫長出 wiki／變成你所有 agent 的 MCP 工具」才是 hook。
+- **清單提交**：awesome-selfhosted；Phase 3 後提交 awesome-mcp-servers 與 MCP registry——MCP 生態是當下最有機的流量入口。
+- **內容節奏**：每個 Phase 出貨配一篇短文（dev.to / blog，雙語擇一即可），主題寫「怎麼用 500 行做出 X」比「我做了一個筆記 app」有效。
+- **雙語文件（EN + 繁中）持續同步**——這是對中文開發者社群的差異化資產。
+
+### 維運信任訊號（持續）
+CI 常綠、issue 48 小時內首次回應、SECURITY.md（已有）、semver 紀律、roadmap 公開（本文件連進 README 的 Design Docs 區）。
+成效檢視：每月看一次 GitHub Insights（traffic / stars / forks / referrers），發文後對照來源。
+
+## 8. 風險與對策
 
 | 風險 | 對策 |
 |---|---|
@@ -128,12 +164,13 @@ Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 4
 | MCP 依賴違反極簡精神 | 隔離在獨立 entry，主 app 不 import；README 標註選配 |
 | 範圍膨脹（Telegram bot、瀏覽器外掛等） | 明確列為 non-goal，除非之後另立目標 |
 
-## 8. Non-goals（本藍圖不做）
+## 9. Non-goals（本藍圖不做）
 
 多人協作/帳號系統、即時同步、瀏覽器外掛、行動 App、內建排程器、資料庫遷移（除非規模痛點觸發）。
 
-## 9. 下一步
+## 10. 下一步
 
-1. 使用者審閱本藍圖（尤其：Phase 3 是否前移？Phase 5 是否保留？）。
-2. 核可後，從 **Phase 0** 開始，走既有流程：`/task` 開分支 → 該 Phase 的 spec（`specs/`）→ 實作計畫（superpowers writing-plans）→ TDD 實作 → code review。
-3. 每完成一個 Phase 回頭校準本文件（勾銷、調序、增補）。
+1. 整體方向已核可（2026-07-03）；懸而未決：Phase 3 是否前移、Phase 5 是否保留。
+2. 開發線從 **Phase 0** 開始（0 與 0.5 建議連續做完，一次解決「量」與「找」），走既有流程：`/task` 開分支 → 該 Phase 的 spec（`specs/`）→ 實作計畫（superpowers writing-plans）→ TDD 實作 → code review。
+3. OSS 軌道 **M1 可立即並行**（README 首屏、Docker、topics、templates 皆不碰核心程式碼）；M2 等 Phase 1 或 3 出貨。
+4. 每完成一個 Phase 回頭校準本文件（勾銷、調序、增補）。
