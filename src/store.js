@@ -3,7 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const HISTORY_LIMIT = 50;
+
+// History cap, from env (JSON 全檔重寫：量大時每次寫入成本隨檔案大小線性成長).
+export function historyLimit() {
+  return Number(process.env.HISTORY_LIMIT) || 1000;
+}
 
 // Computed lazily so tests can override via process.env.HISTORY_FILE.
 function historyFile() {
@@ -52,7 +56,7 @@ export function createEntry({ raw = '', markdown, tags = [], sources, links }) {
 export function insertEntry(entry) {
   const history = loadHistory();
   history.unshift(entry);
-  saveHistory(history.slice(0, HISTORY_LIMIT));
+  saveHistory(history.slice(0, historyLimit()));
   return entry;
 }
 

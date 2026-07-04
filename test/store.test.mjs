@@ -4,8 +4,9 @@ import fs from 'node:fs';
 
 process.env.HISTORY_FILE = '/tmp/md-memo-store-test.json';
 fs.rmSync(process.env.HISTORY_FILE, { force: true });
+process.env.HISTORY_LIMIT = '30';
 
-const { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, HISTORY_LIMIT } =
+const { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, historyLimit } =
   await import('../src/store.js');
 
 test('loadHistory returns [] when file missing', () => {
@@ -30,6 +31,10 @@ test('createEntry attaches optional sources/links only when given', () => {
   assert.deepStrictEqual(rich.links, [2]);
 });
 
+test('historyLimit reads HISTORY_LIMIT env (default 1000 when unset)', () => {
+  assert.strictEqual(historyLimit(), 30);   // set at top of this file
+});
+
 test('insertEntry: consecutive inserts yield distinct ids (no same-ms collision)', () => {
   saveHistory([]);
   const a = insertEntry(createEntry({ markdown: 'a' }));
@@ -39,12 +44,12 @@ test('insertEntry: consecutive inserts yield distinct ids (no same-ms collision)
 
 test('insertEntry prepends and enforces the limit', () => {
   saveHistory([]);
-  for (let i = 0; i < HISTORY_LIMIT + 5; i++) {
+  for (let i = 0; i < historyLimit() + 5; i++) {
     insertEntry(createEntry({ markdown: `m${i}` }));
   }
   const h = loadHistory();
-  assert.strictEqual(h.length, HISTORY_LIMIT);
-  assert.strictEqual(h[0].markdown, `m${HISTORY_LIMIT + 4}`);
+  assert.strictEqual(h.length, historyLimit());
+  assert.strictEqual(h[0].markdown, `m${historyLimit() + 4}`);
 });
 
 test('clearHistory backs up to a timestamped .bak.json then empties history', () => {
