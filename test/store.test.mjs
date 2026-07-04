@@ -6,7 +6,7 @@ process.env.HISTORY_FILE = '/tmp/md-memo-store-test.json';
 fs.rmSync(process.env.HISTORY_FILE, { force: true });
 process.env.HISTORY_LIMIT = '30';
 
-const { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, historyLimit } =
+const { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, historyLimit, listEntries } =
   await import('../src/store.js');
 
 test('loadHistory returns [] when file missing', () => {
@@ -132,4 +132,31 @@ test('updateEntry recomputes title but never touches slug', () => {
   const updated = updateEntry(e.id, { markdown: '# After' });
   assert.strictEqual(updated.title, 'After');
   assert.strictEqual(updated.slug, 'before');   // slug is identity — stable
+});
+
+test('listEntries paginates lightweight fields with total/all', () => {
+  saveHistory([]);
+  for (let i = 0; i < 5; i++) {
+    insertEntry(createEntry({ raw: `raw${i}`, markdown: `# N${i}`, tags: i % 2 ? ['odd'] : ['even'] }));
+  }
+  const page = listEntries({ limit: 2, offset: 1 });
+  assert.strictEqual(page.total, 5);
+  assert.strictEqual(page.all, 5);
+  assert.strictEqual(page.items.length, 2);
+  assert.strictEqual(page.items[0].title, 'N3');       // newest-first, offset 1
+  assert.ok(!('markdown' in page.items[0]), 'no full text in list items');
+  assert.ok(!('raw' in page.items[0]), 'no raw in list items');
+  assert.ok(page.items[0].slug, 'slug included');
+});
+
+test('listEntries filters by tag (total follows the filter, all does not)', () => {
+  const r = listEntries({ tag: 'odd' });
+  assert.strictEqual(r.total, 2);
+  assert.strictEqual(r.all, 5);
+  assert.ok(r.items.every(e => e.tags.includes('odd')));
+});
+
+test('listEntries order asc returns oldest first', () => {
+  const r = listEntries({ order: 'asc', limit: 1 });
+  assert.strictEqual(r.items[0].title, 'N0');
 });

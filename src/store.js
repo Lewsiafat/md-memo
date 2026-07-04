@@ -119,3 +119,16 @@ export function clearHistory() {
   saveHistory([]);
   return { ok: true, backedUp, count, backupFile };
 }
+
+// Paginated, lightweight listing for the Memo List UI. total counts after
+// the tag filter; all is the whole library (the "全部 N" in the count line).
+export function listEntries({ limit = 50, offset = 0, tag = null, order = 'desc' } = {}) {
+  const history = loadHistory();
+  let filtered = tag ? history.filter(e => (e.tags || []).includes(tag)) : history;
+  if (order === 'asc') filtered = filtered.slice().reverse();
+  const items = filtered.slice(offset, offset + limit).map(e => ({
+    id: e.id, title: e.title, slug: e.slug, preview: e.preview,
+    tags: e.tags || [], createdAt: e.createdAt,
+  }));
+  return { items, total: filtered.length, all: history.length };
+}
