@@ -807,6 +807,8 @@ Ctrl+Enter to format."></textarea>
         btnClearConfirm: 'Confirm?',
         historyEmpty: 'No formatted memos yet.\nWrite something and hit Format!',
         historyEmptyTagged: 'No memos tagged "{tag}"',
+        countTotal: '{total} memos',
+        countMatched: '{n} / {total} memos',
         // History item action button titles
         titleCopyLink: 'Copy link',
         titleDelete: 'Delete',
@@ -919,6 +921,8 @@ Ctrl+Enter to format."></textarea>
         btnClearConfirm: '確定？',
         historyEmpty: '尚無已整理的筆記。\n寫點東西並按整理！',
         historyEmptyTagged: '沒有標籤為「{tag}」的筆記',
+        countTotal: '共 {total} 筆',
+        countMatched: '符合 {n}／全部 {total}',
         // History item action button titles
         titleCopyLink: '複製連結',
         titleDelete: '刪除',
@@ -1021,9 +1025,16 @@ Ctrl+Enter to format."></textarea>
     let currentTags = [];
     let currentId = null;
     let isPreviewMode = false;
-    let history = [];
+    let history = [];          // loaded lightweight items (pages accumulate)
+    let historyTotal = 0;      // total after tag filter (server-side)
+    let libraryTotal = 0;      // whole library size
+    let sortOrder = 'desc';
+    let searchText = '';       // live filter over loaded items
+    let searchResults = null;  // non-null → full-library search mode
+    let tagCounts = [];        // [{tag, count}] from /api/tags
     let activeTagFilter = null;
     let quickViewEntry = null;
+    const PAGE_SIZE = 50;
 
     // DOM
     const rawInput       = document.getElementById('raw-input');
@@ -1145,7 +1156,8 @@ Ctrl+Enter to format."></textarea>
         currentId = data.id;
         showPreview(currentMarkdown);
         renderCurrentTags(currentTags);
-        loadHistoryData();
+        loadHistoryData(true);
+        loadTagCloud();
         closeQuickView();
         if (data.truncated) {
           statusText.textContent = t('statusTruncated');
@@ -1343,42 +1355,70 @@ Ctrl+Enter to format."></textarea>
     function setTagFilter(tag) {
       activeTagFilter = activeTagFilter === tag ? null : tag;
       renderTagCloud();
-      renderHistoryItems();
+      loadHistoryData(true);
     }
 
     // ── HISTORY ──
-    async function loadHistoryData() {
+    async function fetchEntry(id) {
       try {
-        const res = await fetch(`${API}/history`);
-        history = await res.json();
-        renderTagCloud();
+        const res = await fetch(`${API}/history/${id}`);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch { return null; }
+    }
+
+    async function loadHistoryData(reset = true) {
+      try {
+        const offset = reset ? 0 : history.length;
+        const params = new URLSearchParams({ limit: PAGE_SIZE, offset, order: sortOrder });
+        if (activeTagFilter) params.set('tag', activeTagFilter);
+        const res = await fetch(`${API}/history?${params}`);
+        const data = await res.json();
+        history = reset ? data.items : history.concat(data.items);
+        historyTotal = data.total;
+        libraryTotal = data.all;
         renderHistoryItems();
       } catch {}
     }
 
-    function getFilteredHistory() {
-      if (!activeTagFilter) return history;
-      return history.filter(e => (e.tags || []).includes(activeTagFilter));
+    async function loadTagCloud() {
+      try { tagCounts = await (await fetch(`${API}/tags`)).json(); } catch {}
+      renderTagCloud();
+    }
+
+    // What the list shows: search results > live-filtered loaded items > loaded items.
+    function getDisplayItems() {
+      if (searchResults) return searchResults;
+      if (!searchText) return history;
+      const q = searchText.toLowerCase();
+      return history.filter(e =>
+        (e.title || '').toLowerCase().includes(q) ||
+        (e.preview || '').toLowerCase().includes(q) ||
+        (e.tags || []).some(t => t.toLowerCase().includes(q)));
+    }
+
+    function renderHistoryCount() {
+      const filtered = !!(searchResults || searchText || activeTagFilter);
+      const n = searchResults ? searchResults.length
+        : (searchText ? getDisplayItems().length : historyTotal);
+      historyCount.textContent = filtered ? tf('countMatched', { n, total: libraryTotal })
+        : (libraryTotal ? tf('countTotal', { total: libraryTotal }) : '');
     }
 
     function renderTagCloud() {
-      const tagMap = {};
-      history.forEach(e => (e.tags || []).forEach(t => { tagMap[t] = (tagMap[t] || 0) + 1; }));
-      const tags = Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
-
       tagCloud.innerHTML = '';
-      if (!tags.length) {
+      if (!tagCounts.length) {
         tagCloud.innerHTML = '<span data-i18n="noTagsYet" style="font-size:12px;color:var(--text3);padding:4px 0">' + escHtml(t('noTagsYet')) + '</span>';
         return;
       }
 
       const allChip = document.createElement('span');
       allChip.className = 'tag-filter-chip' + (!activeTagFilter ? ' active' : '');
-      allChip.innerHTML = `${escHtml(t('tagAll'))} <span class="tag-count">${history.length}</span>`;
+      allChip.innerHTML = `${escHtml(t('tagAll'))} <span class="tag-count">${libraryTotal}</span>`;
       allChip.addEventListener('click', () => setTagFilter(null));
       tagCloud.appendChild(allChip);
 
-      tags.forEach(([tag, count]) => {
+      tagCounts.forEach(({ tag, count }) => {
         const chip = document.createElement('span');
         chip.className = 'tag-filter-chip' + (activeTagFilter === tag ? ' active' : '');
         chip.innerHTML = `${escHtml(tag)} <span class="tag-count">${count}</span>`;
@@ -1388,11 +1428,11 @@ Ctrl+Enter to format."></textarea>
     }
 
     function renderHistoryItems() {
-      const filtered = getFilteredHistory();
-      historyCount.textContent = filtered.length ? `${filtered.length}` : '';
+      const shown = getDisplayItems();
+      renderHistoryCount();
       historyList.querySelectorAll('.history-item').forEach(el => el.remove());
 
-      if (!filtered.length) {
+      if (!shown.length) {
         historyEmpty.style.display = '';
         historyEmpty.textContent = activeTagFilter
           ? tf('historyEmptyTagged', { tag: activeTagFilter })
@@ -1401,7 +1441,7 @@ Ctrl+Enter to format."></textarea>
       }
       historyEmpty.style.display = 'none';
 
-      filtered.forEach(entry => {
+      shown.forEach(entry => {
         const item = document.createElement('div');
         item.className = 'history-item';
         item.dataset.id = entry.id;
@@ -1410,7 +1450,7 @@ Ctrl+Enter to format."></textarea>
         const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
           + ' ' + d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-        const rawPreview = (entry.preview || '')
+        const rawPreview = (entry.title || entry.preview || '')
           .replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
         const tagsHtml = (entry.tags || []).map(t => `<span class="hi-tag">${escHtml(t)}</span>`).join('');
 
@@ -1451,19 +1491,21 @@ Ctrl+Enter to format."></textarea>
       });
     }
 
-    function handleHistoryClick(entry, itemEl) {
+    async function handleHistoryClick(entry, itemEl) {
+      const full = await fetchEntry(entry.id);
+      if (!full) { showToast(tf('toastErrorPrefix', { message: t('errFormatFailed') }), 'error'); return; }
       const hasContent = rawInput.value.trim().length > 0 && !isPreviewMode;
       if (hasContent) {
         document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
         itemEl.classList.add('active');
-        openQuickView(entry);
+        openQuickView(full);
       } else {
-        currentMarkdown = entry.markdown;
-        currentTags = entry.tags || [];
-        currentId = entry.id;
-        rawInput.value = entry.raw;
-        charCount.textContent = tf('charCount', { count: entry.raw.length.toLocaleString() });
-        showPreview(entry.markdown);
+        currentMarkdown = full.markdown;
+        currentTags = full.tags || [];
+        currentId = full.id;
+        rawInput.value = full.raw;
+        charCount.textContent = tf('charCount', { count: full.raw.length.toLocaleString() });
+        showPreview(full.markdown);
         renderCurrentTags(currentTags);
         statusText.textContent = t('statusRestored');
         showToast(t('toastMemoRestored'), 'success');
@@ -1473,9 +1515,8 @@ Ctrl+Enter to format."></textarea>
 
     async function deleteEntry(id) {
       await fetch(`${API}/history/${id}`, { method: 'DELETE' });
-      history = history.filter(e => e.id !== id);
-      renderTagCloud();
-      renderHistoryItems();
+      await loadHistoryData(true);
+      loadTagCloud();
     }
 
     // ── CLEAR ALL (arm → confirm; backs up server-side) ──
@@ -1501,10 +1542,9 @@ Ctrl+Enter to format."></textarea>
         const res = await fetch(`${API}/history/clear`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || t('errClearFailed'));
-        history = [];
         activeTagFilter = null;
-        renderTagCloud();
-        renderHistoryItems();
+        await loadHistoryData(true);
+        loadTagCloud();
         closeQuickView();
         showToast(data.backedUp ? tf('toastCleared', { count: data.count }) : t('toastMemoListCleared'), 'success');
       } catch (err) {
@@ -1516,7 +1556,8 @@ Ctrl+Enter to format."></textarea>
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    loadHistoryData();
+    loadHistoryData(true);
+    loadTagCloud();
     rawInput.focus();
     setMode('edit');
     applyLang();
@@ -1619,7 +1660,7 @@ Ctrl+Enter to format."></textarea>
           if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrApplyFailed'));
           apply.textContent = t('agentApplied');
           if (j.id) { const a = el('a', 'ag-permalink', t('agentOpenMemo')); a.href = `${BASE}/m/${j.id}`; a.target = '_blank'; card.appendChild(a); }
-          loadHistoryData();                       // 刷新 in-memory 快取，退出 agent mode 後 Memo List 立即可見
+          loadHistoryData(true); loadTagCloud();   // 刷新 in-memory 快取，退出 agent mode 後 Memo List 立即可見
         } catch (e) { apply.textContent = '✗ ' + e.message; apply.disabled = skip.disabled = false; }
       });
     }
