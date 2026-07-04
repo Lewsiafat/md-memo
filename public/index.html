@@ -1770,7 +1770,7 @@ Ctrl+Enter to format."></textarea>
         const j = await r.json();
         if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrFailed'));
         showToast(t('toastSavedAsMemo'), 'success');
-        loadHistoryData();
+        loadHistoryData(true); loadTagCloud();
       } catch (e) { showToast(tf('toastErrorPrefix', { message: e.message }), 'error'); }
     }
 
