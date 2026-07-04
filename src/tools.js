@@ -131,6 +131,7 @@ export function searchMemos({ query, limit = 5 }) {
     .slice(0, limit)
     .map(({ m }) => ({
       id: m.id,
+      title: m.title,
       preview: m.preview,
       tags: m.tags || [],
       snippet: (m.markdown || '').replace(/\s+/g, ' ').slice(0, 160),

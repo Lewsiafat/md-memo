@@ -4,7 +4,7 @@ import fs from 'node:fs';
 
 process.env.HISTORY_FILE = '/tmp/md-memo-tools-test.json';
 
-const { saveHistory } = await import('../src/store.js');
+const { saveHistory, insertEntry, createEntry } = await import('../src/store.js');
 const { searchMemos, readMemo, listTags, runReadTool, TOOLS, TOOL_KIND } =
   await import('../src/tools.js');
 
@@ -27,6 +27,13 @@ test('searchMemos respects limit and empty query', () => {
   seed();
   assert.strictEqual(searchMemos({ query: 'alpha', limit: 1 }).length, 1);
   assert.deepStrictEqual(searchMemos({ query: '   ' }), []);
+});
+
+test('searchMemos results include the memo title', () => {
+  saveHistory([]);
+  insertEntry(createEntry({ markdown: '# Docker Deploy Notes\n\nsteps here', tags: ['deploy'] }));
+  const r = searchMemos({ query: 'docker' });
+  assert.strictEqual(r[0].title, 'Docker Deploy Notes');
 });
 
 test('readMemo returns full memo or an error object', () => {
