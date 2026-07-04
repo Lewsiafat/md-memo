@@ -458,6 +458,14 @@
     #history-header h2 { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--text2); }
     #history-count { font-size: 11px; color: var(--text3); font-family: var(--mono); }
 
+    #history-search-wrap { display: flex; gap: 6px; align-items: center; padding: 0 13px 10px; }
+    #history-search {
+      flex: 1; min-width: 0; background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 6px 9px; font-family: var(--mono); font-size: 12px; outline: none;
+    }
+    #history-search:focus { border-color: var(--accent-line); }
+    #history-search::placeholder { color: var(--text3); }
     #history-list { flex: 1; overflow-y: auto; padding: 4px 0; }
     #history-list::-webkit-scrollbar { width: 3px; }
     #history-list::-webkit-scrollbar-track { background: transparent; }
@@ -721,6 +729,10 @@ Ctrl+Enter to format."></textarea>
         </div>
       </div>
 
+      <div id="history-search-wrap">
+        <input id="history-search" type="text" data-i18n-ph="searchPlaceholder" placeholder="Search memos…  ( / )">
+      </div>
+
       <div id="history-list">
         <div id="history-empty" data-i18n-html="historyEmpty">No formatted memos yet.<br>Write something and hit Format!</div>
       </div>
@@ -807,6 +819,8 @@ Ctrl+Enter to format."></textarea>
         btnClearConfirm: 'Confirm?',
         historyEmpty: 'No formatted memos yet.\nWrite something and hit Format!',
         historyEmptyTagged: 'No memos tagged "{tag}"',
+        searchPlaceholder: 'Search memos…  ( / )',
+        searchEmpty: 'No memos match "{q}"',
         countTotal: '{total} memos',
         countMatched: '{n} / {total} memos',
         // History item action button titles
@@ -921,6 +935,8 @@ Ctrl+Enter to format."></textarea>
         btnClearConfirm: '確定？',
         historyEmpty: '尚無已整理的筆記。\n寫點東西並按整理！',
         historyEmptyTagged: '沒有標籤為「{tag}」的筆記',
+        searchPlaceholder: '搜尋筆記…（/）',
+        searchEmpty: '沒有符合「{q}」的筆記',
         countTotal: '共 {total} 筆',
         countMatched: '符合 {n}／全部 {total}',
         // History item action button titles
@@ -1405,6 +1421,35 @@ Ctrl+Enter to format."></textarea>
         : (libraryTotal ? tf('countTotal', { total: libraryTotal }) : '');
     }
 
+    // ── MEMO LIST SEARCH ──
+    const searchInput = document.getElementById('history-search');
+    let searchDebounce;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        searchText = searchInput.value.trim();
+        if (!searchText) searchResults = null;   // emptying the box exits search mode
+        renderHistoryItems();
+      }, 150);
+    });
+    searchInput.addEventListener('keydown', async e => {
+      if (e.key === 'Enter') {
+        const q = searchInput.value.trim();
+        if (!q) return;
+        try {
+          const res = await fetch(`${API}/history/search?` + new URLSearchParams({ q, limit: 50 }));
+          searchResults = (await res.json()).items;
+          renderHistoryItems();
+        } catch {}
+      } else if (e.key === 'Escape') { clearSearch(); }
+    });
+    function clearSearch() {
+      searchInput.value = '';
+      searchText = '';
+      searchResults = null;
+      renderHistoryItems();
+    }
+
     function renderTagCloud() {
       tagCloud.innerHTML = '';
       if (!tagCounts.length) {
@@ -1434,9 +1479,9 @@ Ctrl+Enter to format."></textarea>
 
       if (!shown.length) {
         historyEmpty.style.display = '';
-        historyEmpty.textContent = activeTagFilter
-          ? tf('historyEmptyTagged', { tag: activeTagFilter })
-          : t('historyEmpty');
+        historyEmpty.textContent = (searchResults || searchText)
+          ? tf('searchEmpty', { q: searchResults ? searchInput.value.trim() : searchText })
+          : (activeTagFilter ? tf('historyEmptyTagged', { tag: activeTagFilter }) : t('historyEmpty'));
         return;
       }
       historyEmpty.style.display = 'none';
