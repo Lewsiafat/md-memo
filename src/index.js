@@ -2,10 +2,10 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory } from './store.js';
+import { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, listEntries } from './store.js';
 import { parseFormatResult } from './format.js';
 import { runAgent } from './agent.js';
-import { applyProposal } from './tools.js';
+import { applyProposal, searchMemos, listTags } from './tools.js';
 import { loadSessions, createSession, insertSession, deleteSession } from './sessions.js';
 import { renderPermalink } from './permalink.js';
 import { createAuth } from './auth.js';
@@ -124,10 +124,32 @@ app.post(`${BASE_PATH}/api/agent/apply`, (req, res) => {
   res.json(result);
 });
 
-// GET /md-memo/api/history
+// GET /md-memo/api/history — paginated, lightweight list: { items, total, all }
 app.get(`${BASE_PATH}/api/history`, (req, res) => {
-  res.json(loadHistory());
+  const limit = Math.max(1, Math.min(200, Number(req.query.limit) || 50));
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const order = req.query.order === 'asc' ? 'asc' : 'desc';
+  const tag = req.query.tag || null;
+  res.json(listEntries({ limit, offset, tag, order }));
 });
+
+// GET /md-memo/api/history/search — full-library search, same scoring as the
+// agent's search_memos tool. Must be registered before /api/history/:id.
+app.get(`${BASE_PATH}/api/history/search`, (req, res) => {
+  const limit = Math.max(1, Math.min(50, Number(req.query.limit) || 20));
+  res.json({ items: searchMemos({ query: req.query.q || '', limit }) });
+});
+
+// GET /md-memo/api/history/:id — full entry (quickview / restore need markdown+raw)
+app.get(`${BASE_PATH}/api/history/:id`, (req, res) => {
+  const id = Number(req.params.id);
+  const entry = Number.isFinite(id) ? loadHistory().find(e => e.id === id) : null;
+  if (!entry) return res.status(404).json({ error: 'Memo not found' });
+  res.json(entry);
+});
+
+// GET /md-memo/api/tags — all tags with counts (memo list tag cloud)
+app.get(`${BASE_PATH}/api/tags`, (req, res) => res.json(listTags()));
 
 // GET /md-memo/m/:id — public permalink page
 app.get(`${BASE_PATH}/m/:id`, (req, res) => {
