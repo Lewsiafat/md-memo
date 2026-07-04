@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { deriveTitle, slugify, uniqueSlug } from './slug.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,10 +15,30 @@ function historyFile() {
   return process.env.HISTORY_FILE || path.join(__dirname, '..', 'data', 'history.json');
 }
 
+// Backfill title/slug on legacy entries (pre-Phase-0 data). Returns true
+// when anything changed so the caller can persist once.
+function backfillIdentity(history) {
+  let changed = false;
+  const taken = new Set(history.map(e => e.slug).filter(Boolean));
+  for (const e of history) {
+    if (e.title == null) { e.title = deriveTitle(e.markdown); changed = true; }
+    if (e.slug == null) {
+      e.slug = uniqueSlug(slugify(e.title), taken);
+      taken.add(e.slug);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 export function loadHistory() {
   try {
     const f = historyFile();
-    if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (fs.existsSync(f)) {
+      const history = JSON.parse(fs.readFileSync(f, 'utf8'));
+      if (backfillIdentity(history)) saveHistory(history);
+      return history;
+    }
   } catch {}
   return [];
 }
@@ -45,6 +66,7 @@ export function createEntry({ raw = '', markdown, tags = [], sources, links }) {
     raw,
     markdown,
     tags,
+    title: deriveTitle(markdown),
     preview: markdown.split('\n').find(l => l.trim()) || '(empty)',
   };
   if (sources) entry.sources = sources;
@@ -55,6 +77,8 @@ export function createEntry({ raw = '', markdown, tags = [], sources, links }) {
 // Prepend an entry, enforce the limit, persist. Returns the entry.
 export function insertEntry(entry) {
   const history = loadHistory();
+  entry.slug = uniqueSlug(slugify(entry.title ?? deriveTitle(entry.markdown)),
+    new Set(history.map(e => e.slug).filter(Boolean)));
   history.unshift(entry);
   saveHistory(history.slice(0, historyLimit()));
   return entry;
@@ -68,6 +92,7 @@ export function updateEntry(id, { markdown, tags }) {
   if (!entry) return null;
   if (markdown != null) {
     entry.markdown = markdown;
+    entry.title = deriveTitle(markdown);
     entry.preview = markdown.split('\n').find(l => l.trim()) || '(empty)';
   }
   if (tags != null) entry.tags = tags;

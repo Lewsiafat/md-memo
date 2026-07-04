@@ -100,3 +100,36 @@ test('updateEntry keeps position (does not reorder)', () => {
   assert.strictEqual(h[0].id, 2);                // top entry unchanged
   assert.strictEqual(h[1].markdown, 'A2');       // updated in place at index 1
 });
+
+test('createEntry derives title from markdown', () => {
+  const e = createEntry({ markdown: '# My Note\n\nbody' });
+  assert.strictEqual(e.title, 'My Note');
+});
+
+test('insertEntry assigns unique, stable slugs for duplicate titles', () => {
+  saveHistory([]);
+  const a = insertEntry(createEntry({ markdown: '# Same Title' }));
+  const b = insertEntry(createEntry({ markdown: '# Same Title' }));
+  assert.strictEqual(a.slug, 'same-title');
+  assert.strictEqual(b.slug, 'same-title-2');
+});
+
+test('loadHistory lazily backfills title/slug on legacy entries and persists once', () => {
+  fs.writeFileSync(process.env.HISTORY_FILE, JSON.stringify([
+    { id: 1, createdAt: 'a', raw: '', markdown: '# Legacy\n\nx', tags: [], preview: '# Legacy' },
+  ]));
+  const h = loadHistory();
+  assert.strictEqual(h[0].title, 'Legacy');
+  assert.strictEqual(h[0].slug, 'legacy');
+  // persisted, not just in-memory
+  const onDisk = JSON.parse(fs.readFileSync(process.env.HISTORY_FILE, 'utf8'));
+  assert.strictEqual(onDisk[0].slug, 'legacy');
+});
+
+test('updateEntry recomputes title but never touches slug', () => {
+  saveHistory([]);
+  const e = insertEntry(createEntry({ markdown: '# Before' }));
+  const updated = updateEntry(e.id, { markdown: '# After' });
+  assert.strictEqual(updated.title, 'After');
+  assert.strictEqual(updated.slug, 'before');   // slug is identity — stable
+});
