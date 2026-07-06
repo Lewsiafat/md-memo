@@ -57,6 +57,7 @@ npm start
 | `PORT` | `10026` | 伺服器埠號 |
 | `HOST` | `127.0.0.1` | 綁定位址——部署到 Railway/Render/Docker 時設 `0.0.0.0`（請先啟用 auth！） |
 | `BASE_PATH` | `/md-memo` | URL base path |
+| `HISTORY_LIMIT` | `1000` | 保留的筆記上限（JSON 儲存每次寫入都整檔重寫，別設太誇張） |
 | `OPENROUTER_API_KEY` | — | 你的 OpenRouter API key（AI 必需） |
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter 模型 ID |
 | `AGENT_MODEL` | `deepseek/deepseek-v4-pro` | agent loop 使用的模型（須支援 tool calling） |

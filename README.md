@@ -57,6 +57,7 @@ npm start
 | `PORT` | `10026` | Server port |
 | `HOST` | `127.0.0.1` | Bind address — set `0.0.0.0` when deploying to Railway/Render/Docker (enable auth first!) |
 | `BASE_PATH` | `/md-memo` | URL base path |
+| `HISTORY_LIMIT` | `1000` | Max memos kept (the JSON store is rewritten whole on each save — keep it sane) |
 | `OPENROUTER_API_KEY` | — | Your OpenRouter API key (required for AI) |
 | `AI_MODEL` | `deepseek/deepseek-v4-flash` | OpenRouter model ID |
 | `AGENT_MODEL` | `deepseek/deepseek-v4-pro` | Model for the agent loop (must support tool calling) |
