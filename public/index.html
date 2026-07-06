@@ -739,6 +739,7 @@ Ctrl+Enter to format."></textarea>
       <div id="history-header">
         <h2 data-i18n="historyHeading">Memo List</h2>
         <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn-icon" id="btn-sort" data-i18n-title="sortTitle" title="Toggle sort order" style="width:auto;height:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:4px 9px;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--text2);cursor:pointer">↓</button>
           <span id="history-count"></span>
           <button class="btn-icon" style="width:auto;height:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border:1px solid var(--accent-line);border-radius:2px;background:transparent;color:var(--accent)" id="btn-clear-all" data-i18n="btnClear">Clear</button>
         </div>
@@ -840,6 +841,9 @@ Ctrl+Enter to format."></textarea>
         countTotal: '{total} memos',
         countMatched: '{n} / {total} memos',
         loadMore: 'Load more',
+        sortTitle: 'Toggle sort order',
+        sortNewest: '↓ new',
+        sortOldest: '↑ old',
         // History item action button titles
         titleCopyLink: 'Copy link',
         titleDelete: 'Delete',
@@ -957,6 +961,9 @@ Ctrl+Enter to format."></textarea>
         countTotal: '共 {total} 筆',
         countMatched: '符合 {n}／全部 {total}',
         loadMore: '載入更多',
+        sortTitle: '切換排序',
+        sortNewest: '↓ 新到舊',
+        sortOldest: '↑ 舊到新',
         // History item action button titles
         titleCopyLink: '複製連結',
         titleDelete: '刪除',
@@ -1043,6 +1050,7 @@ Ctrl+Enter to format."></textarea>
       // Re-render dynamic, JS-built strings.
       if (typeof renderTagCloud === 'function') renderTagCloud();
       if (typeof renderHistoryItems === 'function') renderHistoryItems();
+      if (typeof updateSortBtn === 'function') updateSortBtn();
       // mode badge + char count reflect current state in the active language.
       if (typeof modeBadge !== 'undefined' && modeBadge) {
         const m = { edit: 'modeEdit', view: 'modeView', combine: 'modeCombine', agent: 'modeAgent' }[currentMode];
@@ -1492,6 +1500,16 @@ Ctrl+Enter to format."></textarea>
     new IntersectionObserver(entries => {
       if (entries[0].isIntersecting) loadMoreEntries();
     }, { root: historyList }).observe(loadMoreBtn);
+
+    // ── SORT ORDER ──
+    const btnSort = document.getElementById('btn-sort');
+    function updateSortBtn() { btnSort.textContent = t(sortOrder === 'desc' ? 'sortNewest' : 'sortOldest'); }
+    btnSort.addEventListener('click', () => {
+      sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+      updateSortBtn();
+      loadHistoryData(true);
+    });
+    updateSortBtn();
 
     function renderTagCloud() {
       tagCloud.innerHTML = '';
