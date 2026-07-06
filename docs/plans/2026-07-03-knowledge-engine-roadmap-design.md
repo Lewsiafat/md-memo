@@ -70,14 +70,14 @@ md-memo 從「快速 AI markdown 筆記工具」演進為**端到端的知識重
 
 ## 6. 分階段路線圖
 
-### Phase 0 — 知識庫地基（S，先決條件）
+### Phase 0 — 知識庫地基（S，先決條件）✅ 2026-07-06 完成（`specs/memo-foundation-and-list-walkthrough.md`）
 50 筆上限與無標題身分是後面一切的地基問題。
 - `HISTORY_LIMIT` 改為環境變數（預設 1000；文件註明 JSON 全檔重寫的規模特性）。
 - memo 增加 `title`（取第一個標題行）與穩定 `slug`（wiki 身分用；舊資料 lazy 補齊，欄位皆 optional 保持向後相容）。
 - `GET /api/history` 支援分頁/篩選參數（`limit`/`offset`/`tag`），並改回**輕量欄位**（id/title/preview/tags/createdAt，不含全文）；新增 `GET /api/history/:id` 供單篇抓全文（quickview 用）。SPA 的對應改動放 Phase 0.5。
 - 驗收：既有 59+ 測試全綠；新增 title/slug/分頁/單篇端點測試；舊 `history.json` 無需遷移即可用。
 
-### Phase 0.5 — Memo List 可用性：搜尋與大量筆記的操作（S–M，僅依賴 Phase 0）
+### Phase 0.5 — Memo List 可用性：搜尋與大量筆記的操作（S–M，僅依賴 Phase 0）✅ 2026-07-06 完成（與 Phase 0 同分支交付）
 50 筆上限解除後，列表從「一眼掃完」變成「要找得到」。目標：1,000 筆時仍好操作。
 - **即時搜尋框**：置於 Memo List 頂部，輸入即過濾已載入項（debounce，比對 title/preview/tags）；按 Enter 觸發**全庫搜尋** `GET /api/history/search?q=`——後端重用 `src/tools.js` 的 `searchMemos` 計分，UI 搜尋與 agent 的 `search_memos` 同一套行為，改一處兩邊受益。
 - **tag 篩選**：點列表項上的 tag 即過濾該 tag（單選，再點取消）；篩選狀態顯示於搜尋框旁可清除的 chip。
