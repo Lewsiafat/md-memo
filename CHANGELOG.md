@@ -5,6 +5,22 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.6.1] - 2026-07-07
+
+### Fixed
+- **`POST /api/format` no longer rewrites or expands user input.** The
+  system prompt had no instruction to preserve the original content/scope,
+  so pasting an imperative numbered list (e.g. a course-planning draft) got
+  treated as a task to fulfill rather than text to format, producing a much
+  longer invented document instead of lightly-cleaned markdown. The prompt
+  now explicitly treats the input as content-to-format (never
+  instructions-to-execute) and preserves the user's original meaning, scope,
+  and length.
+- **`POST /api/format` no longer drifts into Simplified Chinese.** The
+  prompt had no language directive at all. It now shares the `AGENT_LANG`
+  env var (default `zh-TW`) with the agent loop and enforces Traditional
+  Chinese output when the input is Chinese.
+
 ## [1.6.0] - 2026-07-06
 
 Knowledge-engine roadmap Phase 0 + 0.5

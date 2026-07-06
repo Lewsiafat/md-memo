@@ -5,6 +5,19 @@
 本專案所有重要變更皆記錄於此，遵循
 [Keep a Changelog](https://keepachangelog.com/) 與 [Semantic Versioning](https://semver.org/)。
 
+## [1.6.1] - 2026-07-07
+
+### 修正
+- **`POST /api/format` 不再改寫或擴寫使用者輸入。** 原本的 system prompt
+  完全沒有「保留原始內容/範圍」的指示，導致貼上條列式指令草稿（例如課程規劃
+  草案）時，會被當成「要去完成的任務」而不是「要格式化的文字」，產出一份
+  篇幅大得多、內容全部是編造的文件，而非輕度清稿的 markdown。現在 prompt
+  明確要求把輸入視為「要格式化的內容」（絕不是要執行的指令），並保留原意、
+  範圍與長度。
+- **`POST /api/format` 不再跑出簡體中文。** 原本 prompt 完全沒有語言指示。
+  現在與 agent loop 共用 `AGENT_LANG` 環境變數（預設 `zh-TW`），中文輸入時
+  強制輸出繁體中文。
+
 ## [1.6.0] - 2026-07-06
 
 知識引擎藍圖 Phase 0 + 0.5
