@@ -495,6 +495,7 @@
     }
     .history-item:hover { background: var(--accent-dim); }
     .history-item.active { background: var(--accent-dim); border-left: 2px solid var(--accent); }
+    .history-item.kb-active { outline: 1px solid var(--accent-line); outline-offset: -1px; background: var(--surface2); }
     .history-item:hover .hi-actions { opacity: 1; }
 
     .hi-time { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: .1em; margin-bottom: 6px; }
@@ -1076,6 +1077,7 @@ Ctrl+Enter to format."></textarea>
     let tagCounts = [];        // [{tag, count}] from /api/tags
     let activeTagFilter = null;
     let quickViewEntry = null;
+    let kbIndex = -1;          // keyboard-selected list index (-1 = none)
     const PAGE_SIZE = 50;
 
     // DOM
@@ -1469,6 +1471,7 @@ Ctrl+Enter to format."></textarea>
     });
     searchInput.addEventListener('keydown', async e => {
       if (e.key === 'Enter') {
+        if (kbIndex >= 0) return;                 // a list item is selected — let keyboard nav open it
         const q = searchInput.value.trim();
         if (!q) return;
         try {
@@ -1511,6 +1514,31 @@ Ctrl+Enter to format."></textarea>
     });
     updateSortBtn();
 
+    // ── KEYBOARD NAV (/, ↑/↓, Enter, Esc) ──
+    function kbItems() { return Array.from(historyList.querySelectorAll('.history-item')); }
+    function kbHighlight() {
+      const items = kbItems();
+      items.forEach((el, i) => el.classList.toggle('kb-active', i === kbIndex));
+      if (items[kbIndex]) items[kbIndex].scrollIntoView({ block: 'nearest' });
+    }
+    document.addEventListener('keydown', e => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
+      if (e.key === '/' && !typing) { e.preventDefault(); searchInput.focus(); return; }
+      // list navigation works from the search box or outside any input
+      if (typing && e.target !== searchInput) return;
+      const items = kbItems();
+      if (e.key === 'ArrowDown' && items.length) {
+        e.preventDefault(); kbIndex = Math.min(kbIndex + 1, items.length - 1); kbHighlight();
+      } else if (e.key === 'ArrowUp' && items.length) {
+        e.preventDefault(); kbIndex = Math.max(kbIndex - 1, 0); kbHighlight();
+      } else if (e.key === 'Enter' && kbIndex >= 0 && items[kbIndex]) {
+        e.preventDefault(); items[kbIndex].click();   // → handleHistoryClick → quickview/restore
+      } else if (e.key === 'Escape' && e.target !== searchInput) {
+        clearSearch(); kbIndex = -1; kbHighlight();
+      }
+    });
+
     function renderTagCloud() {
       tagCloud.innerHTML = '';
       if (!tagCounts.length) {
@@ -1536,6 +1564,7 @@ Ctrl+Enter to format."></textarea>
     function renderHistoryItems() {
       const shown = getDisplayItems();
       renderHistoryCount();
+      kbIndex = -1;
       historyList.querySelectorAll('.history-item').forEach(el => el.remove());
 
       if (!shown.length) {
