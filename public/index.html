@@ -477,6 +477,14 @@
     #history-list::-webkit-scrollbar { width: 3px; }
     #history-list::-webkit-scrollbar-track { background: transparent; }
     #history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #history-load-more {
+      display: block; width: calc(100% - 26px); margin: 6px 13px 10px;
+      background: transparent; color: var(--text2); cursor: pointer;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 7px 0; font-family: var(--mono); font-size: 11px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    #history-load-more:hover { color: var(--accent); border-color: var(--accent-line); }
 
     .history-item {
       padding: 10px 13px;
@@ -831,6 +839,7 @@ Ctrl+Enter to format."></textarea>
         searchEmpty: 'No memos match "{q}"',
         countTotal: '{total} memos',
         countMatched: '{n} / {total} memos',
+        loadMore: 'Load more',
         // History item action button titles
         titleCopyLink: 'Copy link',
         titleDelete: 'Delete',
@@ -947,6 +956,7 @@ Ctrl+Enter to format."></textarea>
         searchEmpty: '沒有符合「{q}」的筆記',
         countTotal: '共 {total} 筆',
         countMatched: '符合 {n}／全部 {total}',
+        loadMore: '載入更多',
         // History item action button titles
         titleCopyLink: '複製連結',
         titleDelete: '刪除',
@@ -1467,6 +1477,22 @@ Ctrl+Enter to format."></textarea>
       renderHistoryItems();
     }
 
+    // ── LOAD MORE (button + auto-load when scrolled to the bottom) ──
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.id = 'history-load-more';
+    let loadingMore = false;
+    async function loadMoreEntries() {
+      if (loadingMore || searchResults || searchText) return;
+      if (history.length >= historyTotal) return;
+      loadingMore = true;
+      await loadHistoryData(false);
+      loadingMore = false;
+    }
+    loadMoreBtn.addEventListener('click', loadMoreEntries);
+    new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) loadMoreEntries();
+    }, { root: historyList }).observe(loadMoreBtn);
+
     function renderTagCloud() {
       tagCloud.innerHTML = '';
       if (!tagCounts.length) {
@@ -1558,6 +1584,11 @@ Ctrl+Enter to format."></textarea>
 
         historyList.appendChild(item);
       });
+
+      loadMoreBtn.textContent = t('loadMore');
+      loadMoreBtn.style.display =
+        (!searchResults && !searchText && history.length < historyTotal) ? '' : 'none';
+      historyList.appendChild(loadMoreBtn);
     }
 
     async function handleHistoryClick(entry, itemEl) {
