@@ -37,37 +37,37 @@
 ## 任務清單
 
 ### A — store 地基（Phase 0）
-- [ ] `HISTORY_LIMIT` 改讀 `process.env.HISTORY_LIMIT`（預設 1000），`insertEntry` 沿用；更新既有上限測試
-- [ ] 新增 `deriveTitle(markdown)`：取第一個標題行（`#` 開頭），fallback 第一個非空行
-- [ ] 新增 `slugify(title, existingSlugs)`：CJK 保留 kebab-case ＋ `-2`/`-3` 唯一化
-- [ ] `createEntry` 產出 `title`/`slug`；`updateEntry` 重算 `title`（slug 不動）
-- [ ] `loadHistory` lazy 補齊：發現缺 title/slug 的條目就地補齊並持久化一次
-- [ ] store 測試：env 上限、title 推導、slug 唯一化與穩定性、lazy 補齊、舊格式相容
+- [x] `HISTORY_LIMIT` 改讀 `process.env.HISTORY_LIMIT`（預設 1000），`insertEntry` 沿用；更新既有上限測試
+- [x] 新增 `deriveTitle(markdown)`：取第一個標題行（`#` 開頭），fallback 第一個非空行
+- [x] 新增 `slugify(title, existingSlugs)`：CJK 保留 kebab-case ＋ `-2`/`-3` 唯一化
+- [x] `createEntry` 產出 `title`/`slug`；`updateEntry` 重算 `title`（slug 不動）
+- [x] `loadHistory` lazy 補齊：發現缺 title/slug 的條目就地補齊並持久化一次
+- [x] store 測試：env 上限、title 推導、slug 唯一化與穩定性、lazy 補齊、舊格式相容
 
 ### B — API（Phase 0）
-- [ ] `GET /api/history`：支援 `limit`/`offset`/`tag`/`order`（asc|desc，預設 desc），回 `{ items, total, all }` 輕量欄位（total 為套用 tag 篩選後的總數、all 為全庫筆數）
-- [ ] `GET /api/history/search?q=&limit=`：重用 `searchMemos`，註冊在 `:id` 之前
-- [ ] `GET /api/history/:id`：單篇全文（quickview／還原用），不存在回 404
-- [ ] `GET /api/tags`：重用 `listTags()`
-- [ ] `searchMemos` 回傳補 `title`
-- [ ] endpoint 測試：分頁邊界、tag 篩選、order、單篇 404、search 與 `search_memos` 行為一致性
+- [x] `GET /api/history`：支援 `limit`/`offset`/`tag`/`order`（asc|desc，預設 desc），回 `{ items, total, all }` 輕量欄位（total 為套用 tag 篩選後的總數、all 為全庫筆數）
+- [x] `GET /api/history/search?q=&limit=`：重用 `searchMemos`，註冊在 `:id` 之前
+- [x] `GET /api/history/:id`：單篇全文（quickview／還原用），不存在回 404
+- [x] `GET /api/tags`：重用 `listTags()`
+- [x] `searchMemos` 回傳補 `title`
+- [x] endpoint 測試：分頁邊界、tag 篩選、order、單篇 404、search 與 `search_memos` 行為一致性
 
 ### C — SPA Memo List（Phase 0.5）
-- [ ] `loadHistoryData` 改接封套與分頁狀態；quickview 與點擊還原改走 `GET /api/history/:id` 抓全文
-- [ ] 搜尋框（列表頂部）：輸入即過濾已載入項（debounce，比對 title/preview/tags）；Enter 觸發全庫搜尋 API；Esc 清除
-- [ ] tag 篩選：列表項上的 tag 可點擊過濾（單選再點取消）；篩選走伺服器 `tag` 參數重查；狀態顯示為搜尋框旁可清除的 chip；tag cloud 計數改接 `GET /api/tags`
-- [ ] 分頁載入：底部「載入更多」按鈕＋IntersectionObserver 滾到底自動載
-- [ ] 排序切換：新→舊（預設）／舊→新（走 `order` 參數）
-- [ ] 鍵盤操作：`/` 聚焦搜尋框（編輯器輸入中不觸發）、`↑`/`↓` 列表移動、Enter 開 quickview、Esc 清除搜尋
-- [ ] 計數列：「符合 n / 全部 N」
-- [ ] i18n：新增字串補齊 en／zh 兩份
+- [x] `loadHistoryData` 改接封套與分頁狀態；quickview 與點擊還原改走 `GET /api/history/:id` 抓全文
+- [x] 搜尋框（列表頂部）：輸入即過濾已載入項（debounce，比對 title/preview/tags）；Enter 觸發全庫搜尋 API；Esc 清除
+- [x] tag 篩選：列表項上的 tag 可點擊過濾（單選再點取消）；篩選走伺服器 `tag` 參數重查；狀態顯示為搜尋框旁可清除的 chip；tag cloud 計數改接 `GET /api/tags`
+- [x] 分頁載入：底部「載入更多」按鈕＋IntersectionObserver 滾到底自動載
+- [x] 排序切換：新→舊（預設）／舊→新（走 `order` 參數）
+- [x] 鍵盤操作：`/` 聚焦搜尋框（編輯器輸入中不觸發）、`↑`/`↓` 列表移動、Enter 開 quickview、Esc 清除搜尋
+- [x] 計數列：「符合 n / 全部 N」
+- [x] i18n：新增字串補齊 en／zh 兩份
 
 ### D — demo 同步
-- [ ] `demo/mock.js`：history 路由支援封套＋`limit`/`offset`/`tag`/`order`；新增 `/:id`、`/search`（同 `searchMemos` 計分公式）、`/tags`
-- [ ] `test/demo-data.test.mjs` 跨檔一致性維持綠燈
+- [x] `demo/mock.js`：history 路由支援封套＋`limit`/`offset`/`tag`/`order`；新增 `/:id`、`/search`（同 `searchMemos` 計分公式）、`/tags`
+- [x] `test/demo-data.test.mjs` 跨檔一致性維持綠燈
 
 ### E — 文件與驗證
-- [ ] `.env.sample`／`README.md`／`CLAUDE.md`：補 `HISTORY_LIMIT` 說明與新端點
-- [ ] `npm test` 全綠、`npm run smoke` 通過
-- [ ] 1,000 筆 seed 手動走查：搜尋／篩選／分頁／鍵盤操作（藍圖驗收條件）
-- [ ] dispatch `contract-reviewer` agent 做契約專項把關
+- [x] `.env.sample`／`README.md`／`CLAUDE.md`：補 `HISTORY_LIMIT` 說明與新端點
+- [x] `npm test` 全綠、`npm run smoke` 通過
+- [x] 1,000 筆 seed 手動走查：搜尋／篩選／分頁／鍵盤操作（藍圖驗收條件）
+- [x] dispatch `contract-reviewer` agent 做契約專項把關
