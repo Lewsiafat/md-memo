@@ -5,6 +5,48 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-07-06
+
+Knowledge-engine roadmap Phase 0 + 0.5
+(`docs/plans/2026-07-03-knowledge-engine-roadmap-design.md`): storage foundation
+plus Memo List usability at 1,000-memo scale. Full walkthrough in
+`specs/memo-foundation-and-list-walkthrough.md`.
+
+### Added
+- **`HISTORY_LIMIT` environment variable** (default `1000`) — the hard-coded
+  50-memo cap is gone. The JSON store is still rewritten whole on each save;
+  the docs note the scale characteristics.
+- **`title`/`slug` identity per memo** (`src/slug.js`) — title derived from the
+  first heading (fallback: first non-empty line); CJK-friendly kebab-case slug,
+  unique-suffixed and **stable once generated** (groundwork for wiki links).
+  Old data is lazily backfilled on first load — no manual migration.
+- **Paginated lightweight history API** — `GET /api/history` takes
+  `limit`/`offset`/`tag`/`order` and returns an `{ items, total, all }`
+  envelope with lightweight fields (no full markdown).
+- **`GET /api/history/search?q=`** — full-library keyword search reusing the
+  agent tool's `searchMemos` scoring (one implementation, both consumers).
+- **`GET /api/history/:id`** (single memo on demand for quickview/restore;
+  404 on unknown or non-numeric ids) and **`GET /api/tags`** (tag counts, so
+  the tag cloud stays correct under pagination).
+- **Memo List upgrades** — search box (live filter over loaded items, Enter
+  for full-library search, Esc to clear), clickable per-item tag filter with a
+  dismissible chip, "Load more" button + auto-load on scroll
+  (IntersectionObserver, 50 per page), newest/oldest sort toggle, keyboard
+  navigation (`/` focuses search, `↑`/`↓` move, Enter opens, Esc clears), and
+  a "matched n / total N" count line. All new strings in both EN and 繁體中文.
+- **Demo mock parity** — the static demo's `mock.js` mirrors the envelope,
+  pagination params, and the new `/search`, `/:id`, `/tags` routes.
+
+### Changed
+- **`GET /api/history` response shape** — now the `{ items, total, all }`
+  envelope instead of a full-content array. Its only consumers (the SPA and
+  the demo mock) were updated in the same release; the SPA fetches full
+  markdown per memo only when needed.
+- `searchMemos` results now include `title` (shared by the agent tool and the
+  UI search).
+- Test suite grew from 59 to 75 tests (slug, store limit/backfill/pagination,
+  search title).
+
 ## [1.5.0] - 2026-07-02
 
 Open-source release readiness: implements every finding from the full code review in

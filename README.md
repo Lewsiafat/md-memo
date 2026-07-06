@@ -16,7 +16,7 @@ A lightweight markdown memo tool with AI-powered formatting. Write in plain text
 - 📋 **Copy to clipboard** — markdown or plain text
 - 🔗 **Permalink** — shareable URL for each memo (`/md-memo/m/:id`)
 - 🎨 **Colophon design** — a warm, paper-like aesthetic (Instrument Serif / Literata / IBM Plex Mono); **Light "Writing" is the default**, with a Dark "Reading" theme toggle (localStorage-persisted)
-- 📚 **Memo List** — last 50 memos with tag cloud filter; safe Clear All keeps a timestamped backup
+- 📚 **Memo List** — search (live filter + Enter for full-library search), clickable tag filter, paginated loading with auto-load on scroll (cap configurable via `HISTORY_LIMIT`, default 1000), sort toggle, and keyboard navigation (`/`, `↑`/`↓`, Enter, Esc); safe Clear All keeps a timestamped backup
 - ✏️ **Edit existing memos** — open a saved memo and **Save** (verbatim overwrite, no AI), **Reformat** (re-run the AI, then overwrite the entry or save as a new one), or **Discard**
 - 🔍 **Quick view** — preview history items without leaving the editor
 - 🧠 **Agent over your notes** — ask questions or give commands ("merge this week's meeting notes"); the agent searches, reads, and proposes changes with a live reasoning trace (confirm before any write). A dedicated three-column Agent workspace lets you save, replay, and delete sessions, or turn an answer into a memo

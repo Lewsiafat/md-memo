@@ -5,6 +5,40 @@
 本專案所有重要變更皆記錄於此，遵循
 [Keep a Changelog](https://keepachangelog.com/) 與 [Semantic Versioning](https://semver.org/)。
 
+## [1.6.0] - 2026-07-06
+
+知識引擎藍圖 Phase 0 + 0.5
+（`docs/plans/2026-07-03-knowledge-engine-roadmap-design.md`）：知識庫地基
+＋千筆規模下的 Memo List 可用性。完整記錄見
+`specs/memo-foundation-and-list-walkthrough.md`。
+
+### 新增
+- **`HISTORY_LIMIT` 環境變數**（預設 `1000`）——寫死的 50 筆上限走入歷史。
+  JSON 儲存仍為整檔重寫，文件已註明規模特性。
+- **每筆 memo 的 `title`/`slug` 身分**（`src/slug.js`）——title 取第一個標題行
+  （fallback 第一個非空行）；slug 為 CJK 友善 kebab-case、尾碼唯一化、
+  **產生後穩定不變**（wiki 連結的地基）。舊資料首次載入時 lazy 補齊，免手動遷移。
+- **分頁輕量 history API**——`GET /api/history` 支援 `limit`/`offset`/`tag`/`order`，
+  回 `{ items, total, all }` 封套（輕量欄位，不含全文）。
+- **`GET /api/history/search?q=`**——全庫關鍵字搜尋，重用 agent 工具的
+  `searchMemos` 計分（一套實作、兩邊受益）。
+- **`GET /api/history/:id`**（quickview／還原按需抓單篇；未知或非數字 id 回 404）
+  與 **`GET /api/tags`**（tag 計數，分頁下 tag cloud 仍正確）。
+- **Memo List 升級**——搜尋框（輸入即過濾已載入項、Enter 全庫搜尋、Esc 清除）、
+  列表項 tag 點擊篩選＋可取消 chip、「載入更多」按鈕＋滾到底自動載
+  （IntersectionObserver，每頁 50）、新→舊／舊→新排序切換、鍵盤操作
+  （`/` 聚焦搜尋、`↑`/`↓` 移動、Enter 開啟、Esc 清除）、「符合 n / 全部 N」計數列。
+  新字串皆有 EN 與繁體中文兩份。
+- **Demo mock 對等**——靜態 demo 的 `mock.js` 同步封套、分頁參數與新的
+  `/search`、`/:id`、`/tags` 路由。
+
+### 變更
+- **`GET /api/history` 回應形狀**——改為 `{ items, total, all }` 封套，不再回含全文
+  的完整陣列。唯二消費者（SPA 與 demo mock）於同版本一併更新；SPA 僅在需要時
+  按篇抓取全文。
+- `searchMemos` 結果補 `title` 欄位（agent 工具與 UI 搜尋共用）。
+- 測試從 59 增至 75（slug、store 上限/補齊/分頁、search title）。
+
 ## [1.5.0] - 2026-07-02
 
 開源發布整備：完整實作 `docs/md-memo-code-review.md` 全面審查的所有發現
