@@ -7,6 +7,7 @@ import { parseFormatResult } from './format.js';
 import { runAgent } from './agent.js';
 import { applyProposal, searchMemos, listTags } from './tools.js';
 import { loadSessions, createSession, insertSession, deleteSession } from './sessions.js';
+import { takeProposal } from './proposals.js';
 import { renderPermalink } from './permalink.js';
 import { createAuth } from './auth.js';
 
@@ -18,6 +19,7 @@ const BASE_PATH = process.env.BASE_PATH || '/md-memo';
 // Language for Chinese output (BCP-47 tag). Shares AGENT_LANG with agent.js so
 // the formatter and the agent follow one setting. Default zh-TW (繁體中文).
 const RESPONSE_LANG = process.env.AGENT_LANG || 'zh-TW';
+const LANG_ZH = RESPONSE_LANG.startsWith('zh');
 
 // Optional HTTP Basic Auth — gated by AUTH_ENABLED (default off). Public
 // permalink pages (/m/:id) stay open so shared links work without a password.
@@ -132,11 +134,16 @@ app.post(`${BASE_PATH}/api/agent`, async (req, res) => {
   }
 });
 
-// POST /md-memo/api/agent/apply — execute a user-confirmed write proposal
+// POST /md-memo/api/agent/apply — execute a user-confirmed write proposal.
+// Takes the one-time proposal id issued during the SSE stream; the args live
+// server-side, so double-clicks, replayed sessions, and tampered args all 400.
 app.post(`${BASE_PATH}/api/agent/apply`, (req, res) => {
-  const { action, args } = req.body || {};
-  if (!action || !args) return res.status(400).json({ error: 'action and args required' });
-  const result = applyProposal({ action, args });
+  const { id } = req.body || {};
+  const proposal = id ? takeProposal(id) : null;
+  if (!proposal) {
+    return res.status(400).json({ ok: false, error: LANG_ZH ? '提案已失效或不存在' : 'Proposal expired or unknown' });
+  }
+  const result = applyProposal(proposal);
   if (!result.ok) return res.status(400).json(result);
   res.json(result);
 });
@@ -198,6 +205,16 @@ app.put(`${BASE_PATH}/api/history/:id`, (req, res) => {
   const entry = updateEntry(id, { markdown, tags });
   if (!entry) return res.status(404).json({ ok: false, error: 'Memo not found' });
   res.json({ ok: true, entry });
+});
+
+// POST /md-memo/api/history — raw create without the LLM (agent panel's
+// "save session as memo" uses this; /api/agent/apply is proposals-only).
+app.post(`${BASE_PATH}/api/history`, (req, res) => {
+  const { markdown, tags } = req.body || {};
+  if (typeof markdown !== 'string' || !markdown.trim())
+    return res.status(400).json({ ok: false, error: 'markdown (non-empty string) required' });
+  const entry = insertEntry(createEntry({ markdown, tags: tags || [] }));
+  res.json({ ok: true, id: entry.id });
 });
 
 // GET /md-memo/api/sessions — list saved agent sessions
