@@ -1,4 +1,5 @@
-import { TOOLS, TOOL_KIND, runReadTool, buildProposal } from './tools.js';
+import { TOOLS, TOOL_KIND, runReadTool, buildProposal, validateProposal } from './tools.js';
+import { registerProposal } from './proposals.js';
 
 const MAX_STEPS = 8;
 
@@ -64,8 +65,17 @@ export async function runAgent(message, emit, { callModel = callOpenRouter, prio
       emit('tool_call', { name, args });
       let toolContent;
       if (TOOL_KIND[name] === 'write') {
-        emit('proposal', buildProposal(name, args));
-        toolContent = 'Proposed to the user for confirmation. Assume not yet applied.';
+        const valid = validateProposal(name, args);
+        if (valid.ok) {
+          const proposal = buildProposal(name, args);
+          emit('proposal', { id: registerProposal(proposal), ...proposal });
+          toolContent = 'Proposed to the user for confirmation. Assume not yet applied.';
+        } else {
+          // Invalid args never reach the user — the error goes back to the
+          // model as a tool result so it can self-correct within this run.
+          emit('tool_result', { name, result: { error: valid.error } });
+          toolContent = JSON.stringify({ error: valid.error });
+        }
       } else {
         const result = runReadTool(name, args);
         emit('tool_result', { name, result });

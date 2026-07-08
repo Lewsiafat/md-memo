@@ -54,3 +54,45 @@ test('stops at MAX_STEPS without infinite loop', async () => {
   assert.strictEqual(done.steps, 8);
   assert.ok(c.events.some(e => e[0] === 'answer'));
 });
+
+test('invalid write args feed the error back to the model (no proposal)', async () => {
+  saveHistory([]);   // empty library → source id 999 is invalid
+  let secondTurnMessages = null;
+  let turn = 0;
+  const fake = async (messages) => {
+    turn++;
+    if (turn === 1) return { message: { role: 'assistant', content: '',
+      tool_calls: [{ id: 'c1', type: 'function', function: { name: 'merge_memos', arguments: '{"source_ids":[999],"markdown":"m"}' } }] },
+      usage: {} };
+    secondTurnMessages = messages;
+    return { message: { role: 'assistant', content: 'corrected' }, usage: {} };
+  };
+  const c = collector();
+  await runAgent('merge stuff', c.emit, { callModel: fake });
+  assert.ok(!c.names().includes('proposal'), 'invalid args never become a proposal');
+  const tr = c.events.find(e => e[0] === 'tool_result')[1];
+  assert.match(tr.result.error, /999/);
+  const toolMsg = secondTurnMessages.find(m => m.role === 'tool');
+  assert.match(toolMsg.content, /999/, 'model saw the validation error');
+});
+
+test('valid write proposal event carries a one-time registered id', async () => {
+  saveHistory([]);
+  let turn = 0;
+  const fake = async () => {
+    turn++;
+    if (turn === 1) return { message: { role: 'assistant', content: '',
+      tool_calls: [{ id: 'c1', type: 'function', function: { name: 'create_memo', arguments: '{"markdown":"# New"}' } }] },
+      usage: {} };
+    return { message: { role: 'assistant', content: 'done' }, usage: {} };
+  };
+  const c = collector();
+  await runAgent('make a memo', c.emit, { callModel: fake });
+  const prop = c.events.find(e => e[0] === 'proposal')[1];
+  assert.ok(typeof prop.id === 'string' && prop.id.length > 0);
+  assert.strictEqual(prop.action, 'create_memo');
+  const { takeProposal } = await import('../src/proposals.js');
+  const stored = takeProposal(prop.id);
+  assert.strictEqual(stored.action, 'create_memo');
+  assert.strictEqual(takeProposal(prop.id), null);   // consumed
+});
