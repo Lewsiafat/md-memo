@@ -2,7 +2,7 @@
    Loaded before the app's inline script so window.fetch is patched first. */
 (function () {
   const realFetch = window.fetch.bind(window);
-  const state = { history: [], format: null, trace: null, sessions: [] };
+  const state = { history: [], format: null, trace: null, sessions: [], proposals: {} };
   let dataP;
 
   // Resolve a demo data file relative to the page (served at <base>/).
@@ -27,6 +27,9 @@
         state.history.forEach(e => { if (e.title == null) e.title = demoTitle(e.markdown); });
         state.format = f;
         state.trace = t;
+        for (const ev of t.events) {
+          if (ev.event === 'proposal') state.proposals[ev.data.id] = ev.data;
+        }
       });
     }
     return dataP;
@@ -95,6 +98,19 @@
         id: e.id, title: e.title, slug: e.slug, preview: e.preview, tags: e.tags || [], createdAt: e.createdAt,
       }));
       return json({ items, total: filtered.length, all: state.history.length });
+    }
+
+    if (p.endsWith('/api/history') && method === 'POST') {
+      const md = body.markdown || '';
+      if (!md.trim()) return json({ ok: false, error: 'markdown (non-empty string) required' }, 400);
+      const entry = {
+        id: Date.now(), createdAt: new Date().toISOString(), raw: '',
+        markdown: md, tags: body.tags || [],
+        preview: md.split('\n').find(l => l.trim()) || '(empty)',
+        title: demoTitle(md),
+      };
+      state.history.unshift(entry);
+      return json({ ok: true, id: entry.id });
     }
 
     if (p.endsWith('/api/history/search') && method === 'GET') {
@@ -174,13 +190,15 @@
     if (p.endsWith('/api/agent') && method === 'POST') return sseResponse(state.trace.events);
 
     if (p.endsWith('/api/agent/apply') && method === 'POST') {
-      if (body.action === 'merge_memos') {
-        const entry = mergedNoteFrom(body.args || {}, state.trace.apply);
+      const prop = body.id ? state.proposals[body.id] : null;
+      if (!prop) return json({ ok: false, error: '提案已失效或不存在' }, 400);
+      if (prop.action === 'merge_memos') {
+        const entry = mergedNoteFrom(prop.args || {}, state.trace.apply);
         state.history.unshift(entry);
         return json({ ok: true, id: entry.id });
       }
-      if (body.action === 'create_memo') {
-        const a = body.args || {};
+      if (prop.action === 'create_memo') {
+        const a = prop.args || {};
         const entry = {
           id: Date.now(), createdAt: new Date().toISOString(), raw: '',
           markdown: a.markdown || '', tags: a.tags || [],

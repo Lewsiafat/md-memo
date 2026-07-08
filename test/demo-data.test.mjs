@@ -77,3 +77,11 @@ test('proposal is a merge_memos write with full markdown', () => {
   assert.ok(Array.isArray(prop.args.source_ids) && prop.args.source_ids.length >= 2);
   assert.ok(typeof prop.summary === 'string' && prop.summary.length > 0);
 });
+
+test('every proposal event carries an apply id (frontend sends { id })', () => {
+  const props = trace.events.filter(e => e.event === 'proposal');
+  assert.ok(props.length > 0);
+  for (const ev of props) {
+    assert.ok(typeof ev.data.id === 'string' && ev.data.id.length > 0);
+  }
+});
