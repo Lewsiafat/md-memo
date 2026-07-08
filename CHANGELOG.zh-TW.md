@@ -5,6 +5,38 @@
 本專案所有重要變更皆記錄於此，遵循
 [Keep a Changelog](https://keepachangelog.com/) 與 [Semantic Versioning](https://semver.org/)。
 
+## [1.6.2] - 2026-07-09
+
+Agent mode 強化（C1+H1+H2+H3），源自 2026-07-08 的架構審查；
+設計與任務計畫見 `docs/plans/2026-07-08-agent-mode-hardening-*.md`。
+
+### 修正
+- **儲存層損毀不再靜默清空資料（C1）。** `data/history.json` 或
+  `data/sessions.json` parse 失敗（或不是陣列）時，損毀檔會被隔離成
+  `<name>.corrupt-<時間戳>.json`、原始位元組完整保留供人工救回，app 以
+  空庫繼續運作，不會在下一次存檔時把證據覆寫掉。所有寫入改為原子操作
+  （先寫 `<file>.tmp` 再 rename），程式中途掛掉也不會留下半寫的檔案。
+- **關閉分頁現在真的會停掉 agent（H3）。** SSE 客戶端中途斷線時，
+  AbortController 會中止 agent loop 與進行中的 OpenRouter 請求，
+  不再讓整輪跑完白燒 token。
+- **無效的 agent 寫入提案改為自我修正，不會出現在你面前（H2）。**
+  寫入類工具的參數在 propose 階段即驗證；驗證錯誤以 tool result 餵回
+  模型讓它在同一輪內重試，永遠不會變成待確認的 proposal。
+
+### 變更
+- **`POST /api/agent/apply` 改為消費一次性 proposal id（H1）。**
+  SSE `proposal` 事件帶 server 發的 id（`{ id, action, args, summary }`）；
+  apply 只收 `{ id }`，args 存在 server 端 in-memory registry
+  （上限 200 筆 FIFO）。連點兩下、重播已存 session、竄改 args 一律回
+  400；server 重啟後未套用的提案依設計失效。
+
+### 新增
+- **`POST /api/history`** — 不跑 LLM 的 raw create（body
+  `{ markdown, tags? }`）；agent 面板的「存成 memo」改走此端點，
+  不再借用 apply。
+- Demo mock 同步改為 id-based apply 契約，靜態 demo 繼續流經
+  真實前端程式碼路徑。
+
 ## [1.6.1] - 2026-07-07
 
 ### 修正

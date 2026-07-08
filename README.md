@@ -27,7 +27,7 @@ A lightweight markdown memo tool with AI-powered formatting. Write in plain text
 - **Frontend**: Vanilla JS, no framework, no build step
 - **Type**: Instrument Serif · Literata · IBM Plex Mono (Google Fonts CDN)
 - **AI**: [OpenRouter](https://openrouter.ai) (bring your own key, any model)
-- **Storage**: JSON file (no database needed)
+- **Storage**: JSON file (no database needed) — atomic writes; a corrupted file is quarantined for recovery, never overwritten
 
 ## Quick Start
 

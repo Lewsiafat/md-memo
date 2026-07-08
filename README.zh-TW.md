@@ -27,7 +27,7 @@
 - **前端**：Vanilla JS，無框架、無 build step
 - **字體**：Instrument Serif · Literata · IBM Plex Mono（Google Fonts CDN）
 - **AI**：[OpenRouter](https://openrouter.ai)（自帶 key，任意模型）
-- **儲存**：JSON 檔案（不需資料庫）
+- **儲存**：JSON 檔案（不需資料庫）— 原子寫入；損毀檔案會被隔離保留供救回，不會被覆寫
 
 ## 快速開始
 

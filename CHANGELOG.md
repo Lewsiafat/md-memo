@@ -5,6 +5,44 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.6.2] - 2026-07-09
+
+Agent-mode hardening (C1+H1+H2+H3) from the 2026-07-08 architecture review;
+design and task plan in `docs/plans/2026-07-08-agent-mode-hardening-*.md`.
+
+### Fixed
+- **Corrupted storage no longer silently wipes data (C1).** If
+  `data/history.json` or `data/sessions.json` fails to parse (or isn't an
+  array), the corrupted file is quarantined as
+  `<name>.corrupt-<timestamp>.json` with its original bytes preserved for
+  manual recovery, and the app continues with an empty library instead of
+  overwriting the evidence on the next save. All saves are now atomic
+  (write `<file>.tmp`, then rename), so a crash can never leave a
+  half-written file.
+- **Closing the tab now actually stops the agent (H3).** When the SSE
+  client disconnects mid-run, an AbortController aborts the agent loop and
+  the in-flight OpenRouter request instead of letting the run burn tokens
+  to completion.
+- **Invalid agent write proposals self-correct instead of reaching you
+  (H2).** Write-tool args are validated at propose time; validation errors
+  feed back to the model as tool results so it can retry within the run,
+  and never become a confirmable proposal.
+
+### Changed
+- **`POST /api/agent/apply` now consumes a one-time proposal id (H1).**
+  The SSE `proposal` event carries a server-issued id (`{ id, action,
+  args, summary }`); apply takes `{ id }` only, with args kept server-side
+  in an in-memory registry (200-entry FIFO). Double-clicks, replayed saved
+  sessions, and tampered args all get a 400; a server restart invalidates
+  pending proposals by design.
+
+### Added
+- **`POST /api/history`** — raw create without the LLM (body
+  `{ markdown, tags? }`); the agent panel's "save session as memo" now
+  uses this instead of the apply endpoint.
+- Demo mock mirrors the new id-based apply contract, so the static demo
+  keeps exercising the real frontend code paths.
+
 ## [1.6.1] - 2026-07-07
 
 ### Fixed
