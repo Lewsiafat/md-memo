@@ -140,4 +140,7 @@ test('validateProposal rejects empty markdown, unknown ids, unknown actions', ()
   assert.match(validateProposal('link_memos', { ids: [999] }).error, /999/);
   assert.strictEqual(validateProposal('retag_memo', { id: 999 }).ok, false);
   assert.strictEqual(validateProposal('delete_everything', {}).ok, false);
+  // Lock error message parity: id converted to Number (undefined→NaN, '007'→7)
+  assert.strictEqual(validateProposal('retag_memo', {}).error, 'No memo with id NaN');
+  assert.strictEqual(validateProposal('retag_memo', { id: '007' }).error, 'No memo with id 7');
 });

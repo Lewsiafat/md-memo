@@ -221,8 +221,9 @@ export function validateProposal(action, args = {}) {
       return { ok: true };
     }
     case 'retag_memo': {
-      if (!existingIds().has(Number(args.id)))
-        return { ok: false, error: `No memo with id ${args.id}` };
+      const id = Number(args.id);
+      if (!existingIds().has(id))
+        return { ok: false, error: `No memo with id ${id}` };
       return { ok: true };
     }
     default:
