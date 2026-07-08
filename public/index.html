@@ -1801,7 +1801,7 @@ Ctrl+Enter to format."></textarea>
         try {
           const r = await fetch(`${BASE}/api/agent/apply`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: data.action, args: data.args }),
+            body: JSON.stringify({ id: data.id }),
           });
           const j = await r.json();
           if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrApplyFailed'));
@@ -1910,9 +1910,9 @@ Ctrl+Enter to format."></textarea>
     async function saveToMemo(session) {
       const md = (session.answer || '').trim() || session.question;
       try {
-        const r = await fetch(`${BASE}/api/agent/apply`, {
+        const r = await fetch(`${BASE}/api/history`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'create_memo', args: { markdown: md, tags: ['agent'] } }),
+          body: JSON.stringify({ markdown: md, tags: ['agent'] }),
         });
         const j = await r.json();
         if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrFailed'));
