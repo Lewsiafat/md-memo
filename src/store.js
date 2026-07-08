@@ -32,21 +32,32 @@ function backfillIdentity(history) {
 }
 
 export function loadHistory() {
+  const f = historyFile();
+  if (!fs.existsSync(f)) return [];
+  let history;
   try {
-    const f = historyFile();
-    if (fs.existsSync(f)) {
-      const history = JSON.parse(fs.readFileSync(f, 'utf8'));
-      if (backfillIdentity(history)) saveHistory(history);
-      return history;
-    }
-  } catch {}
-  return [];
+    history = JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (!Array.isArray(history)) throw new Error('history is not an array');
+  } catch (err) {
+    // Corrupted file: move it aside so no later save can overwrite the bytes,
+    // then continue with an empty library. Recovery = inspect the .corrupt file.
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const quarantine = f.replace(/\.json$/, '') + `.corrupt-${ts}.json`;
+    fs.renameSync(f, quarantine);
+    console.error(`history file corrupted — moved to ${quarantine}:`, err.message);
+    return [];
+  }
+  if (backfillIdentity(history)) saveHistory(history);
+  return history;
 }
 
 export function saveHistory(history) {
   const f = historyFile();
   fs.mkdirSync(path.dirname(f), { recursive: true });
-  fs.writeFileSync(f, JSON.stringify(history, null, 2));
+  // tmp + rename so the real file is never half-written on disk.
+  const tmp = f + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(history, null, 2));
+  fs.renameSync(tmp, f);
 }
 
 // Monotonic id generator: Date.now(), bumped by 1 when two calls land in the

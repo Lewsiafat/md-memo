@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
+import path from 'node:path';
 
 process.env.HISTORY_FILE = '/tmp/md-memo-store-test.json';
 fs.rmSync(process.env.HISTORY_FILE, { force: true });
@@ -159,4 +160,42 @@ test('listEntries filters by tag (total follows the filter, all does not)', () =
 test('listEntries order asc returns oldest first', () => {
   const r = listEntries({ order: 'asc', limit: 1 });
   assert.strictEqual(r.items[0].title, 'N0');
+});
+
+test('loadHistory quarantines a corrupted file and returns []', () => {
+  const f = process.env.HISTORY_FILE;
+  const dir = path.dirname(f);
+  const prefix = path.basename(f).replace(/\.json$/, '') + '.corrupt-';
+  // clean stale quarantine files from previous runs
+  for (const n of fs.readdirSync(dir).filter(n => n.startsWith(prefix))) {
+    fs.rmSync(path.join(dir, n), { force: true });
+  }
+  fs.writeFileSync(f, '{ not valid json');
+  assert.deepStrictEqual(loadHistory(), []);
+  assert.ok(!fs.existsSync(f), 'corrupted file moved away');
+  const quarantined = fs.readdirSync(dir).filter(n => n.startsWith(prefix));
+  assert.strictEqual(quarantined.length, 1);
+  assert.match(quarantined[0], /\.corrupt-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.json$/);
+  const qPath = path.join(dir, quarantined[0]);
+  assert.strictEqual(fs.readFileSync(qPath, 'utf8'), '{ not valid json', 'original bytes preserved');
+  fs.rmSync(qPath, { force: true });
+});
+
+test('loadHistory quarantines valid JSON that is not an array', () => {
+  const f = process.env.HISTORY_FILE;
+  const dir = path.dirname(f);
+  const prefix = path.basename(f).replace(/\.json$/, '') + '.corrupt-';
+  fs.writeFileSync(f, '"just a string"');
+  assert.deepStrictEqual(loadHistory(), []);
+  assert.ok(!fs.existsSync(f));
+  for (const n of fs.readdirSync(dir).filter(n => n.startsWith(prefix))) {
+    fs.rmSync(path.join(dir, n), { force: true });
+  }
+});
+
+test('saveHistory writes atomically and leaves no .tmp residue', () => {
+  saveHistory([createEntry({ markdown: '# atomic' })]);
+  assert.ok(fs.existsSync(process.env.HISTORY_FILE));
+  assert.ok(!fs.existsSync(process.env.HISTORY_FILE + '.tmp'));
+  assert.strictEqual(loadHistory()[0].markdown, '# atomic');
 });
