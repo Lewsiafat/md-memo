@@ -121,3 +121,23 @@ test('applyProposal retag_memo replaces tags', () => {
 test('applyProposal rejects unknown actions', () => {
   assert.strictEqual(applyProposal({ action: 'delete_everything', args: {} }).ok, false);
 });
+
+const { validateProposal } = await import('../src/tools.js');
+
+test('validateProposal passes valid args for every action', () => {
+  seed();
+  assert.deepStrictEqual(validateProposal('create_memo', { markdown: '# x' }), { ok: true });
+  assert.ok(validateProposal('merge_memos', { source_ids: [1, 2], markdown: 'm' }).ok);
+  assert.ok(validateProposal('link_memos', { ids: [1, 3] }).ok);
+  assert.ok(validateProposal('retag_memo', { id: 2, tags: [] }).ok);
+});
+
+test('validateProposal rejects empty markdown, unknown ids, unknown actions', () => {
+  seed();
+  assert.strictEqual(validateProposal('create_memo', {}).ok, false);
+  assert.strictEqual(validateProposal('merge_memos', { source_ids: [1], markdown: '   ' }).ok, false);
+  assert.match(validateProposal('merge_memos', { source_ids: [1, 999], markdown: 'm' }).error, /999/);
+  assert.match(validateProposal('link_memos', { ids: [999] }).error, /999/);
+  assert.strictEqual(validateProposal('retag_memo', { id: 999 }).ok, false);
+  assert.strictEqual(validateProposal('delete_everything', {}).ok, false);
+});

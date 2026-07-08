@@ -193,14 +193,16 @@ function existingIds() {
   return new Set(loadHistory().map(e => e.id));
 }
 
-// ---- Apply a user-confirmed proposal. Mutates history. ----
-export function applyProposal({ action, args = {} }) {
+// Validate a write proposal's args against the current history. Runs at
+// propose time (agent loop — the error feeds back to the model so it can
+// self-correct) and again at apply time (history may have changed between
+// propose and apply).
+export function validateProposal(action, args = {}) {
   switch (action) {
     case 'create_memo': {
       if (typeof args.markdown !== 'string' || !args.markdown.trim())
         return { ok: false, error: 'markdown (non-empty string) required' };
-      const entry = insertEntry(createEntry({ markdown: args.markdown, tags: args.tags || [] }));
-      return { ok: true, id: entry.id };
+      return { ok: true };
     }
     case 'merge_memos': {
       if (typeof args.markdown !== 'string' || !args.markdown.trim())
@@ -209,6 +211,36 @@ export function applyProposal({ action, args = {} }) {
       const have = existingIds();
       const missing = ids.filter(id => !have.has(id));
       if (missing.length) return { ok: false, error: `Unknown source ids: ${missing.join(', ')}` };
+      return { ok: true };
+    }
+    case 'link_memos': {
+      const ids = (args.ids || []).map(Number);
+      const have = existingIds();
+      const missing = ids.filter(id => !have.has(id));
+      if (missing.length) return { ok: false, error: `Unknown ids: ${missing.join(', ')}` };
+      return { ok: true };
+    }
+    case 'retag_memo': {
+      if (!existingIds().has(Number(args.id)))
+        return { ok: false, error: `No memo with id ${args.id}` };
+      return { ok: true };
+    }
+    default:
+      return { ok: false, error: `Unknown action ${action}` };
+  }
+}
+
+// ---- Apply a user-confirmed proposal. Mutates history. ----
+export function applyProposal({ action, args = {} }) {
+  const v = validateProposal(action, args);
+  if (!v.ok) return { ok: false, error: v.error };
+  switch (action) {
+    case 'create_memo': {
+      const entry = insertEntry(createEntry({ markdown: args.markdown, tags: args.tags || [] }));
+      return { ok: true, id: entry.id };
+    }
+    case 'merge_memos': {
+      const ids = (args.source_ids || []).map(Number);
       const md = args.title ? `# ${args.title}\n\n${args.markdown}` : args.markdown;
       const entry = insertEntry(createEntry({ markdown: md, tags: args.tags || [], sources: ids }));
       return { ok: true, id: entry.id };
@@ -216,9 +248,6 @@ export function applyProposal({ action, args = {} }) {
     case 'link_memos': {
       const ids = (args.ids || []).map(Number);
       const history = loadHistory();
-      const have = new Set(history.map(e => e.id));
-      const missing = ids.filter(id => !have.has(id));
-      if (missing.length) return { ok: false, error: `Unknown ids: ${missing.join(', ')}` };
       for (const m of history) {
         if (ids.includes(m.id)) {
           const others = ids.filter(x => x !== m.id);
@@ -232,7 +261,6 @@ export function applyProposal({ action, args = {} }) {
       const id = Number(args.id);
       const history = loadHistory();
       const m = history.find(e => e.id === id);
-      if (!m) return { ok: false, error: `No memo with id ${id}` };
       m.tags = args.tags || [];
       saveHistory(history);
       return { ok: true, id };
