@@ -96,3 +96,18 @@ test('valid write proposal event carries a one-time registered id', async () => 
   assert.strictEqual(stored.action, 'create_memo');
   assert.strictEqual(takeProposal(prop.id), null);   // consumed
 });
+
+test('aborted signal stops the loop before the next step', async () => {
+  const ac = new AbortController();
+  let calls = 0;
+  const fake = async () => {
+    calls++;
+    ac.abort();   // client "disconnects" right after the first model call
+    return { message: { role: 'assistant', content: '',
+      tool_calls: [{ id: 'c', type: 'function', function: { name: 'list_tags', arguments: '{}' } }] }, usage: {} };
+  };
+  const c = collector();
+  await runAgent('loop forever', c.emit, { callModel: fake, signal: ac.signal });
+  assert.strictEqual(calls, 1, 'no second model call after abort');
+  assert.ok(!c.names().includes('done'), 'run ends silently, no done event');
+});

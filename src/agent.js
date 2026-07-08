@@ -15,7 +15,7 @@ Write tools only PROPOSE changes — the user confirms them; never assume a prop
 Always respond — including reasoning text and any markdown you write into memos — in this language (BCP-47 tag): ${RESPONSE_LANG} (for zh-TW, use 繁體中文/Traditional Chinese), regardless of the language the user writes in. Cite the memo ids you used.`;
 
 // Real OpenRouter call. Returns { message, usage }.
-export async function callOpenRouter(messages, tools) {
+export async function callOpenRouter(messages, tools, { signal } = {}) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not set');
   const model = process.env.AGENT_MODEL || process.env.AI_MODEL || 'deepseek/deepseek-v4-pro';
@@ -28,6 +28,7 @@ export async function callOpenRouter(messages, tools) {
       'X-Title': 'md-memo',
     },
     body: JSON.stringify({ model, messages, tools, temperature: 0.3, max_tokens: 4096 }),
+    signal,
   });
   if (!res.ok) {
     const err = await res.text();
@@ -45,12 +46,13 @@ function parseArgs(tc) {
 
 // Run the agent loop. emit(event, data) streams events.
 // callModel is injectable for tests; priorTurns allows multi-turn context.
-export async function runAgent(message, emit, { callModel = callOpenRouter, priorTurns = [] } = {}) {
+export async function runAgent(message, emit, { callModel = callOpenRouter, priorTurns = [], signal } = {}) {
   const messages = [{ role: 'system', content: SYSTEM }, ...priorTurns, { role: 'user', content: message }];
   let totalTokens = 0;
   emit('start', {});
   for (let step = 0; step < MAX_STEPS; step++) {
-    const { message: msg, usage } = await callModel(messages, TOOLS);
+    if (signal?.aborted) return;
+    const { message: msg, usage } = await callModel(messages, TOOLS, { signal });
     totalTokens += usage?.total_tokens || 0;
     if (msg.content) emit('message', { content: msg.content });
     if (!msg.tool_calls?.length) {

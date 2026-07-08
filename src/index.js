@@ -114,11 +114,19 @@ app.post(`${BASE_PATH}/api/agent`, async (req, res) => {
     if (res.writableEnded) return;
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   };
+  // Abort the loop (and any in-flight OpenRouter request) when the client
+  // disconnects mid-stream. A normal end also fires 'close', hence the guard.
+  const ac = new AbortController();
+  res.on('close', () => { if (!res.writableEnded) ac.abort(); });
   try {
-    await runAgent(message, emit);
+    await runAgent(message, emit, { signal: ac.signal });
   } catch (err) {
-    console.error('Agent error:', err);
-    emit('error', { message: err.message });
+    if (ac.signal.aborted) {
+      console.log('Agent run aborted: client disconnected');
+    } else {
+      console.error('Agent error:', err);
+      emit('error', { message: err.message });
+    }
   } finally {
     res.end();
   }
