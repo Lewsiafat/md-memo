@@ -82,6 +82,10 @@ markdown 在兩個地方各自渲染、CSS 各自獨立、互不影響：
 - 資料在 `demo/data/`（`history.json` 10 筆雙語、`format-samples.json`、`agent-trace.json`）。測試：`test/permalink.test.mjs`、`test/demo-data.test.mjs`（跨檔一致性）。
 - CI：`.github/workflows/deploy-demo.yml` 在 push 到 main 時 build 並 force-push 到 orphan `gh-pages` 分支（須在 repo Settings → Pages 一次性指向 `gh-pages`/root）。零新依賴（build 只用 Node 內建）。
 
+### md-memo-api skill（給 AI agent 的 API 操作指南）
+
+`.claude/skills/md-memo-api/` 是讓 AI agent 直接以 curl/HTTP 操作本 app REST API 的 Claude Code skill（SKILL.md 操作指南 + `references/api.md` 逐端點完整契約）。在本 repo 內自動可用；其他專案要用時 symlink 到 `~/.claude/skills/`（見 README）。**改動任何路由、request/response 形狀、SSE 事件或 store 語意時，必須同步更新這兩個檔案**，否則 skill 會教錯 API。
+
 ## 部署設定與限制
 
 - **`BASE_PATH`** 由 `process.env.BASE_PATH` 控制（預設 `/md-memo`）。前端讀不到 `process.env`，所以機制是：`public/index.html` 用 `__BASE_PATH__` placeholder，後端服務 SPA 時讀檔做字串替換後再回傳（`src/index.js` 裡組出 `indexHtml` 的那段，掛在 `express.static` 之前攔截 `BASE_PATH` 根路徑）。**在 index.html 新增任何路徑相關字串時務必用 `__BASE_PATH__`**，否則換 base path 部署會連錯。permalink 頁（`renderPermalink`）的 basePath 由參數傳入（server 傳 `BASE_PATH`，demo build 傳 `/md-memo`）。
