@@ -85,6 +85,18 @@ The app is a single Express server serving static files. Deploy anywhere Node.js
 - **Railway / Render**: Set env vars, deploy directly
 - **Docker**: Add your own `Dockerfile` (contributions welcome!)
 
+## AI Agent Skill
+
+`.claude/skills/md-memo-api/` is a [Claude Code skill](https://code.claude.com/docs/en/skills)
+that teaches AI agents to drive md-memo's REST API directly (endpoints, the SSE agent
+stream, the propose→apply flow, and the footguns). It activates automatically when
+working inside this repo. To use it from other projects, copy or symlink it to your
+user-level skills directory:
+
+```bash
+ln -s "$(pwd)/.claude/skills/md-memo-api" ~/.claude/skills/md-memo-api
+```
+
 ## Design Docs
 
 Design history and specs live in `specs/` and `docs/plans/`.
