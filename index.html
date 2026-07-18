@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>md-memo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── DARK THEME · Colophon "Reading" ── */
+    :root {
+      --bg: #1c1a16;
+      --surface: #232019;
+      --surface2: #2a2620;
+      --surface3: #332f26;
+      --border: #332f26;
+      --text: #e8dfca;
+      --text2: #ada288;
+      --text3: #756d5b;
+      --accent: #c9a85f;
+      --accent-h: #dcbb6f;
+      --accent-dim: rgba(201,168,95,.12);
+      --accent-line: rgba(201,168,95,.40);
+      --green: #9bbf6f;
+      --red: #e08a6a;
+      --amber: #dcbb6f;
+      --radius: 2px;
+      --serif-display: 'Instrument Serif', Georgia, 'Songti TC', serif;
+      --serif-body: 'Literata', Georgia, 'Songti TC', serif;
+      --mono: 'IBM Plex Mono', ui-monospace, 'Menlo', monospace;
+      --editor-bg: radial-gradient(130% 95% at 50% -12%, #232019 0%, #1c1a16 58%, #15130f 100%);
+      --md-code-bg: #2a2620;
+      --md-code-color: #d8be84;
+      --md-pre-code-color: #d8be84;
+      --md-strong: #f1e8d2;
+      --md-bq-bg: transparent;
+      --md-tr-even: #232019;
+    }
+
+    /* ── LIGHT THEME · Colophon "Writing" (default) ── */
+    body.light {
+      --bg: #ece8de;
+      --surface: #f5f1e8;
+      --surface2: #efe9dd;
+      --surface3: #e3ddcd;
+      --border: #d9d2c1;
+      --text: #23211b;
+      --text2: #5a5447;
+      --text3: #a89f8c;
+      --accent: #936f33;
+      --accent-h: #7e5e29;
+      --accent-dim: rgba(147,111,51,.07);
+      --accent-line: rgba(147,111,51,.40);
+      --green: #5f8a4a;
+      --red: #b5543a;
+      --amber: #936f33;
+      --editor-bg: #f4f1e8;
+      --md-code-bg: #eae3d3;
+      --md-code-color: #7e5e29;
+      --md-pre-code-color: #5a4a28;
+      --md-strong: #23211b;
+      --md-bq-bg: transparent;
+      --md-tr-even: #efe9dd;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: var(--serif-body);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 15px;
+    }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #topbar h1 {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-family: var(--serif-display);
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: .005em;
+      line-height: 1;
+      color: var(--text);
+      margin-right: auto;
+    }
+    #topbar h1::before {
+      content: "";
+      width: 11px; height: 11px;
+      border: 1.1px solid var(--accent);
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent) 0 1.4px, transparent 1.7px);
+      flex-shrink: 0;
+    }
+    #topbar h1 span { color: var(--accent); font-weight: 400; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      height: 36px;
+      padding: 0 15px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); letter-spacing: .14em; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); border-color: var(--accent-h); }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent-line); color: var(--text); }
+    .btn-agent { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-agent:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+    .btn-icon {
+      width: 36px; height: 36px;
+      padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent-h); }
+
+    #export-btns { display: flex; gap: 5px; }
+
+    /* ── MAIN LAYOUT ── */
+    #main { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── EDITOR PANEL ── */
+    #editor-panel {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    /* ── WORK AREA ── */
+    #work-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #editor-area {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+      background: var(--editor-bg);
+    }
+    #editor-area::before {
+      content: "";
+      position: absolute;
+      left: 52px; top: 0; bottom: 0;
+      width: 1px;
+      background: var(--accent-line);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #raw-input {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      padding: 40px 48px 40px 76px;
+      background: transparent;
+      color: var(--text);
+      border: none;
+      outline: none;
+      resize: none;
+      font-size: 16px;
+      line-height: 1.95;
+      font-family: var(--mono);
+      tab-size: 2;
+    }
+    #raw-input::placeholder { color: var(--text3); }
+
+    /* ── PREVIEW ── */
+    #preview-wrap {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 30px 56px 30px 76px;
+      display: none;
+      background: transparent;
+    }
+    #preview-wrap.visible { display: block; }
+    #preview { max-width: 680px; margin: 0; font-size: 16.5px; line-height: 1.6; }
+
+    /* ── QUICK VIEW ── */
+    #quickview-panel {
+      width: 0;
+      overflow: hidden;
+      border-left: none;
+      transition: width .25s ease, border .25s;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    #quickview-panel.open {
+      width: 45%;
+      border-left: 1px solid var(--border);
+    }
+    #quickview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 8px;
+    }
+    #quickview-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text2);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    #quickview-body { flex: 1; overflow-y: auto; padding: 20px 22px; }
+    #quickview-content { font-size: 14.5px; line-height: 1.75; }
+
+    /* ── MARKDOWN STYLES ── */
+    .md-render h1,.md-render h2 {
+      font-family: var(--serif-display);
+      font-weight: 400;
+      color: var(--md-strong);
+      line-height: 1.1;
+      letter-spacing: .005em;
+      margin: 1.1em 0 .4em;
+    }
+    .md-render h3,.md-render h4 {
+      font-family: var(--serif-body);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      margin: 1.3em 0 .4em;
+    }
+    .md-render h1 { font-size: 2.2em; margin-top: .2em; }
+    .md-render h2 { font-size: 1.55em; display: flex; align-items: center; gap: .5em; }
+    .md-render h2::before { content: ""; width: 7px; height: 7px; background: var(--accent); transform: rotate(45deg); flex-shrink: 0; }
+    .md-render h3 { font-size: 1.12em; }
+    .md-render p { margin: .7em 0; color: var(--text); }
+    .md-render ol { margin: .7em 0 .7em 1.4em; }
+    .md-render ul { list-style: none; margin: .7em 0; padding-left: 0; }
+    .md-render ul li { position: relative; padding-left: 22px; }
+    .md-render ul li::before { content: ""; position: absolute; left: 3px; top: .64em; width: 5px; height: 5px; background: var(--accent); transform: rotate(45deg); }
+    .md-render li { margin: .32em 0; }
+    .md-render code {
+      background: var(--md-code-bg);
+      color: var(--md-code-color);
+      padding: 1px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: .82em;
+    }
+    .md-render pre {
+      background: var(--md-code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 15px;
+      overflow-x: auto;
+      margin: .9em 0;
+    }
+    .md-render pre code { background: none; padding: 0; font-size: .85em; color: var(--md-pre-code-color); }
+    .md-render blockquote {
+      border-left: 2px solid var(--accent);
+      margin: .9em 0;
+      padding: .2em 0 .2em 1.1em;
+      color: var(--text2);
+      font-style: italic;
+      background: var(--md-bq-bg);
+      border-radius: 0;
+    }
+    .md-render hr { border: none; border-top: 1px solid var(--border); margin: 1.4em 0; }
+    .md-render table { border-collapse: collapse; width: 100%; margin: .9em 0; font-size: .9em; }
+    .md-render th,.md-render td { border: 1px solid var(--border); padding: 7px 11px; text-align: left; }
+    .md-render th { background: var(--surface2); font-weight: 600; }
+    .md-render tr:nth-child(even) { background: var(--md-tr-even); }
+    .md-render strong { color: var(--md-strong); font-weight: 700; }
+    .md-render a { color: var(--accent); text-decoration: none; }
+    .md-render a:hover { text-decoration: underline; }
+
+    /* ── LOADING ── */
+    #loading-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 20;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      backdrop-filter: blur(3px);
+    }
+    #loading-overlay.visible { display: flex; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--text2); font-size: 13px; }
+
+    /* ── EDITOR FOOTER ── */
+    #editor-footer {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      height: 46px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+      font-size: 12px;
+      color: var(--text2);
+      gap: 8px;
+    }
+    #char-count {
+      position: absolute; left: 0; right: 0; text-align: center;
+      font-family: var(--mono); font-size: 12px; color: var(--text3);
+      pointer-events: none;
+      display: none;
+    }
+    /* char count only makes sense while writing — hide it in View mode so it
+       doesn't collide with the memo's tags shown in the footer */
+    body.mode-edit #char-count,
+    body.mode-combine #char-count { display: block; }
+    #mode-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 6px 13px; border-radius: var(--radius);
+      background: transparent; color: var(--text2); border: 1px solid var(--border);
+    }
+    #current-tags { display: flex; gap: 5px; flex-wrap: wrap; z-index: 1; }
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 500;
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--accent-line);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* ── HISTORY PANEL ── */
+    #history-panel {
+      width: 372px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    /* ── TAG CLOUD ── */
+    #tag-section { border-bottom: 1px solid var(--border); overflow: hidden; }
+    #tag-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 18px;
+      cursor: pointer;
+      user-select: none;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+    #tag-toggle:hover { color: var(--text); }
+    #tag-toggle-arrow { font-size: 9px; transition: transform .2s; color: var(--text3); }
+    #tag-toggle-arrow.open { transform: rotate(180deg); }
+    #tag-cloud-wrap { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+    #tag-cloud-wrap.open { max-height: 200px; }
+    #tag-cloud { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 13px 11px; }
+
+    .tag-filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text2);
+      transition: all .15s;
+    }
+    .tag-filter-chip:hover { border-color: var(--accent); color: var(--text); }
+    .tag-filter-chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent-h); }
+    .tag-filter-chip .tag-count { font-size: 10px; opacity: .7; }
+
+    /* ── HISTORY HEADER ── */
+    #history-header {
+      padding: 13px 18px 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #history-header h2 { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--text2); }
+    #history-count { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+    #history-search-wrap { display: flex; gap: 6px; align-items: center; padding: 0 13px 10px; }
+    #history-search {
+      flex: 1; min-width: 0; background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 6px 9px; font-family: var(--mono); font-size: 12px; outline: none;
+    }
+    #history-search:focus { border-color: var(--accent-line); }
+    #history-search::placeholder { color: var(--text3); }
+    #history-filter-chip {
+      display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap;
+      font-family: var(--mono); font-size: 11px; color: var(--accent);
+      border: 1px solid var(--accent-line); border-radius: var(--radius); padding: 4px 8px;
+    }
+    .hi-tag { cursor: pointer; }
+    .hi-tag:hover { color: var(--accent); }
+    #history-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+    #history-list::-webkit-scrollbar { width: 3px; }
+    #history-list::-webkit-scrollbar-track { background: transparent; }
+    #history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #history-load-more {
+      display: block; width: calc(100% - 26px); margin: 6px 13px 10px;
+      background: transparent; color: var(--text2); cursor: pointer;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 7px 0; font-family: var(--mono); font-size: 11px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    #history-load-more:hover { color: var(--accent); border-color: var(--accent-line); }
+
+    .history-item {
+      padding: 10px 13px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+      position: relative;
+    }
+    .history-item:hover { background: var(--accent-dim); }
+    .history-item.active { background: var(--accent-dim); border-left: 2px solid var(--accent); }
+    .history-item.kb-active { outline: 1px solid var(--accent-line); outline-offset: -1px; background: var(--surface2); }
+    .history-item:hover .hi-actions { opacity: 1; }
+
+    .hi-time { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: .1em; margin-bottom: 6px; }
+    .hi-preview {
+      font-family: var(--serif-body);
+      font-size: 15.5px; font-weight: 600; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      line-height: 1.3; margin-bottom: 9px;
+    }
+    .hi-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+    .hi-tag {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    /* action buttons (share + delete) on hover */
+    .hi-actions {
+      opacity: 0;
+      position: absolute;
+      right: 8px; top: 8px;
+      display: flex;
+      gap: 4px;
+      transition: opacity .15s;
+    }
+    .hi-action-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10.5px;
+      cursor: pointer;
+      transition: background .15s;
+      color: var(--text2);
+    }
+    .hi-action-btn:hover { background: var(--surface3); color: var(--text); }
+    .hi-action-btn.delete { color: var(--red); }
+    .hi-action-btn.delete:hover { background: #f8717115; }
+
+    #history-empty {
+      padding: 36px 14px;
+      text-align: center;
+      color: var(--text3);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      opacity: 0;
+      transition: opacity .22s, transform .22s;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: #4ade8050; color: var(--green); }
+    #toast.error { border-color: #f8717150; color: var(--red); }
+    #toast.warn { border-color: #fbbf2450; color: var(--amber); }
+
+    /* ── AGENT PANEL (3-column: sessions | main | examples) ── */
+    #agentPanel { display: none; flex: 1; min-height: 0; width: 100%; overflow: hidden; }
+    body.agent-open #main { display: none; }
+    body.agent-open #agentPanel { display: flex; flex-direction: row; }
+
+    #agentSessions, #agentExamples {
+      width: 220px; flex-shrink: 0; display: flex; flex-direction: column;
+      background: var(--surface); overflow-y: auto;
+    }
+    #agentSessions { border-right: 1px solid var(--border); }
+    #agentExamples { border-left: 1px solid var(--border); }
+    .ag-side-head {
+      padding: 10px 13px; font-size: 12px; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--surface);
+    }
+    .ag-side-empty { padding: 16px 13px; font-size: 12.5px; color: var(--text3); line-height: 1.6; }
+
+    #agentMain { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 14px 20px; max-width: 820px; margin: 0 auto; }
+    #agentHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-shrink: 0; }
+    #agentModeLabel { font-size: 13px; font-weight: 700; color: var(--accent); letter-spacing: .04em; }
+
+    #agentTrace { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+    #agentBar { display: flex; gap: 8px; flex-shrink: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    #agentInput { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; background: var(--surface); color: var(--text); }
+    #agentSend { padding: 10px 18px; border: none; border-radius: var(--radius); background: var(--accent); color: var(--bg); font-weight: 600; cursor: pointer; }
+    #agentSend:disabled { opacity: .5; cursor: default; }
+
+    .ag-session-item, .ag-example-item {
+      padding: 9px 13px; border-bottom: 1px solid var(--border); cursor: pointer;
+      font-size: 13px; color: var(--text); line-height: 1.45; transition: background .12s; position: relative;
+    }
+    .ag-session-item:hover, .ag-example-item:hover { background: var(--surface2); }
+    .ag-session-q { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+    .ag-session-time { font-size: 10.5px; color: var(--text3); font-family: var(--mono); margin-top: 3px; }
+    .ag-session-tomemo { display: inline-block; margin-top: 6px; font-size: 11.5px; color: var(--accent); }
+    .ag-session-del {
+      position: absolute; right: 8px; top: 8px; opacity: 0; color: var(--red);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 6px; font-size: 10.5px; cursor: pointer; transition: opacity .15s;
+    }
+    .ag-session-item:hover .ag-session-del { opacity: 1; }
+    .ag-submit-text { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+    .ag-submit-del {
+      position: absolute; right: 8px; top: 8px; opacity: 0; color: var(--red);
+      background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 6px; font-size: 10.5px; cursor: pointer; transition: opacity .15s;
+    }
+    .ag-example-item:hover .ag-submit-del { opacity: 1; }
+    .ag-msg { color: var(--text2, #666); font-size: 14px; }
+    .ag-tool { font-family: var(--mono, monospace); font-size: 12.5px; background: var(--accent-dim); color: var(--accent); padding: 4px 10px; border-radius: var(--radius); align-self: flex-start; }
+    .ag-tool > summary, .ag-result > summary { cursor: pointer; }
+    .ag-tool pre { margin: 6px 0 0; background: #00000008; padding: 8px 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; }
+    .ag-result { font-size: 12px; }
+    .ag-result pre { background: #00000008; padding: 8px 10px; border-radius: 6px; overflow-x: auto; }
+    .ag-proposal { border: 1px solid var(--accent); border-radius: var(--radius); padding: 12px 14px; background: var(--accent-dim); }
+    .ag-proposal-title { font-weight: 600; margin-bottom: 8px; }
+    .ag-proposal-actions { display: flex; gap: 8px; }
+    .ag-proposal-actions button { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; }
+    .ag-apply { background: var(--accent); color: var(--bg); }
+    .ag-skip { background: #00000010; color: var(--text, #333); }
+    .ag-skipped { opacity: .5; }
+    .ag-permalink { display: inline-block; margin-top: 8px; color: var(--accent, #6c5ce7); }
+    .ag-answer { margin-top: 8px; }
+    .ag-done { font-size: 12px; color: var(--text2, #888); }
+    .ag-error { color: #d63031; font-weight: 600; }
+    .ag-thinking {
+      align-self: center; margin: auto 0; display: flex; align-items: center; gap: 10px;
+      color: var(--text2); font-size: 14px;
+    }
+    .ag-dots { display: inline-flex; gap: 5px; }
+    .ag-dots i {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+      animation: ag-bounce 1.2s ease-in-out infinite both;
+    }
+    .ag-dots i:nth-child(2) { animation-delay: .16s; }
+    .ag-dots i:nth-child(3) { animation-delay: .32s; }
+    @keyframes ag-bounce { 0%, 80%, 100% { transform: scale(.5); opacity: .5; } 40% { transform: scale(1); opacity: 1; } }
+
+    /* ── MOBILE ── */
+    @media (max-width: 700px) {
+      body { overflow: auto; }
+      #main { flex-direction: column; overflow: visible; }
+      #editor-panel { border-right: none; border-bottom: 1px solid var(--border); min-height: 55vh; }
+      #history-panel { width: 100%; height: auto; max-height: 45vh; }
+      #quickview-panel.open { width: 100%; border-left: none; border-top: 1px solid var(--border); }
+      #work-area { flex-direction: column; }
+      body.agent-open #agentPanel { flex-direction: column; overflow: auto; }
+      #agentSessions, #agentExamples { width: 100%; max-height: 22vh; border: none; border-bottom: 1px solid var(--border); }
+      #agentMain { max-width: none; padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="topbar">
+    <h1>md<span>-</span>memo</h1>
+    <button class="btn btn-ghost" id="btn-new" data-i18n="btnNew" style="display:none">＋ New</button>
+    <div id="export-btns" style="display:none">
+      <button class="btn btn-ghost" id="btn-edit" data-i18n="btnEdit">✏️ Edit</button>
+      <button class="btn btn-ghost" id="btn-share" data-i18n="btnShare">🔗 Share</button>
+      <button class="btn btn-ghost" id="btn-copy" data-i18n="btnCopy">📋 Copy</button>
+      <button class="btn btn-ghost" id="btn-download" data-i18n="btnDownload">⬇️ .md</button>
+    </div>
+    <button class="btn btn-agent" id="agentToggle" data-i18n="btnAgent" data-i18n-title="titleAgentMode" title="Agent Mode">🤖 Agent</button>
+    <button class="btn btn-ghost" id="btn-save" data-i18n="btnSave" style="display:none">💾 Save</button>
+    <button class="btn btn-ghost" id="btn-discard" data-i18n="btnDiscard" style="display:none">🗑 Discard</button>
+    <button class="btn btn-primary" id="btn-format" data-i18n="btnFormat">✨ Format</button>
+    <button class="btn-icon" id="btn-theme" data-i18n-title="titleToggleTheme" title="Toggle theme">🌙</button>
+    <button class="btn-icon" id="btn-lang" data-i18n-title="langToggleTitle" title="Switch language">中文</button>
+  </div>
+
+  <div id="main">
+
+    <div id="editor-panel">
+      <div id="work-area">
+
+        <div id="editor-area">
+          <textarea id="raw-input" data-i18n-ph="rawInputPlaceholder" placeholder="Paste or type your raw notes here…
+
+Ctrl+Enter to format."></textarea>
+
+          <div id="preview-wrap">
+            <div id="preview" class="md-render"></div>
+          </div>
+
+          <div id="loading-overlay">
+            <div class="spinner"></div>
+            <div class="loading-text" data-i18n="loadingText">Formatting…</div>
+          </div>
+        </div>
+
+        <div id="quickview-panel">
+          <div id="quickview-header">
+            <span id="quickview-title" data-i18n="quickviewTitle">Quick View</span>
+            <button class="btn btn-ghost" id="btn-qv-restore" data-i18n="btnQvRestore" style="padding:3px 9px;font-size:11px">↩ Restore</button>
+            <button class="btn-icon" id="btn-qv-close" data-i18n-title="titleQvClose" title="Close">✕</button>
+          </div>
+          <div id="quickview-body">
+            <div id="quickview-content" class="md-render"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="editor-footer">
+        <span id="mode-badge" data-i18n="modeEdit">✏️ Edit Mode</span>
+        <span id="char-count">0 chars</span>
+        <div id="current-tags"></div>
+        <span id="status-text"></span>
+      </div>
+    </div>
+
+    <div id="history-panel">
+      <div id="tag-section">
+        <div id="tag-toggle">
+          <span data-i18n="tagsHeading">🏷 Tags</span>
+          <span id="tag-toggle-arrow">▼</span>
+        </div>
+        <div id="tag-cloud-wrap">
+          <div id="tag-cloud">
+            <span data-i18n="noTagsYet" style="font-size:12px;color:var(--text3);padding:4px 0">No tags yet</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="history-header">
+        <h2 data-i18n="historyHeading">Memo List</h2>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn-icon" id="btn-sort" data-i18n-title="sortTitle" title="Toggle sort order" style="width:auto;height:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:4px 9px;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--text2);cursor:pointer">↓</button>
+          <span id="history-count"></span>
+          <button class="btn-icon" style="width:auto;height:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border:1px solid var(--accent-line);border-radius:2px;background:transparent;color:var(--accent)" id="btn-clear-all" data-i18n="btnClear">Clear</button>
+        </div>
+      </div>
+
+      <div id="history-search-wrap">
+        <input id="history-search" type="text" data-i18n-ph="searchPlaceholder" placeholder="Search memos…  ( / )">
+        <span id="history-filter-chip" style="display:none"></span>
+      </div>
+
+      <div id="history-list">
+        <div id="history-empty" data-i18n-html="historyEmpty">No formatted memos yet.<br>Write something and hit Format!</div>
+      </div>
+    </div>
+  </div>
+
+  <section id="agentPanel">
+    <aside id="agentSessions">
+      <div class="ag-side-head" data-i18n="agentSavedSessions">已存 Session</div>
+      <div id="agentSessionList"><div class="ag-side-empty" data-i18n="agentEmptySessions">尚無已存 session</div></div>
+    </aside>
+
+    <div id="agentMain">
+      <div id="agentHeader">
+        <span id="agentModeLabel" data-i18n="agentModeLabel">🤖 Agent Mode</span>
+        <button class="btn btn-ghost" id="agentBack" data-i18n="agentBack">← 返回一般模式</button>
+      </div>
+      <div id="agentTrace" class="md-render-host"></div>
+      <div id="agentBar">
+        <input id="agentInput" type="text" data-i18n-ph="agentInputPlaceholder" placeholder="問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）" />
+        <button id="agentSend" data-i18n="agentSend">送出</button>
+        <button class="btn btn-ghost" id="agentSaveSession" data-i18n="agentSaveSession" disabled>💾 存 Session</button>
+      </div>
+    </div>
+
+    <aside id="agentExamples">
+      <div class="ag-side-head" data-i18n="agentExamplesHeading">範例</div>
+      <div id="agentExampleList"></div>
+      <div class="ag-side-head" data-i18n="agentSentHeading">送出紀錄</div>
+      <div id="agentSubmitList"><div class="ag-side-empty" data-i18n="agentEmptySubmits">尚無送出紀錄</div></div>
+    </aside>
+  </section>
+
+  <div id="toast"></div>
+
+  <script src="mock.js"></script>
+  <script>
+    const API = '/md-memo/api';
+    const BASE = location.origin + '/md-memo';
+
+    // ── I18N ──
+    const I18N = {
+      en: {
+        // Topbar buttons
+        btnNew: '＋ New',
+        btnEdit: '✏️ Edit',
+        btnShare: '🔗 Share',
+        btnCopy: '📋 Copy',
+        btnDownload: '⬇️ .md',
+        btnAgent: '🤖 Agent',
+        btnSave: '💾 Save',
+        btnDiscard: '🗑 Discard',
+        btnFormat: '✨ Format',
+        btnReformat: '✨ Reformat',
+        // Topbar title attributes
+        titleAgentMode: 'Agent Mode',
+        titleToggleTheme: 'Toggle theme',
+        langToggleTitle: 'Switch language',
+        // Editor area
+        rawInputPlaceholder: 'Paste or type your raw notes here…\n\nCtrl+Enter to format.',
+        loadingText: 'Formatting…',
+        // Quick view
+        quickviewTitle: 'Quick View',
+        btnQvRestore: '↩ Restore',
+        titleQvClose: 'Close',
+        // Editor footer: mode badge labels
+        modeEdit: '✏️ Edit Mode',
+        modeView: '👁 View Mode',
+        modeCombine: '⊟ Combine Mode',
+        modeAgent: '🤖 Agent Mode',
+        // Editor footer: char count + status
+        charCount: '{count} chars',
+        statusTruncated: '⚠ Output truncated',
+        statusFormatted: '✓ Formatted',
+        statusError: '✗ Error',
+        statusSaved: '✓ Saved',
+        statusRestored: '↩ Restored',
+        // Tag section / cloud
+        tagsHeading: '🏷 Tags',
+        noTagsYet: 'No tags yet',
+        tagAll: 'All',
+        // Memo list (history) panel
+        historyHeading: 'Memo List',
+        btnClear: 'Clear',
+        btnClearConfirm: 'Confirm?',
+        historyEmpty: 'No formatted memos yet.\nWrite something and hit Format!',
+        historyEmptyTagged: 'No memos tagged "{tag}"',
+        searchPlaceholder: 'Search memos…  ( / )',
+        searchEmpty: 'No memos match "{q}"',
+        countTotal: '{total} memos',
+        countMatched: '{n} / {total} memos',
+        loadMore: 'Load more',
+        sortTitle: 'Toggle sort order',
+        sortNewest: '↓ new',
+        sortOldest: '↑ old',
+        // History item action button titles
+        titleCopyLink: 'Copy link',
+        titleDelete: 'Delete',
+        // Toasts
+        toastWriteFirst: 'Write something first!',
+        toastTruncated: 'Output truncated — original kept in history',
+        toastFormatted: 'Formatted!',
+        toastSaved: 'Saved!',
+        toastLinkCopied: '🔗 Link copied!',
+        toastCopied: 'Copied!',
+        toastDownloaded: 'Downloaded!',
+        toastMemoRestored: 'Memo restored',
+        toastSessionSaved: 'Session saved',
+        toastSavedAsMemo: 'Saved as memo',
+        toastCleared: 'Cleared — backed up {count} memo(s)',
+        toastMemoListCleared: 'Memo list cleared',
+        toastErrorPrefix: 'Error: {message}',
+        // confirm() dialogs
+        confirmOverwrite: 'Overwrite this memo?\n\nOK = overwrite the existing one\nCancel = save as a new memo',
+        confirmDiscard: 'Discard the current edits?',
+        // Fallback error messages (Error constructors)
+        errFormatFailed: 'Format failed',
+        errSaveFailed: 'Save failed',
+        errClearFailed: 'Clear failed',
+        // Agent panel: side headings
+        agentSavedSessions: 'Saved Sessions',
+        agentExamplesHeading: 'Examples',
+        agentSentHeading: 'Sent',
+        agentEmptySessions: 'No saved sessions yet',
+        agentEmptySubmits: 'No sent history yet',
+        // Agent panel: main
+        agentModeLabel: '🤖 Agent Mode',
+        agentBack: '← Back to normal mode',
+        agentInputPlaceholder: 'Ask your memo library, or have it organize / merge…（⌘/Ctrl + Enter to send）',
+        agentSend: 'Send',
+        agentSaveSession: '💾 Save Session',
+        // Agent: thinking
+        agentThinking: 'Thinking…',
+        // Agent: example prompts array
+        agentExamples: [
+          'Help me organize notes with similar tags into a summary',
+          'Search for notes related to "deployment" and list the key points',
+          'Merge my recent meeting notes into a single summary',
+          'List all current tags and their counts',
+          'Find related notes and suggest links between them',
+        ],
+        // Agent: proposal card
+        agentProposalPrefix: 'Proposal: {summary}',
+        agentApply: '✓ Apply',
+        agentSkip: '✗ Skip',
+        agentApplying: 'Applying…',
+        agentApplied: '✓ Applied',
+        agentOpenMemo: 'Open memo →',
+        // Agent: trace event labels
+        agentDone: '⏱ {steps} steps · {tokens} tokens',
+        agentResultFallback: 'Result',
+        // Agent: session item
+        agentSessionToMemo: '📝 Save as memo',
+        // Agent: per-item delete title
+        agentDeleteTitle: 'Delete',
+        // Agent: fallback error messages (Error constructors)
+        agentErrApplyFailed: 'Apply failed',
+        agentErrSaveFailed: 'Save failed',
+        agentErrFailed: 'Failed',
+        // Language toggle button visible label
+        langButtonLabel: '中文',
+      },
+      'zh-TW': {
+        // Topbar buttons
+        btnNew: '＋ 新增',
+        btnEdit: '✏️ 編輯',
+        btnShare: '🔗 分享',
+        btnCopy: '📋 複製',
+        btnDownload: '⬇️ .md',
+        btnAgent: '🤖 Agent',
+        btnSave: '💾 儲存',
+        btnDiscard: '🗑 捨棄',
+        btnFormat: '✨ 整理',
+        btnReformat: '✨ 重新整理',
+        // Topbar title attributes
+        titleAgentMode: 'Agent 模式',
+        titleToggleTheme: '切換主題',
+        langToggleTitle: '切換語言',
+        // Editor area
+        rawInputPlaceholder: '在此貼上或輸入你的原始筆記…\n\nCtrl+Enter 整理。',
+        loadingText: '整理中…',
+        // Quick view
+        quickviewTitle: '快速檢視',
+        btnQvRestore: '↩ 還原',
+        titleQvClose: '關閉',
+        // Editor footer: mode badge labels
+        modeEdit: '✏️ 編輯模式',
+        modeView: '👁 檢視模式',
+        modeCombine: '⊟ 並排模式',
+        modeAgent: '🤖 Agent 模式',
+        // Editor footer: char count + status
+        charCount: '{count} 字元',
+        statusTruncated: '⚠ 輸出已截斷',
+        statusFormatted: '✓ 已整理',
+        statusError: '✗ 錯誤',
+        statusSaved: '✓ 已儲存',
+        statusRestored: '↩ 已還原',
+        // Tag section / cloud
+        tagsHeading: '🏷 標籤',
+        noTagsYet: '尚無標籤',
+        tagAll: '全部',
+        // Memo list (history) panel
+        historyHeading: 'Memo List',
+        btnClear: '清空',
+        btnClearConfirm: '確定？',
+        historyEmpty: '尚無已整理的筆記。\n寫點東西並按整理！',
+        historyEmptyTagged: '沒有標籤為「{tag}」的筆記',
+        searchPlaceholder: '搜尋筆記…（/）',
+        searchEmpty: '沒有符合「{q}」的筆記',
+        countTotal: '共 {total} 筆',
+        countMatched: '符合 {n}／全部 {total}',
+        loadMore: '載入更多',
+        sortTitle: '切換排序',
+        sortNewest: '↓ 新到舊',
+        sortOldest: '↑ 舊到新',
+        // History item action button titles
+        titleCopyLink: '複製連結',
+        titleDelete: '刪除',
+        // Toasts
+        toastWriteFirst: '先寫點東西吧！',
+        toastTruncated: '輸出已截斷 — 原文完整保留在 history',
+        toastFormatted: '已整理！',
+        toastSaved: '已儲存！',
+        toastLinkCopied: '🔗 連結已複製！',
+        toastCopied: '已複製！',
+        toastDownloaded: '已下載！',
+        toastMemoRestored: '筆記已還原',
+        toastSessionSaved: 'Session 已儲存',
+        toastSavedAsMemo: '已存成 memo',
+        toastCleared: '已清空 — 已備份 {count} 筆筆記',
+        toastMemoListCleared: 'Memo list 已清空',
+        toastErrorPrefix: '錯誤：{message}',
+        // confirm() dialogs
+        confirmOverwrite: '覆蓋目前這筆筆記？\n\n確定 = 覆蓋既有\n取消 = 另存為新筆記',
+        confirmDiscard: '捨棄目前的編輯內容？',
+        // Fallback error messages (Error constructors)
+        errFormatFailed: '整理失敗',
+        errSaveFailed: '儲存失敗',
+        errClearFailed: '清空失敗',
+        // Agent panel: side headings
+        agentSavedSessions: '已存 Session',
+        agentExamplesHeading: '範例',
+        agentSentHeading: '送出紀錄',
+        agentEmptySessions: '尚無已存 session',
+        agentEmptySubmits: '尚無送出紀錄',
+        // Agent panel: main
+        agentModeLabel: '🤖 Agent Mode',
+        agentBack: '← 返回一般模式',
+        agentInputPlaceholder: '問你的筆記庫，或請它整理／合併…（⌘/Ctrl + Enter 送出）',
+        agentSend: '送出',
+        agentSaveSession: '💾 存 Session',
+        // Agent: thinking
+        agentThinking: '思考中…',
+        // Agent: example prompts array
+        agentExamples: [
+          '幫我把標籤相近的筆記整理成一篇總結',
+          '搜尋跟「部署」有關的筆記並條列重點',
+          '把最近的會議筆記合併成一份摘要',
+          '列出目前所有標籤與數量',
+          '找出彼此相關的筆記並建議連結',
+        ],
+        // Agent: proposal card
+        agentProposalPrefix: '提案：{summary}',
+        agentApply: '✓ 套用',
+        agentSkip: '✗ 略過',
+        agentApplying: '套用中…',
+        agentApplied: '✓ 已套用',
+        agentOpenMemo: '開啟筆記 →',
+        // Agent: trace event labels
+        agentDone: '⏱ {steps} 步 · {tokens} tokens',
+        agentResultFallback: '結果',
+        // Agent: session item
+        agentSessionToMemo: '📝 存成 memo',
+        // Agent: per-item delete title
+        agentDeleteTitle: '刪除',
+        // Agent: fallback error messages (Error constructors)
+        agentErrApplyFailed: '套用失敗',
+        agentErrSaveFailed: '儲存失敗',
+        agentErrFailed: '失敗',
+        // Language toggle button visible label
+        langButtonLabel: 'EN',
+      },
+    };
+    let lang = localStorage.getItem('md-memo-lang') || 'en';
+    function t(k) { const v = (I18N[lang] && I18N[lang][k]); return (v !== undefined ? v : I18N.en[k]) ?? k; }
+    function tf(k, vars) { let s = t(k); for (const [n, val] of Object.entries(vars || {})) s = s.replaceAll('{' + n + '}', val); return s; }
+    // Components in the agent IIFE register re-render hooks here so a live
+    // language toggle updates their already-rendered dynamic content.
+    window.__i18nRerender = window.__i18nRerender || [];
+    function applyLang() {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+      document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = t(el.getAttribute('data-i18n-title')); });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = escHtml(t(el.getAttribute('data-i18n-html'))).replace(/\n/g, '<br>'); });
+      // Language toggle button shows the language it switches TO.
+      const langBtn = document.getElementById('btn-lang');
+      if (langBtn) langBtn.textContent = t('langButtonLabel');
+      // Re-render dynamic, JS-built strings.
+      if (typeof renderTagCloud === 'function') renderTagCloud();
+      if (typeof renderHistoryItems === 'function') renderHistoryItems();
+      if (typeof updateSortBtn === 'function') updateSortBtn();
+      // mode badge + char count reflect current state in the active language.
+      if (typeof modeBadge !== 'undefined' && modeBadge) {
+        const m = { edit: 'modeEdit', view: 'modeView', combine: 'modeCombine', agent: 'modeAgent' }[currentMode];
+        if (m) modeBadge.textContent = t(m);
+      }
+      if (typeof charCount !== 'undefined' && charCount) {
+        charCount.textContent = tf('charCount', { count: (rawInput.value.length).toLocaleString() });
+      }
+      window.__i18nRerender.forEach(fn => { try { fn(); } catch {} });
+    }
+
+    // State
+    let currentMarkdown = '';
+    let currentTags = [];
+    let currentId = null;
+    let isPreviewMode = false;
+    let history = [];          // loaded lightweight items (pages accumulate)
+    let historyTotal = 0;      // total after tag filter (server-side)
+    let libraryTotal = 0;      // whole library size
+    let sortOrder = 'desc';
+    let searchText = '';       // live filter over loaded items
+    let searchResults = null;  // non-null → full-library search mode
+    let tagCounts = [];        // [{tag, count}] from /api/tags
+    let activeTagFilter = null;
+    let quickViewEntry = null;
+    let kbIndex = -1;          // keyboard-selected list index (-1 = none)
+    const PAGE_SIZE = 50;
+
+    // DOM
+    const rawInput       = document.getElementById('raw-input');
+    const previewWrap    = document.getElementById('preview-wrap');
+    const preview        = document.getElementById('preview');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const btnFormat      = document.getElementById('btn-format');
+    const btnSave        = document.getElementById('btn-save');
+    const btnDiscard     = document.getElementById('btn-discard');
+    const btnNew         = document.getElementById('btn-new');
+    const btnEdit        = document.getElementById('btn-edit');
+    const btnShare       = document.getElementById('btn-share');
+    const btnCopy        = document.getElementById('btn-copy');
+    const btnDownload    = document.getElementById('btn-download');
+    const btnTheme       = document.getElementById('btn-theme');
+    const btnClearAll    = document.getElementById('btn-clear-all');
+    const exportBtns     = document.getElementById('export-btns');
+    const charCount      = document.getElementById('char-count');
+    const statusText     = document.getElementById('status-text');
+    const currentTagsEl  = document.getElementById('current-tags');
+    const historyList    = document.getElementById('history-list');
+    const historyEmpty   = document.getElementById('history-empty');
+    const historyCount   = document.getElementById('history-count');
+    const tagToggle      = document.getElementById('tag-toggle');
+    const tagToggleArrow = document.getElementById('tag-toggle-arrow');
+    const tagCloudWrap   = document.getElementById('tag-cloud-wrap');
+    const tagCloud       = document.getElementById('tag-cloud');
+    const qvPanel        = document.getElementById('quickview-panel');
+    const qvTitle        = document.getElementById('quickview-title');
+    const qvContent      = document.getElementById('quickview-content');
+    const btnQvRestore   = document.getElementById('btn-qv-restore');
+    const btnQvClose     = document.getElementById('btn-qv-close');
+    const toast          = document.getElementById('toast');
+
+    // ── VIEW MODE STATE (View / Edit / Combine / Agent) ──
+    let currentMode = 'edit';
+    const modeBadge = document.getElementById('mode-badge');
+    function setMode(mode) {
+      currentMode = mode;
+      document.body.classList.remove('mode-edit', 'mode-view', 'mode-combine', 'mode-agent');
+      document.body.classList.add('mode-' + mode);
+      const labels = { edit: 'modeEdit', view: 'modeView', combine: 'modeCombine', agent: 'modeAgent' };
+      if (modeBadge) modeBadge.textContent = labels[mode] ? t(labels[mode]) : mode;
+      updateEditControls();
+    }
+    // Save shows only when editing an existing memo; Discard only when the
+    // editor (textarea) holds typed content. Editing = not preview, not agent.
+    function updateEditControls() {
+      const editing = currentMode !== 'agent' && !isPreviewMode;
+      btnSave.style.display    = (editing && currentId != null) ? '' : 'none';
+      btnDiscard.style.display = (editing && rawInput.value.trim().length > 0) ? '' : 'none';
+    }
+    function restoreEditorMode() {
+      setMode(quickViewEntry ? 'combine' : (isPreviewMode ? 'view' : 'edit'));
+    }
+    function enterAgentMode() { document.body.classList.add('agent-open'); setMode('agent'); }
+    function exitAgentMode() { document.body.classList.remove('agent-open'); restoreEditorMode(); }
+
+    // ── THEME ──
+    function applyTheme(light) {
+      document.body.classList.toggle('light', light);
+      btnTheme.textContent = light ? '☀️' : '🌙';
+      localStorage.setItem('md-memo-theme', light ? 'light' : 'dark');
+    }
+    // Init theme — light "Writing" is the default; only an explicit 'dark' opts out
+    applyTheme(localStorage.getItem('md-memo-theme') !== 'dark');
+    btnTheme.addEventListener('click', () => applyTheme(!document.body.classList.contains('light')));
+
+    // ── LANGUAGE TOGGLE ──
+    const btnLang = document.getElementById('btn-lang');
+    btnLang.addEventListener('click', () => {
+      lang = (lang === 'en' ? 'zh-TW' : 'en');
+      localStorage.setItem('md-memo-lang', lang);
+      applyLang();
+    });
+
+    // ── TOAST ──
+    let toastTimer;
+    function showToast(msg, type = '') {
+      toast.textContent = msg;
+      toast.className = 'show ' + type;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.className = ''; }, 2600);
+    }
+
+    // ── CHAR COUNT ──
+    rawInput.addEventListener('input', () => {
+      charCount.textContent = tf('charCount', { count: rawInput.value.length.toLocaleString() });
+      updateEditControls();
+    });
+
+    // ── FORMAT ──
+    btnFormat.addEventListener('click', doFormat);
+    rawInput.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doFormat(); }
+    });
+
+    async function doFormat() {
+      const text = rawInput.value.trim();
+      if (!text) { showToast(t('toastWriteFirst'), 'error'); return; }
+      // Reformatting a loaded memo: ask whether to overwrite it or save anew.
+      let overwriteId = null;
+      if (currentId != null) {
+        overwriteId = confirm(t('confirmOverwrite'))
+          ? currentId : null;
+      }
+      setLoading(true);
+      try {
+        const res = await fetch(`${API}/format`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(overwriteId != null ? { text, id: overwriteId } : { text })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || t('errFormatFailed'));
+
+        currentMarkdown = data.markdown;
+        currentTags = data.tags || [];
+        currentId = data.id;
+        showPreview(currentMarkdown);
+        renderCurrentTags(currentTags);
+        loadHistoryData(true);
+        loadTagCloud();
+        closeQuickView();
+        if (data.truncated) {
+          statusText.textContent = t('statusTruncated');
+          showToast(t('toastTruncated'), 'warn');
+        } else {
+          statusText.textContent = t('statusFormatted');
+          showToast(t('toastFormatted'), 'success');
+        }
+      } catch (err) {
+        showToast(tf('toastErrorPrefix', { message: err.message }), 'error');
+        statusText.textContent = t('statusError');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ── PREVIEW / EDIT ──
+    function showPreview(md) {
+      isPreviewMode = true;
+      preview.innerHTML = DOMPurify.sanitize(marked.parse(md));
+      preview.className = 'md-render';
+      previewWrap.classList.add('visible');
+      rawInput.style.display = 'none';
+      exportBtns.style.display = 'flex';
+      btnNew.style.display = '';
+      btnFormat.textContent = t('btnReformat');
+      setMode('view');
+    }
+
+    function resetToNew() {
+      isPreviewMode = false;
+      currentMarkdown = '';
+      currentTags = [];
+      currentId = null;
+      previewWrap.classList.remove('visible');
+      rawInput.style.display = '';
+      rawInput.value = '';
+      exportBtns.style.display = 'none';
+      btnNew.style.display = 'none';
+      btnFormat.textContent = t('btnFormat');
+      charCount.textContent = tf('charCount', { count: (0).toLocaleString() });
+      statusText.textContent = '';
+      currentTagsEl.innerHTML = '';
+      closeQuickView();
+      setMode('edit');
+      rawInput.focus();
+    }
+
+    btnNew.addEventListener('click', resetToNew);
+
+    btnEdit.addEventListener('click', () => {
+      isPreviewMode = false;
+      previewWrap.classList.remove('visible');
+      rawInput.style.display = '';
+      exportBtns.style.display = 'none';
+      rawInput.value = currentMarkdown;
+      charCount.textContent = tf('charCount', { count: currentMarkdown.length.toLocaleString() });
+      btnFormat.textContent = currentId != null ? t('btnReformat') : t('btnFormat');
+      statusText.textContent = '';
+      setMode('edit');
+      rawInput.focus();
+    });
+
+    btnSave.addEventListener('click', async () => {
+      if (currentId == null) return;
+      const markdown = rawInput.value;
+      try {
+        const res = await fetch(`${API}/history/${currentId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown, tags: currentTags })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || t('errSaveFailed'));
+        currentMarkdown = markdown;
+        showPreview(currentMarkdown);
+        renderCurrentTags(currentTags);
+        loadHistoryData();
+        statusText.textContent = t('statusSaved');
+        showToast(t('toastSaved'), 'success');
+      } catch (err) {
+        showToast(tf('toastErrorPrefix', { message: err.message }), 'error');
+        statusText.textContent = t('statusError');
+      }
+    });
+
+    btnDiscard.addEventListener('click', () => {
+      if (!confirm(t('confirmDiscard'))) return;
+      if (quickViewEntry) closeQuickView();        // Combine: also close quick view
+      if (currentId != null) {
+        rawInput.value = currentMarkdown;          // revert textarea to last saved
+        showPreview(currentMarkdown);              // return to View of the loaded memo
+        renderCurrentTags(currentTags);
+      } else {
+        resetToNew();                              // new composition: clear the editor
+      }
+    });
+
+    // ── SHARE / PERMALINK ──
+    btnShare.addEventListener('click', async () => {
+      if (!currentId) return;
+      const url = `${BASE}/m/${currentId}`;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = url; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      showToast(t('toastLinkCopied'), 'success');
+    });
+
+    // ── COPY MARKDOWN ──
+    btnCopy.addEventListener('click', async () => {
+      if (!currentMarkdown) return;
+      try {
+        await navigator.clipboard.writeText(currentMarkdown);
+        showToast(t('toastCopied'), 'success');
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = currentMarkdown; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        showToast(t('toastCopied'), 'success');
+      }
+    });
+
+    // ── DOWNLOAD ──
+    btnDownload.addEventListener('click', () => {
+      if (!currentMarkdown) return;
+      const blob = new Blob([currentMarkdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      a.href = url; a.download = `memo-${ts}.md`; a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('toastDownloaded'), 'success');
+    });
+
+    // ── QUICK VIEW ──
+    function openQuickView(entry) {
+      quickViewEntry = entry;
+      const rawPreview = (entry.preview || '').replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
+      qvTitle.textContent = rawPreview || t('quickviewTitle');
+      qvContent.innerHTML = DOMPurify.sanitize(marked.parse(entry.markdown));
+      qvPanel.classList.add('open');
+      setMode('combine');
+    }
+
+    function closeQuickView() {
+      qvPanel.classList.remove('open');
+      quickViewEntry = null;
+      document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
+      setMode(isPreviewMode ? 'view' : 'edit');
+    }
+
+    btnQvClose.addEventListener('click', closeQuickView);
+    btnQvRestore.addEventListener('click', () => {
+      if (!quickViewEntry) return;
+      currentMarkdown = quickViewEntry.markdown;
+      currentTags = quickViewEntry.tags || [];
+      currentId = quickViewEntry.id;
+      rawInput.value = quickViewEntry.raw;
+      charCount.textContent = tf('charCount', { count: quickViewEntry.raw.length.toLocaleString() });
+      showPreview(currentMarkdown);
+      renderCurrentTags(currentTags);
+      statusText.textContent = t('statusRestored');
+      showToast(t('toastMemoRestored'), 'success');
+      closeQuickView();
+    });
+
+    // ── CURRENT TAGS ──
+    function renderCurrentTags(tags) {
+      currentTagsEl.innerHTML = '';
+      tags.forEach(t => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip';
+        chip.textContent = t;
+        currentTagsEl.appendChild(chip);
+      });
+    }
+
+    // ── LOADING ──
+    function setLoading(on) {
+      loadingOverlay.classList.toggle('visible', on);
+      btnFormat.disabled = on;
+    }
+
+    // ── TAG CLOUD TOGGLE ──
+    tagToggle.addEventListener('click', () => {
+      const isOpen = tagCloudWrap.classList.toggle('open');
+      tagToggleArrow.classList.toggle('open', isOpen);
+    });
+
+    // ── TAG FILTER (server-side once the list is paginated) ──
+    async function setTagFilter(tag) {
+      activeTagFilter = activeTagFilter === tag ? null : tag;
+      updateFilterChip();
+      renderTagCloud();
+      await loadHistoryData(true);
+    }
+
+    function updateFilterChip() {
+      const chip = document.getElementById('history-filter-chip');
+      if (!activeTagFilter) { chip.style.display = 'none'; return; }
+      chip.style.display = '';
+      chip.textContent = `# ${activeTagFilter} ✕`;
+    }
+    document.getElementById('history-filter-chip').addEventListener('click', () => setTagFilter(activeTagFilter));
+
+    // ── HISTORY ──
+    async function fetchEntry(id) {
+      try {
+        const res = await fetch(`${API}/history/${id}`);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch { return null; }
+    }
+
+    async function loadHistoryData(reset = true) {
+      try {
+        const offset = reset ? 0 : history.length;
+        const params = new URLSearchParams({ limit: PAGE_SIZE, offset, order: sortOrder });
+        if (activeTagFilter) params.set('tag', activeTagFilter);
+        const res = await fetch(`${API}/history?${params}`);
+        const data = await res.json();
+        history = reset ? data.items : history.concat(data.items);
+        historyTotal = data.total;
+        libraryTotal = data.all;
+        renderHistoryItems();
+      } catch {}
+    }
+
+    async function loadTagCloud() {
+      try { tagCounts = await (await fetch(`${API}/tags`)).json(); } catch {}
+      renderTagCloud();
+    }
+
+    // What the list shows: search results > live-filtered loaded items > loaded items.
+    function getDisplayItems() {
+      if (searchResults) return searchResults;
+      if (!searchText) return history;
+      const q = searchText.toLowerCase();
+      return history.filter(e =>
+        (e.title || '').toLowerCase().includes(q) ||
+        (e.preview || '').toLowerCase().includes(q) ||
+        (e.tags || []).some(t => t.toLowerCase().includes(q)));
+    }
+
+    function renderHistoryCount() {
+      const filtered = !!(searchResults || searchText || activeTagFilter);
+      const n = searchResults ? searchResults.length
+        : (searchText ? getDisplayItems().length : historyTotal);
+      historyCount.textContent = filtered ? tf('countMatched', { n, total: libraryTotal })
+        : (libraryTotal ? tf('countTotal', { total: libraryTotal }) : '');
+    }
+
+    // ── MEMO LIST SEARCH ──
+    const searchInput = document.getElementById('history-search');
+    let searchDebounce;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        searchText = searchInput.value.trim();
+        if (!searchText) searchResults = null;   // emptying the box exits search mode
+        renderHistoryItems();
+      }, 150);
+    });
+    searchInput.addEventListener('keydown', async e => {
+      if (e.key === 'Enter') {
+        if (kbIndex >= 0) return;                 // a list item is selected — let keyboard nav open it
+        const q = searchInput.value.trim();
+        if (!q) return;
+        try {
+          const res = await fetch(`${API}/history/search?` + new URLSearchParams({ q, limit: 50 }));
+          searchResults = (await res.json()).items;
+          renderHistoryItems();
+        } catch {}
+      } else if (e.key === 'Escape') { clearSearch(); }
+    });
+    function clearSearch() {
+      searchInput.value = '';
+      searchText = '';
+      searchResults = null;
+      renderHistoryItems();
+    }
+
+    // ── LOAD MORE (button + auto-load when scrolled to the bottom) ──
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.id = 'history-load-more';
+    let loadingMore = false;
+    async function loadMoreEntries() {
+      if (loadingMore || searchResults || searchText) return;
+      if (history.length >= historyTotal) return;
+      loadingMore = true;
+      await loadHistoryData(false);
+      loadingMore = false;
+    }
+    loadMoreBtn.addEventListener('click', loadMoreEntries);
+    new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) loadMoreEntries();
+    }, { root: historyList }).observe(loadMoreBtn);
+
+    // ── SORT ORDER ──
+    const btnSort = document.getElementById('btn-sort');
+    function updateSortBtn() { btnSort.textContent = t(sortOrder === 'desc' ? 'sortNewest' : 'sortOldest'); }
+    btnSort.addEventListener('click', () => {
+      sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+      updateSortBtn();
+      loadHistoryData(true);
+    });
+    updateSortBtn();
+
+    // ── KEYBOARD NAV (/, ↑/↓, Enter, Esc) ──
+    function kbItems() { return Array.from(historyList.querySelectorAll('.history-item')); }
+    function kbHighlight() {
+      const items = kbItems();
+      items.forEach((el, i) => el.classList.toggle('kb-active', i === kbIndex));
+      if (items[kbIndex]) items[kbIndex].scrollIntoView({ block: 'nearest' });
+    }
+    document.addEventListener('keydown', e => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
+      if (e.key === '/' && !typing) { e.preventDefault(); searchInput.focus(); return; }
+      // list navigation works from the search box or outside any input
+      if (typing && e.target !== searchInput) return;
+      const items = kbItems();
+      if (e.key === 'ArrowDown' && items.length) {
+        e.preventDefault(); kbIndex = Math.min(kbIndex + 1, items.length - 1); kbHighlight();
+      } else if (e.key === 'ArrowUp' && items.length) {
+        e.preventDefault(); kbIndex = Math.max(kbIndex - 1, 0); kbHighlight();
+      } else if (e.key === 'Enter' && kbIndex >= 0 && items[kbIndex]) {
+        e.preventDefault(); items[kbIndex].click();   // → handleHistoryClick → quickview/restore
+      } else if (e.key === 'Escape' && e.target !== searchInput) {
+        clearSearch(); kbIndex = -1; kbHighlight();
+      }
+    });
+
+    function renderTagCloud() {
+      tagCloud.innerHTML = '';
+      if (!tagCounts.length) {
+        tagCloud.innerHTML = '<span data-i18n="noTagsYet" style="font-size:12px;color:var(--text3);padding:4px 0">' + escHtml(t('noTagsYet')) + '</span>';
+        return;
+      }
+
+      const allChip = document.createElement('span');
+      allChip.className = 'tag-filter-chip' + (!activeTagFilter ? ' active' : '');
+      allChip.innerHTML = `${escHtml(t('tagAll'))} <span class="tag-count">${libraryTotal}</span>`;
+      allChip.addEventListener('click', () => setTagFilter(null));
+      tagCloud.appendChild(allChip);
+
+      tagCounts.forEach(({ tag, count }) => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-filter-chip' + (activeTagFilter === tag ? ' active' : '');
+        chip.innerHTML = `${escHtml(tag)} <span class="tag-count">${count}</span>`;
+        chip.addEventListener('click', () => setTagFilter(tag));
+        tagCloud.appendChild(chip);
+      });
+    }
+
+    function renderHistoryItems() {
+      const shown = getDisplayItems();
+      renderHistoryCount();
+      kbIndex = -1;
+      historyList.querySelectorAll('.history-item').forEach(el => el.remove());
+
+      if (!shown.length) {
+        historyEmpty.style.display = '';
+        historyEmpty.textContent = (searchResults || searchText)
+          ? tf('searchEmpty', { q: searchResults ? searchInput.value.trim() : searchText })
+          : (activeTagFilter ? tf('historyEmptyTagged', { tag: activeTagFilter }) : t('historyEmpty'));
+        return;
+      }
+      historyEmpty.style.display = 'none';
+
+      shown.forEach(entry => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.dataset.id = entry.id;
+
+        const d = new Date(entry.createdAt);
+        const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
+          + ' ' + d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        const rawPreview = (entry.title || entry.preview || '')
+          .replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
+        const tagsHtml = (entry.tags || []).map(t => `<span class="hi-tag">${escHtml(t)}</span>`).join('');
+
+        item.innerHTML = `
+          <div class="hi-time">${timeStr}</div>
+          <div class="hi-preview">${escHtml(rawPreview)}</div>
+          ${tagsHtml ? `<div class="hi-tags">${tagsHtml}</div>` : ''}
+          <div class="hi-actions">
+            <button class="hi-action-btn share" title="${escHtml(t('titleCopyLink'))}">🔗</button>
+            <button class="hi-action-btn delete" title="${escHtml(t('titleDelete'))}">✕</button>
+          </div>
+        `;
+
+        item.querySelectorAll('.hi-tag').forEach(tagEl => {
+          tagEl.addEventListener('click', e => {
+            e.stopPropagation();
+            setTagFilter(tagEl.textContent);
+          });
+        });
+
+        item.querySelector('.share').addEventListener('click', async e => {
+          e.stopPropagation();
+          const url = `${BASE}/m/${entry.id}`;
+          try { await navigator.clipboard.writeText(url); }
+          catch {
+            const ta = document.createElement('textarea');
+            ta.value = url; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+          }
+          showToast(t('toastLinkCopied'), 'success');
+        });
+
+        item.querySelector('.delete').addEventListener('click', async e => {
+          e.stopPropagation();
+          if (quickViewEntry?.id === entry.id) closeQuickView();
+          await deleteEntry(entry.id);
+        });
+
+        item.addEventListener('click', e => {
+          if (e.target.closest('.hi-actions')) return;
+          handleHistoryClick(entry, item);
+        });
+
+        historyList.appendChild(item);
+      });
+
+      loadMoreBtn.textContent = t('loadMore');
+      loadMoreBtn.style.display =
+        (!searchResults && !searchText && history.length < historyTotal) ? '' : 'none';
+      historyList.appendChild(loadMoreBtn);
+    }
+
+    async function handleHistoryClick(entry, itemEl) {
+      const full = await fetchEntry(entry.id);
+      if (!full) { showToast(tf('toastErrorPrefix', { message: t('errFormatFailed') }), 'error'); return; }
+      const hasContent = rawInput.value.trim().length > 0 && !isPreviewMode;
+      if (hasContent) {
+        document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
+        itemEl.classList.add('active');
+        openQuickView(full);
+      } else {
+        currentMarkdown = full.markdown;
+        currentTags = full.tags || [];
+        currentId = full.id;
+        rawInput.value = full.raw;
+        charCount.textContent = tf('charCount', { count: full.raw.length.toLocaleString() });
+        showPreview(full.markdown);
+        renderCurrentTags(currentTags);
+        statusText.textContent = t('statusRestored');
+        showToast(t('toastMemoRestored'), 'success');
+        closeQuickView();
+      }
+    }
+
+    async function deleteEntry(id) {
+      await fetch(`${API}/history/${id}`, { method: 'DELETE' });
+      await loadHistoryData(true);
+      loadTagCloud();
+    }
+
+    // ── CLEAR ALL (arm → confirm; backs up server-side) ──
+    let clearArmed = false;
+    let clearTimer;
+    function disarmClear() {
+      clearArmed = false;
+      clearTimeout(clearTimer);
+      btnClearAll.textContent = t('btnClear');
+      btnClearAll.style.color = 'var(--text2)';
+    }
+    btnClearAll.addEventListener('click', async () => {
+      if (!history.length) return;
+      if (!clearArmed) {
+        clearArmed = true;
+        btnClearAll.textContent = t('btnClearConfirm');
+        btnClearAll.style.color = 'var(--red)';
+        clearTimer = setTimeout(disarmClear, 4000);
+        return;
+      }
+      disarmClear();
+      try {
+        const res = await fetch(`${API}/history/clear`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || t('errClearFailed'));
+        activeTagFilter = null;
+        await loadHistoryData(true);
+        loadTagCloud();
+        closeQuickView();
+        showToast(data.backedUp ? tf('toastCleared', { count: data.count }) : t('toastMemoListCleared'), 'success');
+      } catch (err) {
+        showToast(tf('toastErrorPrefix', { message: err.message }), 'error');
+      }
+    });
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    loadHistoryData(true);
+    loadTagCloud();
+    rawInput.focus();
+    setMode('edit');
+    applyLang();
+  </script>
+
+  <script>
+  (function () {
+    const BASE = '/md-memo';
+    const toggle = document.getElementById('agentToggle');
+    const input = document.getElementById('agentInput');
+    const sendBtn = document.getElementById('agentSend');
+    const trace = document.getElementById('agentTrace');
+    const backBtn = document.getElementById('agentBack');
+    const exampleList = document.getElementById('agentExampleList');
+
+    const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+    const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    let thinkingEl = null;
+    let pendingProposals = [];
+    function showThinking() {
+      hideThinking();
+      thinkingEl = el('div', 'ag-thinking', '<span class="ag-dots"><i></i><i></i><i></i></span><span>' + esc(t('agentThinking')) + '</span>');
+      trace.appendChild(thinkingEl);
+      trace.scrollTop = trace.scrollHeight;
+    }
+    function hideThinking() { if (thinkingEl) { thinkingEl.remove(); thinkingEl = null; } }
+
+    backBtn && backBtn.addEventListener('click', () => exitAgentMode());
+
+    function renderExamples() {
+      exampleList.innerHTML = '';
+      const examples = (I18N[lang] && I18N[lang].agentExamples) || I18N.en.agentExamples;
+      for (const ex of examples) {
+        const item = el('div', 'ag-example-item', esc(ex));
+        item.addEventListener('click', () => { input.value = ex; input.focus(); });
+        exampleList.appendChild(item);
+      }
+    }
+    renderExamples();
+
+    const submitList = document.getElementById('agentSubmitList');
+    const SUBMIT_KEY = 'mdmemo_agent_submits';
+    let submitHistory = [];
+    try { submitHistory = JSON.parse(localStorage.getItem(SUBMIT_KEY) || '[]'); } catch { submitHistory = []; }
+    function saveSubmitHistory() { try { localStorage.setItem(SUBMIT_KEY, JSON.stringify(submitHistory)); } catch {} }
+    function renderSubmitHistory() {
+      submitList.innerHTML = '';
+      if (!submitHistory.length) { submitList.innerHTML = '<div class="ag-side-empty">' + esc(t('agentEmptySubmits')) + '</div>'; return; }
+      for (const msg of submitHistory) {
+        const item = el('div', 'ag-example-item');
+        item.title = msg;
+        item.appendChild(el('span', 'ag-submit-text', esc(msg)));
+        const del = el('button', 'ag-submit-del', '✕');
+        del.title = t('agentDeleteTitle');
+        del.addEventListener('click', (e) => { e.stopPropagation(); removeSubmit(msg); });
+        item.appendChild(del);
+        item.addEventListener('click', () => { input.value = msg; input.focus(); });
+        submitList.appendChild(item);
+      }
+    }
+    function addSubmit(msg) {
+      submitHistory = [msg, ...submitHistory.filter((m) => m !== msg)].slice(0, 12);
+      saveSubmitHistory();
+      renderSubmitHistory();
+    }
+    function removeSubmit(msg) {
+      submitHistory = submitHistory.filter((m) => m !== msg);
+      saveSubmitHistory();
+      renderSubmitHistory();
+    }
+    renderSubmitHistory();
+
+    const sessionList = document.getElementById('agentSessionList');
+    const saveSessionBtn = document.getElementById('agentSaveSession');
+    let currentSession = null;
+
+    toggle && toggle.addEventListener('click', () => {
+      if (document.body.classList.contains('agent-open')) exitAgentMode(); else enterAgentMode();
+    });
+
+    function renderProposal(data) {
+      const card = el('div', 'ag-proposal');
+      card.appendChild(el('div', 'ag-proposal-title', tf('agentProposalPrefix', { summary: esc(data.summary) })));
+      const actions = el('div', 'ag-proposal-actions');
+      const apply = el('button', 'ag-apply', t('agentApply'));
+      const skip = el('button', 'ag-skip', t('agentSkip'));
+      actions.appendChild(apply); actions.appendChild(skip);
+      card.appendChild(actions); trace.appendChild(card);
+
+      skip.addEventListener('click', () => { card.classList.add('ag-skipped'); apply.disabled = skip.disabled = true; });
+      apply.addEventListener('click', async () => {
+        apply.disabled = skip.disabled = true; apply.textContent = t('agentApplying');
+        try {
+          const r = await fetch(`${BASE}/api/agent/apply`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: data.id }),
+          });
+          const j = await r.json();
+          if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrApplyFailed'));
+          apply.textContent = t('agentApplied');
+          if (j.id) { const a = el('a', 'ag-permalink', t('agentOpenMemo')); a.href = `${BASE}/m/${j.id}`; a.target = '_blank'; card.appendChild(a); }
+          loadHistoryData(true); loadTagCloud();   // 刷新 in-memory 快取，退出 agent mode 後 Memo List 立即可見
+        } catch (e) { apply.textContent = '✗ ' + e.message; apply.disabled = skip.disabled = false; }
+      });
+    }
+
+    function flushProposals() {
+      for (const data of pendingProposals) renderProposal(data);
+      pendingProposals = [];
+    }
+
+    function renderEvent(ev, data) {
+      if (ev === 'start') { trace.innerHTML = ''; pendingProposals = []; showThinking(); return; }
+      if (ev === 'done' || ev === 'error') hideThinking();
+      if (ev === 'message') trace.appendChild(el('div', 'ag-msg', `💭 ${esc(data.content)}`));
+      else if (ev === 'tool_call') {
+        const d = el('details', 'ag-tool'); d.appendChild(el('summary', null, `🔧 ${esc(data.name)}`));
+        d.appendChild(el('pre', null, esc(JSON.stringify(data.args, null, 2)))); trace.appendChild(d);
+      }
+      else if (ev === 'tool_result') {
+        const d = el('details', 'ag-result'); d.appendChild(el('summary', null, `📋 ${esc(data.name || t('agentResultFallback'))}`));
+        d.appendChild(el('pre', null, esc(JSON.stringify(data.result, null, 2)))); trace.appendChild(d);
+      } else if (ev === 'proposal') pendingProposals.push(data);
+      else if (ev === 'answer') {
+        const a = el('div', 'ag-answer md-render');
+        a.innerHTML = window.marked ? DOMPurify.sanitize(marked.parse(data.content || '')) : esc(data.content || '');
+        trace.appendChild(a);
+        flushProposals();                       // proposals render AFTER the summary
+      } else if (ev === 'done') { trace.appendChild(el('div', 'ag-done', esc(tf('agentDone', { steps: data.steps, tokens: data.tokens })))); flushProposals(); }
+      else if (ev === 'error') { trace.appendChild(el('div', 'ag-error', `⚠ ${esc(data.message)}`)); flushProposals(); }
+      if (thinkingEl && ev !== 'done' && ev !== 'error') trace.appendChild(thinkingEl);
+      trace.scrollTop = trace.scrollHeight;
+    }
+
+    async function run() {
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = '';
+      addSubmit(message);
+      sendBtn.disabled = true;
+      saveSessionBtn.disabled = true;
+      currentSession = null;
+      trace.innerHTML = '';
+      pendingProposals = [];
+      showThinking();
+      const events = [];
+      let answer = '';
+      try {
+        const res = await fetch(`${BASE}/api/agent`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+        if (!res.ok) { renderEvent('error', { message: `HTTP ${res.status}` }); return; }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          let idx;
+          while ((idx = buf.indexOf('\n\n')) !== -1) {
+            const frame = buf.slice(0, idx); buf = buf.slice(idx + 2);
+            const evM = frame.match(/^event: (.+)$/m);
+            const dataM = frame.match(/^data: (.+)$/m);
+            if (evM && dataM) {
+              let data; try { data = JSON.parse(dataM[1]); } catch { continue; }
+              const ev = evM[1].trim();
+              if (ev !== 'start') events.push({ event: ev, data });
+              if (ev === 'answer') answer = data.content || '';
+              renderEvent(ev, data);
+            }
+          }
+        }
+        if (events.length) { currentSession = { question: message, answer, events }; saveSessionBtn.disabled = false; }
+      } catch (e) { renderEvent('error', { message: e.message }); }
+      finally { sendBtn.disabled = false; hideThinking(); }
+    }
+
+    saveSessionBtn && saveSessionBtn.addEventListener('click', async () => {
+      if (!currentSession) return;
+      saveSessionBtn.disabled = true;
+      try {
+        const r = await fetch(`${BASE}/api/sessions`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(currentSession),
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrSaveFailed'));
+        showToast(t('toastSessionSaved'), 'success');
+        loadSessions();
+      } catch (e) { showToast(tf('toastErrorPrefix', { message: e.message }), 'error'); saveSessionBtn.disabled = false; }
+    });
+
+    function openSession(session) {
+      trace.innerHTML = '';
+      pendingProposals = [];
+      for (const e of session.events) renderEvent(e.event, e.data);
+      trace.scrollTop = trace.scrollHeight;
+    }
+
+    async function saveToMemo(session) {
+      const md = (session.answer || '').trim() || session.question;
+      try {
+        const r = await fetch(`${BASE}/api/history`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown: md, tags: ['agent'] }),
+        });
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrFailed'));
+        showToast(t('toastSavedAsMemo'), 'success');
+        loadHistoryData(true); loadTagCloud();
+      } catch (e) { showToast(tf('toastErrorPrefix', { message: e.message }), 'error'); }
+    }
+
+    function renderSessionList(list) {
+      sessionList.innerHTML = '';
+      if (!list.length) { sessionList.innerHTML = '<div class="ag-side-empty">' + esc(t('agentEmptySessions')) + '</div>'; return; }
+      for (const s of list) {
+        const item = el('div', 'ag-session-item');
+        const d = new Date(s.createdAt);
+        const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' +
+          d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+        item.innerHTML =
+          `<div class="ag-session-q">${esc(s.question)}</div>` +
+          `<div class="ag-session-time">${timeStr}</div>` +
+          `<span class="ag-session-tomemo">${esc(t('agentSessionToMemo'))}</span>` +
+          `<button class="ag-session-del" title="${esc(t('agentDeleteTitle'))}">✕</button>`;
+        item.addEventListener('click', (e) => {
+          if (e.target.closest('.ag-session-del') || e.target.closest('.ag-session-tomemo')) return;
+          openSession(s);
+        });
+        item.querySelector('.ag-session-tomemo').addEventListener('click', (e) => {
+          e.stopPropagation();
+          saveToMemo(s);
+        });
+        item.querySelector('.ag-session-del').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await fetch(`${BASE}/api/sessions/${s.id}`, { method: 'DELETE' });
+          loadSessions();
+        });
+        sessionList.appendChild(item);
+      }
+    }
+
+    async function loadSessions() {
+      try {
+        const r = await fetch(`${BASE}/api/sessions`);
+        renderSessionList(await r.json());
+      } catch {}
+    }
+    loadSessions();
+
+    // Register re-render hooks so a live language toggle (applyLang) refreshes
+    // this panel's JS-built dynamic content.
+    window.__i18nRerender.push(renderExamples, renderSubmitHistory, loadSessions);
+
+    sendBtn && sendBtn.addEventListener('click', run);
+    input && input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) run(); });
+  })();
+  </script>
+</body>
+</html>
