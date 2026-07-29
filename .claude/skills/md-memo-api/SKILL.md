@@ -2,13 +2,13 @@
 name: md-memo-api
 description: >-
   Read and mutate an md-memo notebook over its REST API (curl/HTTP, not the web UI).
-  USE THIS whenever the user wants to list/read/delete memos, save text verbatim as a
-  memo, AI-format raw text into markdown + tags, change a memo's tags or content, run
-  the notebook agent (search/merge/link/retag over memos) or apply its proposals,
-  manage saved agent sessions, get a shareable permalink, or clear/back up the
-  notebook — and more generally whenever they mention md-memo, its memos/tags/agent,
-  or its API. Maps each task to the right one of the 10 endpoints, drives the SSE
-  agent stream and the propose→apply two-phase write flow, and knows the
+  USE THIS whenever the user wants to list/search/read/delete memos, save text
+  verbatim as a memo, AI-format raw text into markdown + tags, change a memo's tags
+  or content, list all tags, run the notebook agent (search/merge/link/retag over
+  memos) or apply its proposals, manage saved agent sessions, get a shareable
+  permalink, or clear/back up the notebook — and more generally whenever they mention
+  md-memo, its memos/tags/agent, or its API. Maps each task to the right endpoint,
+  drives the SSE agent stream and the propose→apply one-time-id flow, and knows the
   validation/error cases and footguns. Trigger on "md-memo", "memo", "notebook",
   "format this note", "agent proposal". Reach for this instead of guessing the API
   shape or scraping the SPA.
@@ -17,20 +17,21 @@ description: >-
 # md-memo REST API
 
 A no-database Express app: one JSON file of "history" entries (memos), newest first,
-**hard-capped at 50**. A memo is:
+capped at **`HISTORY_LIMIT` (default 1000)**. A memo is:
 
 ```json
 { "id": 1784085528198, "createdAt": "…ISO…", "raw": "original input or \"\"",
-  "markdown": "…", "tags": ["a","b"], "preview": "first non-empty line",
+  "markdown": "…", "tags": ["a","b"], "title": "derived from markdown",
+  "slug": "unique-cjk-friendly-slug", "preview": "first non-empty line",
   "sources": [ids], "links": [ids] }
 ```
 
 `sources`/`links` exist only on merged/linked memos. `id` is a millisecond timestamp —
-**never guess ids; resolve them from `GET /api/history` first.**
+**never guess ids; resolve them via the list or search endpoints first.**
 
 This file is the operating guide. For the exhaustive per-endpoint contract — every
-status code, exact request/response JSON, SSE event shapes, and copy-paste curl for
-all 10 endpoints — read **`references/api.md`**.
+status code, exact request/response JSON, SSE event shapes, and copy-paste curl —
+read **`references/api.md`**.
 
 ## Base URL & config
 
@@ -53,8 +54,11 @@ http://localhost:10026/md-memo/api
 
 | You want to…                                         | Call                                             |
 |------------------------------------------------------|--------------------------------------------------|
-| List / read / search memos, resolve an id            | `GET /api/history` (the ONLY read; filter yourself) |
-| Save text **verbatim** as a new memo (no AI)         | `POST /api/agent/apply` `{"action":"create_memo",…}` |
+| Browse / page through memos (lightweight, no bodies) | `GET /api/history?limit=&offset=&tag=&order=`    |
+| Search the whole library                             | `GET /api/history/search?q=…`                    |
+| Read ONE memo in full (markdown + raw)               | `GET /api/history/:id`                           |
+| List all tags with counts                            | `GET /api/tags`                                  |
+| Save text **verbatim** as a new memo (no AI)         | `POST /api/history` `{"markdown":…, "tags":…}`   |
 | AI-format raw text into a new memo (markdown + tags) | `POST /api/format` `{"text":…}`                  |
 | AI-reformat **over** an existing memo                | `POST /api/format` `{"text":…, "id":N}`          |
 | Edit a memo's markdown and/or tags verbatim (no AI)  | `PUT /api/history/:id`                           |
@@ -62,31 +66,31 @@ http://localhost:10026/md-memo/api
 | Delete one memo                                      | `DELETE /api/history/:id`                        |
 | Wipe the notebook (auto-backup first)                | `POST /api/history/clear`                        |
 | Ask the notebook agent (multi-step search/synthesis) | `POST /api/agent` (SSE stream)                   |
-| Execute an agent write proposal                      | `POST /api/agent/apply` (proposal's `{action,args}` verbatim) |
-| Merge or link memos without running the agent        | `POST /api/agent/apply` with `merge_memos` / `link_memos` |
+| Execute an agent write proposal                      | `POST /api/agent/apply` `{"id":"<proposal id>"}` |
+| Merge or link memos                                  | agent-only: ask via `POST /api/agent`, then apply the proposal — there is NO direct REST path |
 | List / save / delete saved agent sessions            | `GET|POST /api/sessions`, `DELETE /api/sessions/:id` |
 | Share a memo publicly                                | link to `/md-memo/m/:id` (HTML page, no auth)    |
 
-There is **no `POST /api/history`** — verbatim creation goes through
-`agent/apply create_memo` (the web UI itself does this). There is **no search
-endpoint and no pagination** — `GET /api/history` returns everything (≤50); grep the
-JSON yourself.
-
 ## Resolve ids first (the cardinal pattern)
 
+The list endpoint is **paginated and lightweight** (`{items, total, all}`; items carry
+`id/title/slug/preview/tags/createdAt` but **no markdown**). Resolve, then fetch:
+
 ```bash
-# id by title/preview
-curl -s "$API/history" | jq '.[] | select(.preview|test("Roadmap";"i")) | .id'
-# id + tags overview
-curl -s "$API/history" | jq 'map({id, preview, tags})'
+# id by title/keyword — search scores title hits 3× body hits
+curl -s "$API/history/search?q=roadmap" | jq '.items[] | {id, title}'
+# or browse a page
+curl -s "$API/history?limit=50" | jq '.items | map({id, title, tags})'
+# then read the one you want in full
+curl -s "$API/history/$ID" | jq .
 ```
 
 ## Common workflows
 
 **Save text verbatim (no AI rewrite):**
 ```bash
-curl -s -X POST "$API/agent/apply" -H 'Content-Type: application/json' \
-  -d '{"action":"create_memo","args":{"markdown":"# Title\n\nbody","tags":["a","b"]}}'
+curl -s -X POST "$API/history" -H 'Content-Type: application/json' \
+  -d '{"markdown":"# Title\n\nbody","tags":["a","b"]}'
 # → {"ok":true,"id":1784085528198}
 ```
 
@@ -113,29 +117,46 @@ apply):
 curl -sN -X POST "$API/agent" -H 'Content-Type: application/json' \
   -d '{"message":"merge my two memos about Q1 planning"}'
 # SSE stream: start / message / tool_call / tool_result / proposal / answer / done / error
-# Grab each `proposal` event's data: {"action":"merge_memos","args":{…},"summary":"…"}
+# Each proposal event: {"id":"<uuid>","action":"merge_memos","args":{…},"summary":"…"}
 curl -s -X POST "$API/agent/apply" -H 'Content-Type: application/json' \
-  -d '{"action":"merge_memos","args":{…proposal args verbatim…}}'
+  -d '{"id":"<that uuid>"}'
 ```
-Confirm proposals with the user before applying — that's the contract the two-phase
-design exists for.
+The proposal `id` is **one-time and in-memory**: applying consumes it (second apply →
+400), a server restart drops all pending proposals, and the args live server-side so
+you cannot modify them — to change anything, re-run the agent. Confirm proposals with
+the user before applying — that's the contract the two-phase design exists for.
 
 ## Footguns — read before mutating
 
-- **The 50-entry cap evicts silently.** Every successful create (`format` without id,
-  `create_memo`, `merge_memos`) prepends and slices to 50 — at capacity, the OLDEST
-  memo is permanently dropped with no warning, no backup. Check
-  `curl -s "$API/history" | jq length` before bulk-creating.
+- **`GET /api/history` no longer returns everything.** It's a paginated envelope
+  `{items, total, all}` — default page 50, max 200 — and items have NO
+  markdown/raw. Iterate with `offset` (or use `search`/`:id`); assuming one call =
+  whole library silently misses older memos. `total` counts after the `tag` filter;
+  `all` is the whole library.
+- **The cap evicts silently.** Every successful create prepends and slices to
+  `HISTORY_LIMIT` (env-configurable, default 1000) — at capacity, the OLDEST memo is
+  permanently dropped with no warning. Check `jq .all` against the limit before
+  bulk-creating.
 - **`POST /api/format` with an `id` overwrites that memo** (markdown + tags; `raw`
   keeps the ORIGINAL input). And if the `id` doesn't exist it does NOT 404 — it
   silently creates a NEW memo instead. Only pass `id` when you've resolved it.
 - **PUT is omit/null-preserve, `""`-overwrite.** `PUT /api/history/:id` updates only
   the fields present: omitted or `null` keeps the old value; but `"markdown":""` or
   `"tags":[]` are real values that wipe. It is NOT a full-replace — don't resend
-  unchanged fields.
+  unchanged fields. Changing markdown recomputes `title`/`preview`; `slug` never
+  changes after creation.
+- **Proposal ids are one-time, expiring, and localized on failure.**
+  `POST /api/agent/apply` with a consumed/unknown/restart-lost id → 400 with a
+  human message in `AGENT_LANG` (default zh-TW: `提案已失效或不存在`) — don't
+  string-match it; match on `ok:false` + status 400. Only ~200 proposals are held;
+  old ones fall off.
+- **Invalid write proposals never reach you.** The agent validates at propose time —
+  bad args go back to the model as a `tool_result` error and no `proposal` event is
+  emitted. Every proposal you see has already passed validation (it's re-validated at
+  apply, since history may have changed in between).
 - **`DELETE /api/history/:id` always returns `{"ok":true}`**, even for nonexistent
-  ids — you cannot detect a typo'd id from the response. Verify with `GET /api/history`
-  after deleting if it matters.
+  ids — you cannot detect a typo'd id from the response. Verify via `GET /api/history/:id`
+  (404 = really gone) if it matters.
 - **`POST /api/history/clear` demands `Content-Type: application/json`** (else 415)
   and is the ONLY destructive op with a safety net: it first copies the file to a
   timestamped `data/history.<ts>.bak.json` and returns `{backedUp, count, backupFile}`.
@@ -143,30 +164,28 @@ design exists for.
 - **Agent errors arrive INSIDE the SSE stream, not as HTTP errors.** `POST /api/agent`
   returns 200 + headers immediately; a missing API key or upstream failure shows up as
   an `error` event. Always `curl -N` (unbuffered) and watch for `event: error`.
-- **Agent write tools don't write.** `create_memo`/`merge_memos`/`link_memos`/
-  `retag_memo` inside the agent loop only emit `proposal` events. Nothing persists
-  until you POST the proposal to `/api/agent/apply`. The agent stops after 8 steps.
-- **Apply validates ids; retag replaces wholesale.** `merge_memos`/`link_memos`/
-  `retag_memo` 400 on unknown ids (`{"ok":false,"error":…}`). `retag_memo` (and PUT
-  with `tags`) REPLACES the whole tag list — to add a tag, read the current tags and
-  send the union.
+  Disconnecting mid-stream aborts the agent run server-side. The loop stops after 8
+  steps.
 - **Tags are conventionally lowercase** (the AI generates lowercase; nothing enforces
-  it on writes). Match case exactly when filtering.
-- **`/m/:id` returns HTML, not JSON** — it's the share page. Don't parse it; use
-  `GET /api/history` for data.
+  it on writes). Match case exactly when filtering (`?tag=` is exact-match).
+- **`/m/:id` returns HTML, not JSON** — it's the share page. Don't parse it; use the
+  API for data.
 
 ## Pre-flight checklist before any mutation
 
 1. URL includes the full `${BASE_PATH}/api` subpath (default `/md-memo/api`).
 2. `Content-Type: application/json` header set; body is valid JSON (≤1 MB).
-3. Target id resolved via `GET /api/history` — never guessed.
-4. Creating? Checked the count — at 50 the oldest memo gets evicted.
+3. Target id resolved via list/search/`:id` — never guessed.
+4. Creating? Checked `.all` against `HISTORY_LIMIT` — at the cap the oldest memo
+   gets evicted.
 5. PUT/format: sending ONLY the fields you mean to change; no accidental `""`/`id`.
-6. Clear: user confirmed; content type is JSON.
-7. Auth-enabled deployment? `-u x:"$PASSWORD"` on every call except `/m/:id`.
+6. Applying? The proposal id is fresh (this run, not yet applied, no server restart
+   since).
+7. Clear: user confirmed; content type is JSON.
+8. Auth-enabled deployment? `-u x:"$PASSWORD"` on every call except `/m/:id`.
 
 ## Full contract
 
 For exact request/response JSON, every status code, SSE event-by-event shapes,
-apply-action semantics, and copy-paste curl for all 10 endpoints, see
+pagination envelopes, and copy-paste curl for every endpoint, see
 **`references/api.md`**. Consult it whenever unsure of a field, default, or error.
