@@ -458,10 +458,33 @@
     #history-header h2 { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--text2); }
     #history-count { font-size: 11px; color: var(--text3); font-family: var(--mono); }
 
+    #history-search-wrap { display: flex; gap: 6px; align-items: center; padding: 0 13px 10px; }
+    #history-search {
+      flex: 1; min-width: 0; background: transparent; color: var(--text);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 6px 9px; font-family: var(--mono); font-size: 12px; outline: none;
+    }
+    #history-search:focus { border-color: var(--accent-line); }
+    #history-search::placeholder { color: var(--text3); }
+    #history-filter-chip {
+      display: inline-flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap;
+      font-family: var(--mono); font-size: 11px; color: var(--accent);
+      border: 1px solid var(--accent-line); border-radius: var(--radius); padding: 4px 8px;
+    }
+    .hi-tag { cursor: pointer; }
+    .hi-tag:hover { color: var(--accent); }
     #history-list { flex: 1; overflow-y: auto; padding: 4px 0; }
     #history-list::-webkit-scrollbar { width: 3px; }
     #history-list::-webkit-scrollbar-track { background: transparent; }
     #history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #history-load-more {
+      display: block; width: calc(100% - 26px); margin: 6px 13px 10px;
+      background: transparent; color: var(--text2); cursor: pointer;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 7px 0; font-family: var(--mono); font-size: 11px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    #history-load-more:hover { color: var(--accent); border-color: var(--accent-line); }
 
     .history-item {
       padding: 10px 13px;
@@ -472,6 +495,7 @@
     }
     .history-item:hover { background: var(--accent-dim); }
     .history-item.active { background: var(--accent-dim); border-left: 2px solid var(--accent); }
+    .history-item.kb-active { outline: 1px solid var(--accent-line); outline-offset: -1px; background: var(--surface2); }
     .history-item:hover .hi-actions { opacity: 1; }
 
     .hi-time { font-size: 10px; color: var(--text3); font-family: var(--mono); letter-spacing: .1em; margin-bottom: 6px; }
@@ -716,9 +740,15 @@ Ctrl+Enter to format."></textarea>
       <div id="history-header">
         <h2 data-i18n="historyHeading">Memo List</h2>
         <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn-icon" id="btn-sort" data-i18n-title="sortTitle" title="Toggle sort order" style="width:auto;height:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:4px 9px;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--text2);cursor:pointer">↓</button>
           <span id="history-count"></span>
           <button class="btn-icon" style="width:auto;height:auto;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border:1px solid var(--accent-line);border-radius:2px;background:transparent;color:var(--accent)" id="btn-clear-all" data-i18n="btnClear">Clear</button>
         </div>
+      </div>
+
+      <div id="history-search-wrap">
+        <input id="history-search" type="text" data-i18n-ph="searchPlaceholder" placeholder="Search memos…  ( / )">
+        <span id="history-filter-chip" style="display:none"></span>
       </div>
 
       <div id="history-list">
@@ -807,6 +837,14 @@ Ctrl+Enter to format."></textarea>
         btnClearConfirm: 'Confirm?',
         historyEmpty: 'No formatted memos yet.\nWrite something and hit Format!',
         historyEmptyTagged: 'No memos tagged "{tag}"',
+        searchPlaceholder: 'Search memos…  ( / )',
+        searchEmpty: 'No memos match "{q}"',
+        countTotal: '{total} memos',
+        countMatched: '{n} / {total} memos',
+        loadMore: 'Load more',
+        sortTitle: 'Toggle sort order',
+        sortNewest: '↓ new',
+        sortOldest: '↑ old',
         // History item action button titles
         titleCopyLink: 'Copy link',
         titleDelete: 'Delete',
@@ -919,6 +957,14 @@ Ctrl+Enter to format."></textarea>
         btnClearConfirm: '確定？',
         historyEmpty: '尚無已整理的筆記。\n寫點東西並按整理！',
         historyEmptyTagged: '沒有標籤為「{tag}」的筆記',
+        searchPlaceholder: '搜尋筆記…（/）',
+        searchEmpty: '沒有符合「{q}」的筆記',
+        countTotal: '共 {total} 筆',
+        countMatched: '符合 {n}／全部 {total}',
+        loadMore: '載入更多',
+        sortTitle: '切換排序',
+        sortNewest: '↓ 新到舊',
+        sortOldest: '↑ 舊到新',
         // History item action button titles
         titleCopyLink: '複製連結',
         titleDelete: '刪除',
@@ -1005,6 +1051,7 @@ Ctrl+Enter to format."></textarea>
       // Re-render dynamic, JS-built strings.
       if (typeof renderTagCloud === 'function') renderTagCloud();
       if (typeof renderHistoryItems === 'function') renderHistoryItems();
+      if (typeof updateSortBtn === 'function') updateSortBtn();
       // mode badge + char count reflect current state in the active language.
       if (typeof modeBadge !== 'undefined' && modeBadge) {
         const m = { edit: 'modeEdit', view: 'modeView', combine: 'modeCombine', agent: 'modeAgent' }[currentMode];
@@ -1021,9 +1068,17 @@ Ctrl+Enter to format."></textarea>
     let currentTags = [];
     let currentId = null;
     let isPreviewMode = false;
-    let history = [];
+    let history = [];          // loaded lightweight items (pages accumulate)
+    let historyTotal = 0;      // total after tag filter (server-side)
+    let libraryTotal = 0;      // whole library size
+    let sortOrder = 'desc';
+    let searchText = '';       // live filter over loaded items
+    let searchResults = null;  // non-null → full-library search mode
+    let tagCounts = [];        // [{tag, count}] from /api/tags
     let activeTagFilter = null;
     let quickViewEntry = null;
+    let kbIndex = -1;          // keyboard-selected list index (-1 = none)
+    const PAGE_SIZE = 50;
 
     // DOM
     const rawInput       = document.getElementById('raw-input');
@@ -1145,7 +1200,8 @@ Ctrl+Enter to format."></textarea>
         currentId = data.id;
         showPreview(currentMarkdown);
         renderCurrentTags(currentTags);
-        loadHistoryData();
+        loadHistoryData(true);
+        loadTagCloud();
         closeQuickView();
         if (data.truncated) {
           statusText.textContent = t('statusTruncated');
@@ -1339,46 +1395,164 @@ Ctrl+Enter to format."></textarea>
       tagToggleArrow.classList.toggle('open', isOpen);
     });
 
-    // ── TAG FILTER ──
-    function setTagFilter(tag) {
+    // ── TAG FILTER (server-side once the list is paginated) ──
+    async function setTagFilter(tag) {
       activeTagFilter = activeTagFilter === tag ? null : tag;
+      updateFilterChip();
       renderTagCloud();
-      renderHistoryItems();
+      await loadHistoryData(true);
     }
 
+    function updateFilterChip() {
+      const chip = document.getElementById('history-filter-chip');
+      if (!activeTagFilter) { chip.style.display = 'none'; return; }
+      chip.style.display = '';
+      chip.textContent = `# ${activeTagFilter} ✕`;
+    }
+    document.getElementById('history-filter-chip').addEventListener('click', () => setTagFilter(activeTagFilter));
+
     // ── HISTORY ──
-    async function loadHistoryData() {
+    async function fetchEntry(id) {
       try {
-        const res = await fetch(`${API}/history`);
-        history = await res.json();
-        renderTagCloud();
+        const res = await fetch(`${API}/history/${id}`);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch { return null; }
+    }
+
+    async function loadHistoryData(reset = true) {
+      try {
+        const offset = reset ? 0 : history.length;
+        const params = new URLSearchParams({ limit: PAGE_SIZE, offset, order: sortOrder });
+        if (activeTagFilter) params.set('tag', activeTagFilter);
+        const res = await fetch(`${API}/history?${params}`);
+        const data = await res.json();
+        history = reset ? data.items : history.concat(data.items);
+        historyTotal = data.total;
+        libraryTotal = data.all;
         renderHistoryItems();
       } catch {}
     }
 
-    function getFilteredHistory() {
-      if (!activeTagFilter) return history;
-      return history.filter(e => (e.tags || []).includes(activeTagFilter));
+    async function loadTagCloud() {
+      try { tagCounts = await (await fetch(`${API}/tags`)).json(); } catch {}
+      renderTagCloud();
     }
 
-    function renderTagCloud() {
-      const tagMap = {};
-      history.forEach(e => (e.tags || []).forEach(t => { tagMap[t] = (tagMap[t] || 0) + 1; }));
-      const tags = Object.entries(tagMap).sort((a, b) => b[1] - a[1]);
+    // What the list shows: search results > live-filtered loaded items > loaded items.
+    function getDisplayItems() {
+      if (searchResults) return searchResults;
+      if (!searchText) return history;
+      const q = searchText.toLowerCase();
+      return history.filter(e =>
+        (e.title || '').toLowerCase().includes(q) ||
+        (e.preview || '').toLowerCase().includes(q) ||
+        (e.tags || []).some(t => t.toLowerCase().includes(q)));
+    }
 
+    function renderHistoryCount() {
+      const filtered = !!(searchResults || searchText || activeTagFilter);
+      const n = searchResults ? searchResults.length
+        : (searchText ? getDisplayItems().length : historyTotal);
+      historyCount.textContent = filtered ? tf('countMatched', { n, total: libraryTotal })
+        : (libraryTotal ? tf('countTotal', { total: libraryTotal }) : '');
+    }
+
+    // ── MEMO LIST SEARCH ──
+    const searchInput = document.getElementById('history-search');
+    let searchDebounce;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        searchText = searchInput.value.trim();
+        if (!searchText) searchResults = null;   // emptying the box exits search mode
+        renderHistoryItems();
+      }, 150);
+    });
+    searchInput.addEventListener('keydown', async e => {
+      if (e.key === 'Enter') {
+        if (kbIndex >= 0) return;                 // a list item is selected — let keyboard nav open it
+        const q = searchInput.value.trim();
+        if (!q) return;
+        try {
+          const res = await fetch(`${API}/history/search?` + new URLSearchParams({ q, limit: 50 }));
+          searchResults = (await res.json()).items;
+          renderHistoryItems();
+        } catch {}
+      } else if (e.key === 'Escape') { clearSearch(); }
+    });
+    function clearSearch() {
+      searchInput.value = '';
+      searchText = '';
+      searchResults = null;
+      renderHistoryItems();
+    }
+
+    // ── LOAD MORE (button + auto-load when scrolled to the bottom) ──
+    const loadMoreBtn = document.createElement('button');
+    loadMoreBtn.id = 'history-load-more';
+    let loadingMore = false;
+    async function loadMoreEntries() {
+      if (loadingMore || searchResults || searchText) return;
+      if (history.length >= historyTotal) return;
+      loadingMore = true;
+      await loadHistoryData(false);
+      loadingMore = false;
+    }
+    loadMoreBtn.addEventListener('click', loadMoreEntries);
+    new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) loadMoreEntries();
+    }, { root: historyList }).observe(loadMoreBtn);
+
+    // ── SORT ORDER ──
+    const btnSort = document.getElementById('btn-sort');
+    function updateSortBtn() { btnSort.textContent = t(sortOrder === 'desc' ? 'sortNewest' : 'sortOldest'); }
+    btnSort.addEventListener('click', () => {
+      sortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+      updateSortBtn();
+      loadHistoryData(true);
+    });
+    updateSortBtn();
+
+    // ── KEYBOARD NAV (/, ↑/↓, Enter, Esc) ──
+    function kbItems() { return Array.from(historyList.querySelectorAll('.history-item')); }
+    function kbHighlight() {
+      const items = kbItems();
+      items.forEach((el, i) => el.classList.toggle('kb-active', i === kbIndex));
+      if (items[kbIndex]) items[kbIndex].scrollIntoView({ block: 'nearest' });
+    }
+    document.addEventListener('keydown', e => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || e.target.isContentEditable;
+      if (e.key === '/' && !typing) { e.preventDefault(); searchInput.focus(); return; }
+      // list navigation works from the search box or outside any input
+      if (typing && e.target !== searchInput) return;
+      const items = kbItems();
+      if (e.key === 'ArrowDown' && items.length) {
+        e.preventDefault(); kbIndex = Math.min(kbIndex + 1, items.length - 1); kbHighlight();
+      } else if (e.key === 'ArrowUp' && items.length) {
+        e.preventDefault(); kbIndex = Math.max(kbIndex - 1, 0); kbHighlight();
+      } else if (e.key === 'Enter' && kbIndex >= 0 && items[kbIndex]) {
+        e.preventDefault(); items[kbIndex].click();   // → handleHistoryClick → quickview/restore
+      } else if (e.key === 'Escape' && e.target !== searchInput) {
+        clearSearch(); kbIndex = -1; kbHighlight();
+      }
+    });
+
+    function renderTagCloud() {
       tagCloud.innerHTML = '';
-      if (!tags.length) {
+      if (!tagCounts.length) {
         tagCloud.innerHTML = '<span data-i18n="noTagsYet" style="font-size:12px;color:var(--text3);padding:4px 0">' + escHtml(t('noTagsYet')) + '</span>';
         return;
       }
 
       const allChip = document.createElement('span');
       allChip.className = 'tag-filter-chip' + (!activeTagFilter ? ' active' : '');
-      allChip.innerHTML = `${escHtml(t('tagAll'))} <span class="tag-count">${history.length}</span>`;
+      allChip.innerHTML = `${escHtml(t('tagAll'))} <span class="tag-count">${libraryTotal}</span>`;
       allChip.addEventListener('click', () => setTagFilter(null));
       tagCloud.appendChild(allChip);
 
-      tags.forEach(([tag, count]) => {
+      tagCounts.forEach(({ tag, count }) => {
         const chip = document.createElement('span');
         chip.className = 'tag-filter-chip' + (activeTagFilter === tag ? ' active' : '');
         chip.innerHTML = `${escHtml(tag)} <span class="tag-count">${count}</span>`;
@@ -1388,20 +1562,21 @@ Ctrl+Enter to format."></textarea>
     }
 
     function renderHistoryItems() {
-      const filtered = getFilteredHistory();
-      historyCount.textContent = filtered.length ? `${filtered.length}` : '';
+      const shown = getDisplayItems();
+      renderHistoryCount();
+      kbIndex = -1;
       historyList.querySelectorAll('.history-item').forEach(el => el.remove());
 
-      if (!filtered.length) {
+      if (!shown.length) {
         historyEmpty.style.display = '';
-        historyEmpty.textContent = activeTagFilter
-          ? tf('historyEmptyTagged', { tag: activeTagFilter })
-          : t('historyEmpty');
+        historyEmpty.textContent = (searchResults || searchText)
+          ? tf('searchEmpty', { q: searchResults ? searchInput.value.trim() : searchText })
+          : (activeTagFilter ? tf('historyEmptyTagged', { tag: activeTagFilter }) : t('historyEmpty'));
         return;
       }
       historyEmpty.style.display = 'none';
 
-      filtered.forEach(entry => {
+      shown.forEach(entry => {
         const item = document.createElement('div');
         item.className = 'history-item';
         item.dataset.id = entry.id;
@@ -1410,7 +1585,7 @@ Ctrl+Enter to format."></textarea>
         const timeStr = d.toLocaleDateString('en', { month: 'short', day: 'numeric' })
           + ' ' + d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-        const rawPreview = (entry.preview || '')
+        const rawPreview = (entry.title || entry.preview || '')
           .replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(/`/g, '');
         const tagsHtml = (entry.tags || []).map(t => `<span class="hi-tag">${escHtml(t)}</span>`).join('');
 
@@ -1423,6 +1598,13 @@ Ctrl+Enter to format."></textarea>
             <button class="hi-action-btn delete" title="${escHtml(t('titleDelete'))}">✕</button>
           </div>
         `;
+
+        item.querySelectorAll('.hi-tag').forEach(tagEl => {
+          tagEl.addEventListener('click', e => {
+            e.stopPropagation();
+            setTagFilter(tagEl.textContent);
+          });
+        });
 
         item.querySelector('.share').addEventListener('click', async e => {
           e.stopPropagation();
@@ -1449,21 +1631,28 @@ Ctrl+Enter to format."></textarea>
 
         historyList.appendChild(item);
       });
+
+      loadMoreBtn.textContent = t('loadMore');
+      loadMoreBtn.style.display =
+        (!searchResults && !searchText && history.length < historyTotal) ? '' : 'none';
+      historyList.appendChild(loadMoreBtn);
     }
 
-    function handleHistoryClick(entry, itemEl) {
+    async function handleHistoryClick(entry, itemEl) {
+      const full = await fetchEntry(entry.id);
+      if (!full) { showToast(tf('toastErrorPrefix', { message: t('errFormatFailed') }), 'error'); return; }
       const hasContent = rawInput.value.trim().length > 0 && !isPreviewMode;
       if (hasContent) {
         document.querySelectorAll('.history-item.active').forEach(el => el.classList.remove('active'));
         itemEl.classList.add('active');
-        openQuickView(entry);
+        openQuickView(full);
       } else {
-        currentMarkdown = entry.markdown;
-        currentTags = entry.tags || [];
-        currentId = entry.id;
-        rawInput.value = entry.raw;
-        charCount.textContent = tf('charCount', { count: entry.raw.length.toLocaleString() });
-        showPreview(entry.markdown);
+        currentMarkdown = full.markdown;
+        currentTags = full.tags || [];
+        currentId = full.id;
+        rawInput.value = full.raw;
+        charCount.textContent = tf('charCount', { count: full.raw.length.toLocaleString() });
+        showPreview(full.markdown);
         renderCurrentTags(currentTags);
         statusText.textContent = t('statusRestored');
         showToast(t('toastMemoRestored'), 'success');
@@ -1473,9 +1662,8 @@ Ctrl+Enter to format."></textarea>
 
     async function deleteEntry(id) {
       await fetch(`${API}/history/${id}`, { method: 'DELETE' });
-      history = history.filter(e => e.id !== id);
-      renderTagCloud();
-      renderHistoryItems();
+      await loadHistoryData(true);
+      loadTagCloud();
     }
 
     // ── CLEAR ALL (arm → confirm; backs up server-side) ──
@@ -1501,10 +1689,9 @@ Ctrl+Enter to format."></textarea>
         const res = await fetch(`${API}/history/clear`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error || t('errClearFailed'));
-        history = [];
         activeTagFilter = null;
-        renderTagCloud();
-        renderHistoryItems();
+        await loadHistoryData(true);
+        loadTagCloud();
         closeQuickView();
         showToast(data.backedUp ? tf('toastCleared', { count: data.count }) : t('toastMemoListCleared'), 'success');
       } catch (err) {
@@ -1516,7 +1703,8 @@ Ctrl+Enter to format."></textarea>
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
-    loadHistoryData();
+    loadHistoryData(true);
+    loadTagCloud();
     rawInput.focus();
     setMode('edit');
     applyLang();
@@ -1613,13 +1801,13 @@ Ctrl+Enter to format."></textarea>
         try {
           const r = await fetch(`${BASE}/api/agent/apply`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: data.action, args: data.args }),
+            body: JSON.stringify({ id: data.id }),
           });
           const j = await r.json();
           if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrApplyFailed'));
           apply.textContent = t('agentApplied');
           if (j.id) { const a = el('a', 'ag-permalink', t('agentOpenMemo')); a.href = `${BASE}/m/${j.id}`; a.target = '_blank'; card.appendChild(a); }
-          loadHistoryData();                       // 刷新 in-memory 快取，退出 agent mode 後 Memo List 立即可見
+          loadHistoryData(true); loadTagCloud();   // 刷新 in-memory 快取，退出 agent mode 後 Memo List 立即可見
         } catch (e) { apply.textContent = '✗ ' + e.message; apply.disabled = skip.disabled = false; }
       });
     }
@@ -1722,14 +1910,14 @@ Ctrl+Enter to format."></textarea>
     async function saveToMemo(session) {
       const md = (session.answer || '').trim() || session.question;
       try {
-        const r = await fetch(`${BASE}/api/agent/apply`, {
+        const r = await fetch(`${BASE}/api/history`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'create_memo', args: { markdown: md, tags: ['agent'] } }),
+          body: JSON.stringify({ markdown: md, tags: ['agent'] }),
         });
         const j = await r.json();
         if (!r.ok || !j.ok) throw new Error(j.error || t('agentErrFailed'));
         showToast(t('toastSavedAsMemo'), 'success');
-        loadHistoryData();
+        loadHistoryData(true); loadTagCloud();
       } catch (e) { showToast(tf('toastErrorPrefix', { message: e.message }), 'error'); }
     }
 

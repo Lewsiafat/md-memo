@@ -23,6 +23,7 @@
     ] } },
     { "event": "message", "data": { "content": "內容齊了。我把這三篇整理成一份**雙語總覽**，並標註來源筆記 id。請確認下面的提案。" } },
     { "event": "proposal", "data": {
+      "id": "demo-proposal-1",
       "action": "merge_memos",
       "summary": "合併 3 篇為「Side Project 進度總覽」",
       "args": {

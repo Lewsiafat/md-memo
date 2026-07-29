@@ -5,6 +5,102 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [1.6.2] - 2026-07-09
+
+Agent-mode hardening (C1+H1+H2+H3) from the 2026-07-08 architecture review;
+design and task plan in `docs/plans/2026-07-08-agent-mode-hardening-*.md`.
+
+### Fixed
+- **Corrupted storage no longer silently wipes data (C1).** If
+  `data/history.json` or `data/sessions.json` fails to parse (or isn't an
+  array), the corrupted file is quarantined as
+  `<name>.corrupt-<timestamp>.json` with its original bytes preserved for
+  manual recovery, and the app continues with an empty library instead of
+  overwriting the evidence on the next save. All saves are now atomic
+  (write `<file>.tmp`, then rename), so a crash can never leave a
+  half-written file.
+- **Closing the tab now actually stops the agent (H3).** When the SSE
+  client disconnects mid-run, an AbortController aborts the agent loop and
+  the in-flight OpenRouter request instead of letting the run burn tokens
+  to completion.
+- **Invalid agent write proposals self-correct instead of reaching you
+  (H2).** Write-tool args are validated at propose time; validation errors
+  feed back to the model as tool results so it can retry within the run,
+  and never become a confirmable proposal.
+
+### Changed
+- **`POST /api/agent/apply` now consumes a one-time proposal id (H1).**
+  The SSE `proposal` event carries a server-issued id (`{ id, action,
+  args, summary }`); apply takes `{ id }` only, with args kept server-side
+  in an in-memory registry (200-entry FIFO). Double-clicks, replayed saved
+  sessions, and tampered args all get a 400; a server restart invalidates
+  pending proposals by design.
+
+### Added
+- **`POST /api/history`** — raw create without the LLM (body
+  `{ markdown, tags? }`); the agent panel's "save session as memo" now
+  uses this instead of the apply endpoint.
+- Demo mock mirrors the new id-based apply contract, so the static demo
+  keeps exercising the real frontend code paths.
+
+## [1.6.1] - 2026-07-07
+
+### Fixed
+- **`POST /api/format` no longer rewrites or expands user input.** The
+  system prompt had no instruction to preserve the original content/scope,
+  so pasting an imperative numbered list (e.g. a course-planning draft) got
+  treated as a task to fulfill rather than text to format, producing a much
+  longer invented document instead of lightly-cleaned markdown. The prompt
+  now explicitly treats the input as content-to-format (never
+  instructions-to-execute) and preserves the user's original meaning, scope,
+  and length.
+- **`POST /api/format` no longer drifts into Simplified Chinese.** The
+  prompt had no language directive at all. It now shares the `AGENT_LANG`
+  env var (default `zh-TW`) with the agent loop and enforces Traditional
+  Chinese output when the input is Chinese.
+
+## [1.6.0] - 2026-07-06
+
+Knowledge-engine roadmap Phase 0 + 0.5
+(`docs/plans/2026-07-03-knowledge-engine-roadmap-design.md`): storage foundation
+plus Memo List usability at 1,000-memo scale. Full walkthrough in
+`specs/memo-foundation-and-list-walkthrough.md`.
+
+### Added
+- **`HISTORY_LIMIT` environment variable** (default `1000`) — the hard-coded
+  50-memo cap is gone. The JSON store is still rewritten whole on each save;
+  the docs note the scale characteristics.
+- **`title`/`slug` identity per memo** (`src/slug.js`) — title derived from the
+  first heading (fallback: first non-empty line); CJK-friendly kebab-case slug,
+  unique-suffixed and **stable once generated** (groundwork for wiki links).
+  Old data is lazily backfilled on first load — no manual migration.
+- **Paginated lightweight history API** — `GET /api/history` takes
+  `limit`/`offset`/`tag`/`order` and returns an `{ items, total, all }`
+  envelope with lightweight fields (no full markdown).
+- **`GET /api/history/search?q=`** — full-library keyword search reusing the
+  agent tool's `searchMemos` scoring (one implementation, both consumers).
+- **`GET /api/history/:id`** (single memo on demand for quickview/restore;
+  404 on unknown or non-numeric ids) and **`GET /api/tags`** (tag counts, so
+  the tag cloud stays correct under pagination).
+- **Memo List upgrades** — search box (live filter over loaded items, Enter
+  for full-library search, Esc to clear), clickable per-item tag filter with a
+  dismissible chip, "Load more" button + auto-load on scroll
+  (IntersectionObserver, 50 per page), newest/oldest sort toggle, keyboard
+  navigation (`/` focuses search, `↑`/`↓` move, Enter opens, Esc clears), and
+  a "matched n / total N" count line. All new strings in both EN and 繁體中文.
+- **Demo mock parity** — the static demo's `mock.js` mirrors the envelope,
+  pagination params, and the new `/search`, `/:id`, `/tags` routes.
+
+### Changed
+- **`GET /api/history` response shape** — now the `{ items, total, all }`
+  envelope instead of a full-content array. Its only consumers (the SPA and
+  the demo mock) were updated in the same release; the SPA fetches full
+  markdown per memo only when needed.
+- `searchMemos` results now include `title` (shared by the agent tool and the
+  UI search).
+- Test suite grew from 59 to 75 tests (slug, store limit/backfill/pagination,
+  search title).
+
 ## [1.5.0] - 2026-07-02
 
 Open-source release readiness: implements every finding from the full code review in

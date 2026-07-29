@@ -4,7 +4,7 @@ import fs from 'node:fs';
 
 process.env.HISTORY_FILE = '/tmp/md-memo-tools-test.json';
 
-const { saveHistory } = await import('../src/store.js');
+const { saveHistory, insertEntry, createEntry } = await import('../src/store.js');
 const { searchMemos, readMemo, listTags, runReadTool, TOOLS, TOOL_KIND } =
   await import('../src/tools.js');
 
@@ -27,6 +27,13 @@ test('searchMemos respects limit and empty query', () => {
   seed();
   assert.strictEqual(searchMemos({ query: 'alpha', limit: 1 }).length, 1);
   assert.deepStrictEqual(searchMemos({ query: '   ' }), []);
+});
+
+test('searchMemos results include the memo title', () => {
+  saveHistory([]);
+  insertEntry(createEntry({ markdown: '# Docker Deploy Notes\n\nsteps here', tags: ['deploy'] }));
+  const r = searchMemos({ query: 'docker' });
+  assert.strictEqual(r[0].title, 'Docker Deploy Notes');
 });
 
 test('readMemo returns full memo or an error object', () => {
@@ -113,4 +120,27 @@ test('applyProposal retag_memo replaces tags', () => {
 
 test('applyProposal rejects unknown actions', () => {
   assert.strictEqual(applyProposal({ action: 'delete_everything', args: {} }).ok, false);
+});
+
+const { validateProposal } = await import('../src/tools.js');
+
+test('validateProposal passes valid args for every action', () => {
+  seed();
+  assert.deepStrictEqual(validateProposal('create_memo', { markdown: '# x' }), { ok: true });
+  assert.ok(validateProposal('merge_memos', { source_ids: [1, 2], markdown: 'm' }).ok);
+  assert.ok(validateProposal('link_memos', { ids: [1, 3] }).ok);
+  assert.ok(validateProposal('retag_memo', { id: 2, tags: [] }).ok);
+});
+
+test('validateProposal rejects empty markdown, unknown ids, unknown actions', () => {
+  seed();
+  assert.strictEqual(validateProposal('create_memo', {}).ok, false);
+  assert.strictEqual(validateProposal('merge_memos', { source_ids: [1], markdown: '   ' }).ok, false);
+  assert.match(validateProposal('merge_memos', { source_ids: [1, 999], markdown: 'm' }).error, /999/);
+  assert.match(validateProposal('link_memos', { ids: [999] }).error, /999/);
+  assert.strictEqual(validateProposal('retag_memo', { id: 999 }).ok, false);
+  assert.strictEqual(validateProposal('delete_everything', {}).ok, false);
+  // Lock error message parity: id converted to Number (undefined→NaN, '007'→7)
+  assert.strictEqual(validateProposal('retag_memo', {}).error, 'No memo with id NaN');
+  assert.strictEqual(validateProposal('retag_memo', { id: '007' }).error, 'No memo with id 7');
 });

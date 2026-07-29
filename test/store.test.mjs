@@ -1,11 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import fs from 'node:fs';
+import path from 'node:path';
 
 process.env.HISTORY_FILE = '/tmp/md-memo-store-test.json';
 fs.rmSync(process.env.HISTORY_FILE, { force: true });
+process.env.HISTORY_LIMIT = '30';
 
-const { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, HISTORY_LIMIT } =
+const { loadHistory, saveHistory, createEntry, insertEntry, updateEntry, clearHistory, historyLimit, listEntries } =
   await import('../src/store.js');
 
 test('loadHistory returns [] when file missing', () => {
@@ -30,6 +32,10 @@ test('createEntry attaches optional sources/links only when given', () => {
   assert.deepStrictEqual(rich.links, [2]);
 });
 
+test('historyLimit reads HISTORY_LIMIT env (default 1000 when unset)', () => {
+  assert.strictEqual(historyLimit(), 30);   // set at top of this file
+});
+
 test('insertEntry: consecutive inserts yield distinct ids (no same-ms collision)', () => {
   saveHistory([]);
   const a = insertEntry(createEntry({ markdown: 'a' }));
@@ -39,12 +45,12 @@ test('insertEntry: consecutive inserts yield distinct ids (no same-ms collision)
 
 test('insertEntry prepends and enforces the limit', () => {
   saveHistory([]);
-  for (let i = 0; i < HISTORY_LIMIT + 5; i++) {
+  for (let i = 0; i < historyLimit() + 5; i++) {
     insertEntry(createEntry({ markdown: `m${i}` }));
   }
   const h = loadHistory();
-  assert.strictEqual(h.length, HISTORY_LIMIT);
-  assert.strictEqual(h[0].markdown, `m${HISTORY_LIMIT + 4}`);
+  assert.strictEqual(h.length, historyLimit());
+  assert.strictEqual(h[0].markdown, `m${historyLimit() + 4}`);
 });
 
 test('clearHistory backs up to a timestamped .bak.json then empties history', () => {
@@ -94,4 +100,102 @@ test('updateEntry keeps position (does not reorder)', () => {
   const h = loadHistory();
   assert.strictEqual(h[0].id, 2);                // top entry unchanged
   assert.strictEqual(h[1].markdown, 'A2');       // updated in place at index 1
+});
+
+test('createEntry derives title from markdown', () => {
+  const e = createEntry({ markdown: '# My Note\n\nbody' });
+  assert.strictEqual(e.title, 'My Note');
+});
+
+test('insertEntry assigns unique, stable slugs for duplicate titles', () => {
+  saveHistory([]);
+  const a = insertEntry(createEntry({ markdown: '# Same Title' }));
+  const b = insertEntry(createEntry({ markdown: '# Same Title' }));
+  assert.strictEqual(a.slug, 'same-title');
+  assert.strictEqual(b.slug, 'same-title-2');
+});
+
+test('loadHistory lazily backfills title/slug on legacy entries and persists once', () => {
+  fs.writeFileSync(process.env.HISTORY_FILE, JSON.stringify([
+    { id: 1, createdAt: 'a', raw: '', markdown: '# Legacy\n\nx', tags: [], preview: '# Legacy' },
+  ]));
+  const h = loadHistory();
+  assert.strictEqual(h[0].title, 'Legacy');
+  assert.strictEqual(h[0].slug, 'legacy');
+  // persisted, not just in-memory
+  const onDisk = JSON.parse(fs.readFileSync(process.env.HISTORY_FILE, 'utf8'));
+  assert.strictEqual(onDisk[0].slug, 'legacy');
+});
+
+test('updateEntry recomputes title but never touches slug', () => {
+  saveHistory([]);
+  const e = insertEntry(createEntry({ markdown: '# Before' }));
+  const updated = updateEntry(e.id, { markdown: '# After' });
+  assert.strictEqual(updated.title, 'After');
+  assert.strictEqual(updated.slug, 'before');   // slug is identity — stable
+});
+
+test('listEntries paginates lightweight fields with total/all', () => {
+  saveHistory([]);
+  for (let i = 0; i < 5; i++) {
+    insertEntry(createEntry({ raw: `raw${i}`, markdown: `# N${i}`, tags: i % 2 ? ['odd'] : ['even'] }));
+  }
+  const page = listEntries({ limit: 2, offset: 1 });
+  assert.strictEqual(page.total, 5);
+  assert.strictEqual(page.all, 5);
+  assert.strictEqual(page.items.length, 2);
+  assert.strictEqual(page.items[0].title, 'N3');       // newest-first, offset 1
+  assert.ok(!('markdown' in page.items[0]), 'no full text in list items');
+  assert.ok(!('raw' in page.items[0]), 'no raw in list items');
+  assert.ok(page.items[0].slug, 'slug included');
+});
+
+test('listEntries filters by tag (total follows the filter, all does not)', () => {
+  const r = listEntries({ tag: 'odd' });
+  assert.strictEqual(r.total, 2);
+  assert.strictEqual(r.all, 5);
+  assert.ok(r.items.every(e => e.tags.includes('odd')));
+});
+
+test('listEntries order asc returns oldest first', () => {
+  const r = listEntries({ order: 'asc', limit: 1 });
+  assert.strictEqual(r.items[0].title, 'N0');
+});
+
+test('loadHistory quarantines a corrupted file and returns []', () => {
+  const f = process.env.HISTORY_FILE;
+  const dir = path.dirname(f);
+  const prefix = path.basename(f).replace(/\.json$/, '') + '.corrupt-';
+  // clean stale quarantine files from previous runs
+  for (const n of fs.readdirSync(dir).filter(n => n.startsWith(prefix))) {
+    fs.rmSync(path.join(dir, n), { force: true });
+  }
+  fs.writeFileSync(f, '{ not valid json');
+  assert.deepStrictEqual(loadHistory(), []);
+  assert.ok(!fs.existsSync(f), 'corrupted file moved away');
+  const quarantined = fs.readdirSync(dir).filter(n => n.startsWith(prefix));
+  assert.strictEqual(quarantined.length, 1);
+  assert.match(quarantined[0], /\.corrupt-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.json$/);
+  const qPath = path.join(dir, quarantined[0]);
+  assert.strictEqual(fs.readFileSync(qPath, 'utf8'), '{ not valid json', 'original bytes preserved');
+  fs.rmSync(qPath, { force: true });
+});
+
+test('loadHistory quarantines valid JSON that is not an array', () => {
+  const f = process.env.HISTORY_FILE;
+  const dir = path.dirname(f);
+  const prefix = path.basename(f).replace(/\.json$/, '') + '.corrupt-';
+  fs.writeFileSync(f, '"just a string"');
+  assert.deepStrictEqual(loadHistory(), []);
+  assert.ok(!fs.existsSync(f));
+  for (const n of fs.readdirSync(dir).filter(n => n.startsWith(prefix))) {
+    fs.rmSync(path.join(dir, n), { force: true });
+  }
+});
+
+test('saveHistory writes atomically and leaves no .tmp residue', () => {
+  saveHistory([createEntry({ markdown: '# atomic' })]);
+  assert.ok(fs.existsSync(process.env.HISTORY_FILE));
+  assert.ok(!fs.existsSync(process.env.HISTORY_FILE + '.tmp'));
+  assert.strictEqual(loadHistory()[0].markdown, '# atomic');
 });

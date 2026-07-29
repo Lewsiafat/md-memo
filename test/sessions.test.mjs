@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import fs from 'fs';
+import path from 'node:path';
 
 process.env.SESSIONS_FILE = '/tmp/md-memo-sessions-test.json';
 fs.rmSync(process.env.SESSIONS_FILE, { force: true });
@@ -53,4 +54,27 @@ test('deleteSession removes by id', () => {
   assert.strictEqual(remaining.length, 1);
   assert.strictEqual(remaining[0].question, 'b');
   assert.ok(!remaining.some(s => s.question === 'a'));
+});
+
+test('loadSessions quarantines a corrupted file and returns []', () => {
+  const f = process.env.SESSIONS_FILE;
+  const dir = path.dirname(f);
+  const prefix = path.basename(f).replace(/\.json$/, '') + '.corrupt-';
+  for (const n of fs.readdirSync(dir).filter(n => n.startsWith(prefix))) {
+    fs.rmSync(path.join(dir, n), { force: true });
+  }
+  fs.writeFileSync(f, '[{ broken');
+  assert.deepStrictEqual(loadSessions(), []);
+  assert.ok(!fs.existsSync(f), 'corrupted file moved away');
+  const quarantined = fs.readdirSync(dir).filter(n => n.startsWith(prefix));
+  assert.strictEqual(quarantined.length, 1);
+  assert.strictEqual(fs.readFileSync(path.join(dir, quarantined[0]), 'utf8'), '[{ broken');
+  fs.rmSync(path.join(dir, quarantined[0]), { force: true });
+});
+
+test('insertSession persists atomically (no .tmp residue)', () => {
+  fs.rmSync(process.env.SESSIONS_FILE, { force: true });
+  insertSession(createSession({ question: 'atomic?' }));
+  assert.ok(fs.existsSync(process.env.SESSIONS_FILE));
+  assert.ok(!fs.existsSync(process.env.SESSIONS_FILE + '.tmp'));
 });
