@@ -827,6 +827,7 @@ Ctrl+Enter to format."></textarea>
         statusError: '✗ Error',
         statusSaved: '✓ Saved',
         statusRestored: '↩ Restored',
+        statusDraft: '📝 Unsaved draft',
         // Tag section / cloud
         tagsHeading: '🏷 Tags',
         noTagsYet: 'No tags yet',
@@ -857,6 +858,7 @@ Ctrl+Enter to format."></textarea>
         toastCopied: 'Copied!',
         toastDownloaded: 'Downloaded!',
         toastMemoRestored: 'Memo restored',
+        toastDraftRestored: 'Unsaved draft restored ({time})',
         toastSessionSaved: 'Session saved',
         toastSavedAsMemo: 'Saved as memo',
         toastCleared: 'Cleared — backed up {count} memo(s)',
@@ -947,6 +949,7 @@ Ctrl+Enter to format."></textarea>
         statusError: '✗ 錯誤',
         statusSaved: '✓ 已儲存',
         statusRestored: '↩ 已還原',
+        statusDraft: '📝 未存檔的草稿',
         // Tag section / cloud
         tagsHeading: '🏷 標籤',
         noTagsYet: '尚無標籤',
@@ -977,6 +980,7 @@ Ctrl+Enter to format."></textarea>
         toastCopied: '已複製！',
         toastDownloaded: '已下載！',
         toastMemoRestored: '筆記已還原',
+        toastDraftRestored: '已還原未存檔的草稿（{time}）',
         toastSessionSaved: 'Session 已儲存',
         toastSavedAsMemo: '已存成 memo',
         toastCleared: '已清空 — 已備份 {count} 筆筆記',
@@ -1130,7 +1134,68 @@ Ctrl+Enter to format."></textarea>
       const editing = currentMode !== 'agent' && !isPreviewMode;
       btnSave.style.display    = (editing && currentId != null) ? '' : 'none';
       btnDiscard.style.display = (editing && rawInput.value.trim().length > 0) ? '' : 'none';
+      scheduleDraftSave();
     }
+
+    // ── DRAFT (client-side autosave + leave warning) ──
+    // Unsaved editor content lives in localStorage so closing the tab doesn't
+    // lose it. Dirty = editing and the text differs from what the server has:
+    // a new composition with any text, or an existing memo whose text differs
+    // from its saved markdown (the Edit button loads currentMarkdown).
+    const DRAFT_KEY = 'md-memo-draft';
+    let draftTimer;
+    function isDirty() {
+      if (isPreviewMode) return false;
+      const v = rawInput.value;
+      return currentId != null ? v !== currentMarkdown : v.trim() !== '';
+    }
+    function saveDraftNow() {
+      clearTimeout(draftTimer);
+      try {
+        if (isDirty()) {
+          localStorage.setItem(DRAFT_KEY, JSON.stringify({
+            text: rawInput.value, id: currentId,
+            baseMarkdown: currentMarkdown, tags: currentTags, savedAt: Date.now()
+          }));
+        } else {
+          localStorage.removeItem(DRAFT_KEY);
+        }
+      } catch {}
+    }
+    function scheduleDraftSave() {
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(saveDraftNow, 400);
+    }
+    function restoreDraft() {
+      let d;
+      try { d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch { d = null; }
+      if (!d || typeof d.text !== 'string' || !d.text.trim()) return;
+      rawInput.value = d.text;
+      charCount.textContent = tf('charCount', { count: d.text.length.toLocaleString() });
+      if (d.id != null) {
+        currentId = d.id;
+        currentMarkdown = d.baseMarkdown || '';
+        currentTags = d.tags || [];
+        renderCurrentTags(currentTags);
+        btnFormat.textContent = t('btnReformat');
+        // The memo may have been deleted meanwhile: fall back to a new composition.
+        fetchEntry(d.id).then(full => {
+          if (full || currentId !== d.id) return;
+          currentId = null; currentMarkdown = ''; currentTags = [];
+          renderCurrentTags(currentTags);
+          btnFormat.textContent = t('btnFormat');
+          updateEditControls();
+        });
+      }
+      statusText.textContent = t('statusDraft');
+      const time = new Date(d.savedAt || Date.now()).toLocaleString(lang);
+      showToast(tf('toastDraftRestored', { time }), 'success');
+    }
+    window.addEventListener('pagehide', saveDraftNow);
+    window.addEventListener('beforeunload', e => {
+      saveDraftNow();
+      if (isDirty()) { e.preventDefault(); e.returnValue = ''; }
+    });
     function restoreEditorMode() {
       setMode(quickViewEntry ? 'combine' : (isPreviewMode ? 'view' : 'edit'));
     }
@@ -1705,6 +1770,7 @@ Ctrl+Enter to format."></textarea>
 
     loadHistoryData(true);
     loadTagCloud();
+    restoreDraft();
     rawInput.focus();
     setMode('edit');
     applyLang();
