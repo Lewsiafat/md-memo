@@ -1,0 +1,82 @@
+[
+  {
+    "id": 110,
+    "createdAt": "2026-06-20T08:00:00.000Z",
+    "raw": "京都 day1 行程 八坂神社 清水寺 錦市場 晚上先斗町",
+    "markdown": "# 京都行程 Day 1 🗾\n\n## 今日路線\n\n- [x] 08:30 八坂神社\n- [x] 10:00 清水寺（二年坂、三年坂）\n- [ ] 13:00 錦市場吃午餐\n- [ ] 19:00 先斗町晚餐\n\n| 時間 | 地點 | 備註 |\n|------|------|------|\n| 08:30 | 八坂神社 | 早點到避開人潮 |\n| 10:00 | 清水寺 | 買御守 |\n| 19:00 | 先斗町 | 預約炭火燒 |\n\n> 一蘭拉麵留到 Day 2，今天走路會超過 2 萬步。",
+    "tags": ["旅行", "kyoto", "行程"],
+    "preview": "# 京都行程 Day 1 🗾"
+  },
+  {
+    "id": 109,
+    "createdAt": "2026-06-20T01:30:00.000Z",
+    "raw": "standup yesterday finished sse parser today wire agent panel blocked on safari bug",
+    "markdown": "# Standup — 2026-06-20\n\n| | |\n|---|---|\n| **Yesterday** | Finished the SSE frame parser on the agent panel |\n| **Today** | Wire the confirm-card apply flow |\n| **Blockers** | Safari drops the stream mid-run (see bug note) |",
+    "tags": ["standup", "team", "english"],
+    "preview": "# Standup — 2026-06-20"
+  },
+  {
+    "id": 108,
+    "createdAt": "2026-06-19T16:20:00.000Z",
+    "raw": "bug sse 在 safari 跑到一半斷掉 chrome 正常 可能是 buffering",
+    "markdown": "# Bug: SSE 在 Safari 中途斷線\n\n**現象**：agent 串流跑到一半，Safari 直接斷線；Chrome / Firefox 正常。\n\n```js\n// 疑似 Safari 對 text/event-stream 的 buffering 行為\nres.writeHead(200, {\n  'Content-Type': 'text/event-stream',\n  'Cache-Control': 'no-cache',\n  'Connection': 'keep-alive',\n});\n```\n\n## 待辦\n\n- [ ] 確認是否要送 keep-alive comment (`:\\n\\n`)\n- [ ] 測 `X-Accel-Buffering: no`\n- [ ] 在 Safari Technology Preview 重現",
+    "tags": ["bug", "sse", "safari", "side project"],
+    "preview": "# Bug: SSE 在 Safari 中途斷線"
+  },
+  {
+    "id": 107,
+    "createdAt": "2026-06-19T10:05:00.000Z",
+    "raw": "idea offline first sync for the memo app local first then push when online",
+    "markdown": "# Idea: offline-first sync 💡\n\nMake the memo app **local-first**, then reconcile when back online.\n\n- ✍️ Write offline → queue mutations\n- 🔄 Sync on reconnect (last-write-wins to start)\n- 🔒 No server round-trip for reads\n- 📦 Could ship as the next *side project* milestone\n\n> Start dumb: a single `pending[]` array in `localStorage`.",
+    "tags": ["idea", "side project", "offline", "sync"],
+    "preview": "# Idea: offline-first sync 💡"
+  },
+  {
+    "id": 106,
+    "createdAt": "2026-06-15T02:00:00.000Z",
+    "raw": "產品週會 討論 side project 下一步 先做 agent 再做 offline 還要寫 demo",
+    "markdown": "# 產品週會 2026-06-15\n\n## side project 下一步\n\n- **本週**\n  - 收尾 agent 面板（SSE trace + 確認卡）\n  - 修 Safari 斷線 bug\n- **下週**\n  - 啟動 offline-first 雛形\n  - 做一個**可分享的 demo 站**給外部看\n\n> 共識：demo 站零後端、免 API key，方便分享。",
+    "tags": ["meeting", "roadmap", "side project"],
+    "preview": "# 產品週會 2026-06-15"
+  },
+  {
+    "id": 105,
+    "createdAt": "2026-06-14T13:40:00.000Z",
+    "raw": "rag vs fine tuning 筆記 rag 適合知識更新 fine tune 適合風格",
+    "markdown": "# RAG vs Fine-tuning 比較筆記\n\n| 面向 | RAG | Fine-tuning |\n|------|-----|-------------|\n| 知識更新 | 換 index 即可 | 要重訓 |\n| 風格 / 格式 | 靠 prompt | 內化在權重 |\n| 成本 | 檢索 + 較長 prompt | 前期訓練貴 |\n| 可解釋 | 可附來源 | 黑箱 |\n\n> 結論：先用 RAG 解決「知識新鮮度」，風格問題再考慮 fine-tune。",
+    "tags": ["ai", "rag", "llm", "學習"],
+    "preview": "# RAG vs Fine-tuning 比較筆記"
+  },
+  {
+    "id": 104,
+    "createdAt": "2026-06-13T09:15:00.000Z",
+    "raw": "snippet debounce in javascript",
+    "markdown": "# Snippet: debounce in JavaScript\n\n```js\nfunction debounce(fn, wait = 300) {\n  let t;\n  return (...args) => {\n    clearTimeout(t);\n    t = setTimeout(() => fn.apply(this, args), wait);\n  };\n}\n```\n\nUse it for the memo editor's char-count and autosave so we don't thrash on every keystroke.",
+    "tags": ["javascript", "snippet", "side project"],
+    "preview": "# Snippet: debounce in JavaScript"
+  },
+  {
+    "id": 103,
+    "createdAt": "2026-06-13T03:00:00.000Z",
+    "raw": "週末料理 味噌鮭魚 鮭魚 味噌 味醂 醬油 烤 12 分鐘",
+    "markdown": "# 週末料理：味噌鮭魚 🐟\n\n## 食材\n\n| 食材 | 份量 |\n|------|------|\n| 鮭魚 | 2 片 |\n| 味噌 | 2 大匙 |\n| 味醂 | 1 大匙 |\n| 醬油 | 1 小匙 |\n\n## 步驟\n\n1. 味噌、味醂、醬油拌勻成醬\n2. 鮭魚抹醬，冷藏醃 30 分鐘\n3. 烤箱 200°C 烤 12 分鐘\n4. 起鍋撒蔥花",
+    "tags": ["料理", "食譜", "weekend"],
+    "preview": "# 週末料理：味噌鮭魚 🐟"
+  },
+  {
+    "id": 102,
+    "createdAt": "2026-06-12T20:00:00.000Z",
+    "raw": "reading notes designing data intensive applications reliability scalability maintainability",
+    "markdown": "# Reading Notes: Designing Data-Intensive Apps\n*by Martin Kleppmann*\n\n1. **Reliability** — keep working correctly even when things go wrong\n2. **Scalability** — reasonable ways to cope with growth\n3. **Maintainability** — make life better for the engineers who follow\n\n> \"A data-intensive application is built from standard building blocks; the art is choosing the right ones for the job.\"",
+    "tags": ["reading", "books", "distributed-systems"],
+    "preview": "# Reading Notes: Designing Data-Intensive Apps"
+  },
+  {
+    "id": 101,
+    "createdAt": "2026-06-12T07:30:00.000Z",
+    "raw": "隨手想法 好工具應該隱形 不打斷心流",
+    "markdown": "# 隨手想法：好工具應該隱形\n\n> 最好的工具是你用的時候**感覺不到它的存在**——它不打斷心流，只是讓你更快抵達想去的地方。\n\n這也是 md-memo 的設計原則：少設定、零登入、貼上就走。",
+    "tags": ["隨筆", "設計", "產品"],
+    "preview": "# 隨手想法：好工具應該隱形"
+  }
+]

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Side Project 進度總覽 / Overview — md-memo</title>
+  <meta property="og:title" content="Side Project 進度總覽 / Overview">
+  <meta property="og:description" content="Shared via md-memo">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600;7..72,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <style>
+    :root {
+      --bg:#ece8de; --surface:#f5f1e8; --border:#d9d2c1;
+      --text:#23211b; --text2:#5a5447; --text3:#a89f8c;
+      --accent:#936f33; --accent-h:#7e5e29; --accent-line:rgba(147,111,51,.4);
+      --code-bg:#eae3d3;
+      --serif-display:'Instrument Serif',Georgia,'Songti TC',serif;
+      --serif-body:'Literata',Georgia,'Songti TC',serif;
+      --mono:'IBM Plex Mono',ui-monospace,'Menlo',monospace;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:var(--serif-body);line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:12px}
+    header a{display:inline-flex;align-items:center;gap:10px;font-family:var(--serif-display);font-size:26px;font-weight:400;color:var(--text);text-decoration:none;letter-spacing:.005em;line-height:1}
+    header a::before{content:"";width:10px;height:10px;border:1.1px solid var(--accent);border-radius:50%;background:radial-gradient(circle,var(--accent) 0 1.3px,transparent 1.6px);flex-shrink:0}
+    header a span{color:var(--accent);font-weight:400}
+    .meta{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text2)}
+    .tags{display:flex;gap:6px;flex-wrap:wrap;margin-left:8px}
+    .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:2px;background:transparent;color:var(--text2);border:1px solid var(--border)}
+    main{max-width:680px;margin:52px auto;padding:0 28px 80px}
+    .copy-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:var(--bg);border:none;border-radius:2px;padding:9px 18px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-bottom:36px;text-decoration:none;transition:background .15s}
+    .copy-btn:hover{background:var(--accent-h)}
+    .md h1,.md h2{font-family:var(--serif-display);font-weight:400;line-height:1.1;letter-spacing:.005em;margin:1.1em 0 .4em;color:var(--text)}
+    .md h3,.md h4{font-family:var(--serif-body);font-weight:600;margin:1.3em 0 .4em;line-height:1.3;color:var(--text)}
+    .md h1{font-size:2.2em;margin-top:.1em}
+    .md h2{font-size:1.55em;display:flex;align-items:center;gap:.5em}
+    .md h2::before{content:"";width:7px;height:7px;background:var(--accent);transform:rotate(45deg);flex-shrink:0}
+    .md h3{font-size:1.12em}
+    .md p{margin:.7em 0}
+    .md ol{margin:.7em 0 .7em 1.4em}.md li{margin:.32em 0}
+    .md ul{list-style:none;margin:.7em 0;padding-left:0}
+    .md ul li{position:relative;padding-left:22px}
+    .md ul li::before{content:"";position:absolute;left:3px;top:.64em;width:5px;height:5px;background:var(--accent);transform:rotate(45deg)}
+    .md code{background:var(--code-bg);color:var(--accent-h);padding:1px 6px;border-radius:3px;border:1px solid var(--border);font-family:var(--mono);font-size:.82em}
+    .md pre{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:14px 16px;overflow-x:auto;margin:.9em 0}
+    .md pre code{background:none;border:none;padding:0;color:var(--text);font-size:.85em}
+    .md blockquote{border-left:2px solid var(--accent);margin:.9em 0;padding:.2em 0 .2em 1.1em;color:var(--text2);font-style:italic}
+    .md table{border-collapse:collapse;width:100%;margin:.9em 0;font-size:.9em}
+    .md th,.md td{border:1px solid var(--border);padding:7px 12px;text-align:left}
+    .md th{background:var(--surface);font-weight:600}
+    .md hr{border:none;border-top:1px solid var(--border);margin:1.4em 0}
+    .md strong{font-weight:600;color:var(--text)}
+    .md a{color:var(--accent)}
+    footer{text-align:center;padding:24px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text2);border-top:1px solid var(--border)}
+    footer a{color:var(--accent);text-decoration:none}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/md-memo/">md<span>-</span>memo</a>
+    <div class="tags"><span class="tag">side project</span><span class="tag">summary</span><span class="tag">overview</span></div>
+    <span class="meta">Jun 21, 2026, 09:00 AM</span>
+  </header>
+  <main>
+    <button class="copy-btn" onclick="copyMd()">📋 Copy Markdown</button>
+    <div class="md" id="content"></div>
+  </main>
+  <footer>Generated by <a href="/md-memo/">md-memo</a> · <a href="/md-memo/">Create your own memo →</a></footer>
+  <script>
+    const raw = "# Side Project 進度總覽 / Overview\n\n> 整理自三篇筆記（#108 / #107 / #104），涵蓋目前進度、待修問題與下一步點子。\n\n## 🐞 進行中的問題 · Open Issues\n\n- **SSE 在 Safari 中途斷線**（來源 #108）— agent 串流在 Safari 會斷，Chrome/Firefox 正常；待測 keep-alive comment 與 `X-Accel-Buffering: no`。\n\n## 💡 下一步點子 · Next Ideas\n\n- **Offline-first sync**（來源 #107）— make the app local-first, queue mutations offline, reconcile on reconnect.\n\n## 🧩 可複用片段 · Reusable Snippets\n\n- **debounce()**（來源 #104）— for editor char-count / autosave without thrashing.\n\n## 🔗 連結 · How they fit\n\n修好 Safari 的串流問題，agent 體驗才穩；offline-first 是下一個里程碑；debounce 這類小工具讓編輯體驗更順——三者都指向同一個 side project 的打磨。";
+    document.getElementById('content').innerHTML = DOMPurify.sanitize(marked.parse(raw));
+    async function copyMd() {
+      try { await navigator.clipboard.writeText(raw); }
+      catch { const t=document.createElement('textarea');t.value=raw;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t); }
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✓ Copied';
+      setTimeout(() => btn.innerHTML = '📋 Copy Markdown', 2000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "prefill": "今天跟團隊聊了一下 side project 的下一步\n本週要把 agent 面板收尾 還有那個 safari 斷線的 bug 要修\n下週想開始做 offline first 然後一定要生一個可以分享的 demo 站\n還有提醒自己 demo 站不要綁 api key 不然分享出去會被亂用",
+  "result": {
+    "markdown": "# Side Project 下一步\n\n## 本週\n\n- 收尾 **agent 面板**\n- 修 **Safari 斷線** bug\n\n## 下週\n\n- 啟動 **offline-first** 雛形\n- 產出一個**可分享的 demo 站**\n\n> ⚠️ 提醒：demo 站**不要綁 API key**，避免分享出去後被濫用。",
+    "tags": ["side project", "roadmap", "planning"]
+  }
+}
