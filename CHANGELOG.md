@@ -5,6 +5,15 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Client-side draft autosave.** Unsaved editor content (a new note, or edits
+  to an existing memo) is kept in `localStorage` and restored with a toast the
+  next time the app opens. Closing or reloading the tab with unsaved content
+  triggers the browser's leave-page warning. The draft is cleared once the
+  content is formatted, saved, or discarded.
+
 ## [1.6.2] - 2026-07-09
 
 Agent-mode hardening (C1+H1+H2+H3) from the 2026-07-08 architecture review;

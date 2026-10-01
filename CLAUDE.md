@@ -44,6 +44,8 @@ npm run build:demo                   # 產出靜態 demo bundle 到 dist-demo/�
 
 編輯模式（對既有筆記按 ✏️ Edit）提供三鈕：💾 Save（原樣覆蓋，不跑 LLM，走 `PUT /api/history/:id`）、✨ Reformat（重跑 LLM，native confirm 選覆蓋既有或另存新筆記）、🗑 Discard（native confirm 後丟棄編輯、回到該筆 View 或清空）。Save/Discard 的顯示由 `updateEditControls()` 控制（Save 僅在編輯既有筆記時、Discard 僅在有輸入時）。History 面板已更名為「Memo List」。
 
+草稿暫存（純前端）：`updateEditControls()` 每次呼叫都會 debounce 寫入 `localStorage` 的 `md-memo-draft`（`{ text, id, baseMarkdown, tags, savedAt }`）。「未存檔」由 `isDirty()` 判定：非 preview 狀態下，新筆記有任何文字，或既有筆記的文字與 `currentMarkdown` 不同。不 dirty 時刪除草稿，所以 Format／Save／Discard 成功後草稿自動清掉。啟動時 `restoreDraft()` 還原（草稿指向的筆記已被刪除則退回新筆記）；`beforeunload` 在 dirty 時觸發瀏覽器原生離開確認（瀏覽器不允許自訂提示文字）。
+
 ### 標籤約定（跨前後端的隱性契約）
 
 AI 不回傳結構化 tags 欄位。系統 prompt（`src/index.js` 內 `/api/format` 的 system message）要求模型在輸出**最後一行**附上 `<!-- tags: a, b, c -->`，後端 `parseTags()`（`src/format.js`，由 `parseFormatResult()` 呼叫）用 regex 抽出標籤並把該行從 markdown 移除。改動 prompt 格式時必須同步改 `parseTags()`，否則標籤會壞掉或殘留在內文。

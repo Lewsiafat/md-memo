@@ -5,6 +5,14 @@
 本專案所有重要變更皆記錄於此，遵循
 [Keep a Changelog](https://keepachangelog.com/) 與 [Semantic Versioning](https://semver.org/)。
 
+## [Unreleased]
+
+### 新增
+- **前端草稿自動暫存。** 尚未存檔的編輯內容（新筆記，或對既有筆記的修改）
+  會暫存在瀏覽器的 `localStorage`，下次開啟 app 時自動還原並以 toast 提示。
+  有未存檔內容時關閉或重新整理分頁，瀏覽器會跳出離開頁面的確認。內容經
+  整理、儲存或捨棄後，草稿即清除。
+
 ## [1.6.2] - 2026-07-09
 
 Agent mode 強化（C1+H1+H2+H3），源自 2026-07-08 的架構審查；
