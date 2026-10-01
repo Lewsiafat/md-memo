@@ -5,7 +5,7 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com/) and [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.6.3] - 2026-10-01
 
 ### Added
 - **Client-side draft autosave.** Unsaved editor content (a new note, or edits

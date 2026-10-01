@@ -5,7 +5,7 @@
 本專案所有重要變更皆記錄於此，遵循
 [Keep a Changelog](https://keepachangelog.com/) 與 [Semantic Versioning](https://semver.org/)。
 
-## [Unreleased]
+## [1.6.3] - 2026-10-01
 
 ### 新增
 - **前端草稿自動暫存。** 尚未存檔的編輯內容（新筆記，或對既有筆記的修改）

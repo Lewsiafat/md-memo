@@ -18,6 +18,7 @@
 - 🎨 **Colophon 設計** — 暖色紙感外觀（Instrument Serif / Literata / IBM Plex Mono）；**預設為淺色「Writing」**，可切換深色「Reading」主題（以 localStorage 持久化）
 - 📚 **Memo List** — 搜尋（輸入即過濾＋Enter 全庫搜尋）、tag 點擊篩選、分頁載入＋滾到底自動載（上限由 `HISTORY_LIMIT` 設定，預設 1000）、排序切換、鍵盤操作（`/`、`↑`/`↓`、Enter、Esc）；安全的 Clear All 會保留帶時間戳的備份
 - ✏️ **編輯既有筆記** — 開啟已存的筆記並可 **Save**（原樣覆蓋，不跑 AI）、**Reformat**（重跑 AI，接著覆蓋該筆或另存為新筆記）或 **Discard**
+- 💾 **草稿自動暫存** — 未存檔的編輯內容會暫存在瀏覽器，下次開啟自動還原；有未存檔內容時關閉分頁會跳出離開確認
 - 🔍 **快速檢視** — 不離開編輯器即可預覽 history 項目
 - 🧠 **對你的筆記下指令的 Agent** — 提問或下指令（「合併本週的會議記錄」）；agent 會搜尋、閱讀並提出變更建議，並附即時推理 trace（任何寫入前都會先確認）。專屬的三欄 Agent 工作區讓你儲存、重播與刪除 session，或將一則回答轉成 memo
 
